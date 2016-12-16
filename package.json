@@ -22,11 +22,11 @@
     "url": "https://github.com/hull-ships/hull-sql/issues"
   },
   "scripts": {
-    "build": "npm run clean && npm run build:server && npm run build:client",
+    "build": "npm run clean && npm run build:server",
     "build:client": "NODE_ENV=production ./node_modules/.bin/webpack --config ./webpack.config.js --progress --profile --colors",
-    "build:server": "./node_modules/.bin/babel server -d lib",
-    "clean": "./node_modules/.bin/rimraf dist; ./node_modules/.bin/rimraf lib",
-    "start": "node ./server",
+    "build:server": "./node_modules/.bin/babel server -d build",
+    "clean": "./node_modules/.bin/rimraf build",
+    "start": "node ./build",
     "start:dev": "./node_modules/.bin/nodemon -w server --exec ./node_modules/.bin/babel-node -- server",
     "test": "npm run test:lint && npm run test:units && npm run test:modules",
     "test:lint": "./node_modules/.bin/eslint server",

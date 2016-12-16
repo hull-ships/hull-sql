@@ -4,7 +4,7 @@ import path from "path";
 import devMode from "./dev-mode";
 import ejs from "ejs";
 
-import SyncAgent from "../lib/sync-agent"
+import SyncAgent from "./sync-agent"
 
 module.exports = function server(options = {}) {
   const { Hull, hostSecret } = options;
