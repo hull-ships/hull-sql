@@ -2,18 +2,17 @@
  * Module dependencies.
  */
 
-const _ = require('lodash');
-const map = require('through2-map');
+const _ = require("lodash");
 
 // Map each record of the stream.
-const transform = require('./utils/transform');
+const transform = require("./utils/transform");
 
 /**
  * Configure the streaming to AWS.
  */
 
 // Configure the AWS SDK.
-const Aws = require('aws-sdk');
+const Aws = require("aws-sdk");
 Aws.config.update({
   accessKeyId: process.env.AWS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_KEY
@@ -22,14 +21,16 @@ Aws.config.update({
 // Configure the AWS S3 account with
 // a new AWS instance.
 const awsAccount = new Aws.S3();
-const awsS3 = require('s3-upload-stream')(awsAccount);
+const awsS3 = require("s3-upload-stream")(awsAccount);
+
+import Adapters from "./adapters";
 
 // Configure the AWS S3 bucket.
 const s3Params = {
   Bucket: process.env.BUCKET_PATH,
-  ACL: 'private',
-  StorageClass: 'STANDARD',
-  ContentType: 'application/json',
+  ACL: "private",
+  StorageClass: "STANDARD",
+  ContentType: "application/json",
   Expires: 86400
 };
 
@@ -38,7 +39,7 @@ const s3Params = {
  */
 
 const adapters = [
-  'postgres',
+  "postgres",
   // 'mysql'
 ];
 
@@ -57,27 +58,26 @@ module.exports = class SyncAgent {
    */
 
   constructor(ship, hull) {
-
     // Expose the ship settings
     // and the Hull instance.
     this.ship = ship;
     this.hull = hull;
 
     // Get the DB type.
-    const adapter = this.ship.private_settings.db_type;
+    const { db_type } = this.ship.private_settings.db_type;
 
     // Make sure the DB type is known.
     // If not, throw an error.
     // Otherwise, use the correct adapter.
-    if (!_.includes(adapters, adapter)) {
+    if (!_.includes(adapters, db_type)) {
       return {
         error: 405,
-        message: 'No adapter specified.'
+        message: "No adapter specified."
       };
-    } else {
-      this.adapter = require(`./adapters/${adapter}`);
-      this.client = this.adapter.openConnection(this.ship.private_settings.connection_string);
     }
+    this.adapter = Adapters[db_type];
+    this.client = this.adapter.openConnection(this.ship.private_settings.connection_string);
+    return this;
   }
 
   /**
@@ -106,8 +106,8 @@ module.exports = class SyncAgent {
     self.adapter.runQuery(client, wrappedQuery, countQuery, (err, data) => {
       if (err) {
         let message;
-        if (err.message.substr(0, 11) === 'getaddrinfo') {
-          message = 'impossible to connect to the database.'
+        if (err.message.substr(0, 11) === "getaddrinfo") {
+          message = "impossible to connect to the database.";
         } else {
           message = err.message;
         }
@@ -115,7 +115,7 @@ module.exports = class SyncAgent {
         return callback({
           error: 400,
           message: `An error occured with the request you provided: ${message}`
-        })
+        });
       }
 
       // Close the connection.
@@ -174,38 +174,38 @@ module.exports = class SyncAgent {
       const uploader = stream.pipe(upload);
 
       // On a stream error.
-      stream.on('error', (err) => {
+      stream.on("error", (error) => {
         return callback({
           error: 400,
-          message: `An error occured while streaming the data: ${err.message}`
-        })
+          message: `An error occured while streaming the data: ${error.message}`
+        });
       });
 
       // On a stream error.
-      uploader.on('error', (err) => {
+      uploader.on("error", (error) => {
         return callback({
           error: 400,
-          message: `An error occured while streaming the data: ${err.message}`
-        })
+          message: `An error occured while streaming the data: ${error.message}`
+        });
       });
 
       // Make sure the stream has finish
       // before doing everything else.
-      stream.on('end', () => {
+      stream.on("end", () => {
         self.adapter.closeConnection(client);
 
         // Get the bucket URL.
-        const url = awsAccount.getSignedUrl('getObject', _.pick(s3Params, [
-          'Bucket',
-          'Key',
-          'Expires'
+        const url = awsAccount.getSignedUrl("getObject", _.pick(s3Params, [
+          "Bucket",
+          "Key",
+          "Expires"
         ]));
 
         // When the file is uploaded, import the data to Hull.
-        uploader.on('uploaded', (details) => {
-          self.hull.post('/import/users', {
-            url: url,
-            format: 'json',
+        uploader.on("uploaded", () => {
+          self.hull.post("/import/users", {
+            url,
+            format: "json",
             notify: true,
             emit_event: false
           })
@@ -221,14 +221,16 @@ module.exports = class SyncAgent {
               });
               return callback(null, job);
             })
-            .catch(err => {
+            .catch(error => {
               return callback({
                 error: 400,
-                message: `An error occured while streaming the data: ${err.message}`
+                message: `An error occured while streaming the data: ${error.message}`
               });
             });
         });
       });
+
+      return stream;
     });
   }
 };
