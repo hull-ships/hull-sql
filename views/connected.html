@@ -161,7 +161,7 @@
             $('.afterPreview').css('display', 'block');
 
             try {
-              if (typeof data.count !== 0) {
+              if (typeof data.count !== 0 && data.count !== undefined) {
                 $('#results-title').append(' (' + data.count + ' entries)');
                 for (var columnName in data.entries[0]) {
                   $('#result thead tr').append('<th>' + columnName + '</th>');
