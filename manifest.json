@@ -60,6 +60,12 @@
       "title": "Last sync",
       "type": "string",
       "format": "hidden"
+    },
+    {
+      "name": "last_job_id",
+      "title": "Last job ID",
+      "type": "string",
+      "format": "hidden"
     }
   ],
   "resources": [],
