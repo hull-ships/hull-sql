@@ -219,10 +219,6 @@ module.exports = class SyncAgent {
                   }
                 });
               });
-              console.log('JOB');
-              console.log(job);
-              console.log('SHIP');
-              console.log(self.ship);
               return callback(null, job);
             })
             .catch(err => {
