@@ -1,0 +1,19 @@
+{
+  "name": "Hull SQL Sync",
+  "description": "A Hull Integration for SQL.",
+  "repository": "https://github.com/hull-ships/hull-sql",
+  "website": "http://www.hull.io",
+  "success_url": "/readme",
+  "env": {
+    "AWS_KEY_ID": {
+      "description": "The AWS key ID to use for the S3 bucket."
+    },
+    "AWS_SECRET_KEY": {
+      "description": "The AWS secret key to use for the S3 bucket."
+    },
+    "BUCKET_PATH": {
+      "description": "The AWS S3 bucket directory where the JSON are stored."
+    }
+  },
+  "scripts": {}
+}

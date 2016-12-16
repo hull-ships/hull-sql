@@ -1,0 +1,84 @@
+{
+  "name": "SQL Importer",
+  "description": "Import SQL data from your own database",
+  "picture": "picture.png",
+  "version": "0.0.1",
+  "tags": [
+    "incoming",
+    "oneColumn"
+  ],
+  "private_settings": [
+    {
+      "name": "enable",
+      "title": "Enable Sync",
+      "type": "boolean",
+      "default": "true"
+    },
+    {
+      "name": "db_type",
+      "type": "string",
+      "title": "Database Type",
+      "enum": [
+        "postgres",
+        "mysql"
+      ],
+      "default": "postgres"
+    },
+    {
+      "name": "connection_string",
+      "title": "Connection String",
+      "type": "string",
+      "default": "postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&...]"
+    },
+    {
+      "name": "query",
+      "title": "Query to run",
+      "type": "string",
+      "format": "textarea",
+      "default": "SELECT * FROM users"
+    },
+    {
+      "name": "overwrite_hull",
+      "title": "Overwrite data in Hull in case of a conflict",
+      "type": "boolean",
+      "default": "true"
+    },
+    {
+      "name": "frequency",
+      "title": "Sync Frequency",
+      "type": "string",
+      "default": "5min",
+      "enum": [
+        "5min",
+        "10min",
+        "20min",
+        "60min"
+      ]
+    },
+    {
+      "name": "last_sync_at",
+      "title": "Last sync",
+      "type": "string",
+      "format": "hidden"
+    }
+  ],
+  "resources": [],
+  "readme": "readme.md",
+  "admin": "admin.html",
+  "ui": false,
+  "subscriptions": [
+    {
+      "url": "/notify"
+    }
+  ],
+  "schedules": [
+    {
+      "url": "/import",
+      "type": "cron",
+      "value": "*/12 * * * *",
+      "params": {
+        "incremantal": true
+      }
+    }
+  ]
+}

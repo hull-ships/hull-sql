@@ -1,0 +1,217 @@
+<html><head>
+  <title>Hull SQL</title>
+  <link rel="stylesheet" href="//dd04rofzygnm0.cloudfront.net/releases/master/865f04865d2448286626bac92c518a8f8ea8bafe/stylesheets/neue.css">
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-sweetalert/1.0.1/sweetalert.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-sweetalert/1.0.1/sweetalert.min.css">
+</head>
+<body>
+  <div class="row">
+    <div class="col-xs-offset-1 col-xs-10 col-lg-10 col-lg-offset-1 panel mt-2">
+      <div class="panel-body">
+
+        <div class="mb-1 ps-3">
+
+          <h1 class="mb-0 mt-05 text-center"><i class="icon icon-hull" style="font-size:64px;"></i> </h1>
+
+          <div class="mb-1 media pb-1">
+            <div class="media-left">
+              <div class="media-object pr-1 pt-1">
+                <div class="check valid"><i class="icon icon-valid"></i></div>
+              </div>
+            </div>
+            <div class="media-body pt-1">
+              <!-- <span class="pull-right">
+                <form action="/test" id="test" method="POST">
+                  <input type="submit" class="btn btn-rounded btn-pill btn-secondary to-disable" value="Test connection">
+                </form>
+              </span> -->
+              <h4 class="m-0 pt-05 text-muted">Connected to your <%= db_type %> database</h4>
+            </div>
+          </div>
+
+          <!-- <h5>Last Sync <small class="pull-right"><strong>0 Users</strong> on <span data-time=""><%= last_sync_at %></span></small></h5> -->
+
+          <hr>
+
+          <div class="row">
+            <div class="col-sm-12">
+              <h4 class="mt-0 text-muted">SQL Query</h4>
+              <textarea name="" id="querying" class="form-control"><%= query %></textarea>
+              <div class="pt-1 pb-1">
+                <button id="button_preview" class="btn-pill btn-rounded btn-success btn to-disable"><i class="icon icon-eye_open"></i> Preview</button>
+                <div class="btn-group pl-1 pull-right">
+                  <button id="button_import" class="btn-pill btn-rounded btn-danger btn to-disable"><i class="icon icon-reset"></i> Import everything</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr class="afterPreview">
+
+          <h4 class="text-muted afterPreview">Results Preview <span id="results-title"></span></h4>
+
+          <p id="error-query"></p>
+
+          <table id="result" class="afterPreview table table-striped table-responsive table-bordered table-condensed">
+            <thead>
+              <tr></tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+    </div>
+  </div>
+  <style type="text/css" media="screen">
+    .afterPreview, #error-query {
+      display: none;
+    }
+    .check i.icon {
+      color: rgba(75, 222, 122, 0.52);
+      font-size: 2pc;
+      position: relative;
+      top: -11px;
+      left: 3px;
+    }
+    .check.valid {
+      border-color: rgba(75, 222, 122, 0.52);
+    }
+    .check {
+      border-radius: 100px;
+      border: 2px solid transparent;
+      padding: 0 5px;
+      height: 37px;
+      width: 37px;
+      position: relative;
+    }
+  </style>
+  <script>
+    var original_query = `<%- query %>`;
+    var good_query;
+    $(function() {
+      $('.to-disable').prop('disabled', false);
+
+      $('#button_import').click(function () {
+
+        if ($('#querying').val() !== original_query) {
+          swal('Unsaved query', 'The current query is not the query you saved. Please save your query first.', 'warning');
+        } else {
+          swal({
+            title: 'Import the users from the current query? ',
+            text: "If you continue, we will import the users from the currently saved query.",
+            type: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#DD6B55',
+            confirmButtonText: 'Let\'s Go',
+            closeOnConfirm: false
+          }, function (isConfirm) {
+
+            if (isConfirm === true) {
+              $('.afterPreview').css('display', 'none');
+              $('#button_import').prop('disabled', true);
+              $('#button_import').text('Importing...');
+              $('#result thead tr').empty();
+              $('#result tbody').empty();
+              $('#error-query').empty();
+              $('#results-title').empty();
+
+
+              swal('Started importing users. Results will be available shortly in Hull!');
+
+
+              $.ajax({
+                url: '/import' + window.location.search,
+                type: 'post',
+                data: {
+                  query: $('#querying').val(),
+                  incremental: true
+                },
+                success: function (data) {
+                  $('.to-disable').prop('disabled', false);
+                  $('#button_import').replaceWith('<button id="button_import" class="btn-pill btn-rounded btn-danger btn to-disable"><i class="icon icon-reset"></i> Import everything</button>');
+                },
+                error: function (err) {
+                  $('.to-disable').prop('disabled', false);
+                  $('#error-query').empty().css('display', 'block').append(err.message);
+                }
+              });
+            }
+          });
+        }
+      });
+
+      $('#button_preview').click(function () {
+        $('.afterPreview').css('display', 'none');
+        $('.to-disable').prop('disabled', true);
+        $('#result thead tr').empty();
+        $('#result tbody').empty();
+        $('#error-query').empty();
+        $('#results-title').empty();
+        good_query = null;
+
+        $.ajax({
+          url: '/run' + window.location.search,
+          type: 'post',
+          data: {
+            query: $('#querying').val()
+          },
+          success: function (data) {
+            $('.to-disable').prop('disabled', false);
+            $('.afterPreview').css('display', 'block');
+
+            try {
+              if (typeof data.count !== 0) {
+                $('#results-title').append(' (' + data.count + ' entries)');
+                for (var columnName in data.entries[0]) {
+                  $('#result thead tr').append('<th>' + columnName + '</th>');
+                }
+
+                data.entries.forEach(function(element, index) {
+                  var currentRow = '';
+                  $.each(element, function(key , value) {
+                    currentRow = currentRow.concat('<td>' + value + '</td>');
+                  });
+                  $('#result tbody').append('<tr>' + currentRow + '<tr>');
+                });
+              } else {
+                $('#error-query').empty().css('display', 'block').append('No results for this query.');
+              }
+
+              good_query = $('#querying').val();
+            } catch (err) {
+              good_query = original_query;
+              $('#error-query').empty().css('display', 'block').append(data.message);
+            } finally {
+              if (good_query !== original_query) {
+                window.parent.postMessage(JSON.stringify({
+                  from: 'embedded-ship',
+                  action: 'update',
+                  ship: {
+                    private_settings: {
+                      query: good_query
+                    }
+                  }
+                }), '*');
+              }
+            }
+          },
+          error: function (err) {
+            // $('.to-disable').prop('disabled', false);
+            // $('#error-query').empty().css('display', 'block').append(err.message);
+            // good_query = original_query;
+            // window.parent.postMessage(JSON.stringify({
+            //   from: 'embedded-ship',
+            //   action: 'update',
+            //   ship: {
+            //     private_settings: {
+            //       query: good_query
+            //     }
+            //   }
+            // }), '*');
+          }
+        });
+      });
+    });
+  </script>
+</body></html>
