@@ -4,11 +4,11 @@ import path from "path";
 import devMode from "./dev-mode";
 import ejs from "ejs";
 
-import SyncAgent from "./sync-agent"
+import SyncAgent from "./sync-agent";
 
 module.exports = function server(options = {}) {
   const { Hull, hostSecret } = options;
-  const { Routes, Middleware: hullClient } = Hull;
+  const { Routes } = Hull;
   const { Readme, Manifest } = Routes;
   const app = express();
 
@@ -28,100 +28,47 @@ module.exports = function server(options = {}) {
   app.get("/", Readme);
   app.get("/readme", Readme);
 
-  app.get("/admin.html", hullClient({ hostSecret, fetchShip: false }), (req, res) => {
+  app.use(Hull.Middleware({ hostSecret, fetchShip: true, cacheShip: false, requireCredentials: false }));
 
-    const { config } = req.hull;
-
-    const hull = new Hull({
-      id: req.query.ship,
-      secret: req.query.secret,
-      organization: req.query.organization
-    });
-
-    hull.get(req.query.ship)
-      .then(shipConfig => {
-
-        if (shipConfig.private_settings.connection_string) {
-          res.render("connected.html", {
-            last_sync_at: shipConfig.private_settings.last_sync_at,
-            db_type: shipConfig.private_settings.db_type,
-            query: shipConfig.private_settings.query
-          });
-        }
-
-        else {
-          res.render("home.html", {});
-        }
-      });
+  app.get("/admin.html", (req, res) => {
+    const { ship } = req.hull;
+    if (ship.private_settings.connection_string) {
+      res.render("connected.html", ship.private_settings);
+    } else {
+      res.render("home.html", {});
+    }
   });
 
-  app.post('/run', hullClient({ hostSecret, fetchShip: false }), (req, res) => {
-    const settings = {
-      id: req.query.ship,
-      secret: req.query.secret,
-      organization: req.query.organization
-    };
-
-    const hull = new Hull(settings);
-
-    hull.get(settings.id)
-      .then((ship) => {
-        const query = req.body.query || ship.private_settings.query
-        const agent = new SyncAgent(ship, hull);
-
-        agent.runQuery(ship.private_settings.connection_string, query, (err, data) => {
-          if (err) {
-            Hull.logger.error(err);
-            return res.json(err);
-          } else {
-            Hull.logger.info(data);
-            return res.json(data);
-          }
-
-        });
-      })
-      .catch(err => {
-        Hull.logger.error(err);
-        return res.json(err);
-      });
+  app.post("/run", (req, res) => {
+    const { ship } = req.hull;
+    const query = req.body.query || ship.private_settings.query;
+    const agent = new SyncAgent(req.hull);
+    agent
+      .runQuery(query, { timeout: 1000 })
+      .then(data => res.json(data))
+      .catch(({ status, message }) =>
+        res.status(status || 500).send({ message })
+      );
   });
 
-
-  app.post('/import', hullClient({ hostSecret, fetchShip: false }), (req, res) => {
-    const settings = {
-      id: req.query.ship,
-      secret: req.query.secret,
-      organization: req.query.organization
-    };
+  app.post("/import", (req, res) => {
+    const { private_settings } = req.hull.ship;
 
     let last_sync_at;
     if (req.query.incremental) {
-      last_sync_at = ship.private_settings.last_sync_at;
+      last_sync_at = private_settings.last_sync_at;
     }
 
-    const hull = new Hull(settings);
-
-    hull.get(settings.id)
-      .then((ship) => {
-        const query = ship.private_settings.query;
-        const agent = new SyncAgent(ship, hull);
-
-        agent.streamQuery(ship.private_settings.connection_string, query, last_sync_at, (err, result) => {
-          if (err) {
-            Hull.logger.error(err);
-            return res.json(err);
-          } else {
-            Hull.logger.info(result);
-            return res.json(result);
-          }
-        });
+    const agent = new SyncAgent(req.hull);
+    agent.streamQuery(private_settings.query, { last_sync_at })
+      .then(stream => {
+        res.json({ status: "working..." });
+        return agent.startSync(stream, new Date());
       })
-      .catch(err => {
-        Hull.logger.error(err);
-        return res.json(err);
+      .catch(({ status, message }) => {
+        res.status(status || 500).send({ message });
       });
   });
-
 
   // Error Handler
   app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
@@ -134,7 +81,8 @@ module.exports = function server(options = {}) {
         url: req.url,
         params: req.params
       };
-      console.log("Error ----------------", err.message, err.status, data);
+      console.log("Error ----------------");
+      console.log(err.message, err.status, data);
       console.log(err.stack);
     }
 

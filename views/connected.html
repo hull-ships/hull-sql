@@ -37,7 +37,7 @@
           <div class="row">
             <div class="col-sm-12">
               <h4 class="mt-0 text-muted">SQL Query</h4>
-              <textarea name="" id="querying" class="form-control"><%= query %></textarea>
+              <textarea name="" rows="15" id="querying" class="form-control"><%= query %></textarea>
               <div class="pt-1 pb-1">
                 <button id="button_preview" class="btn-pill btn-rounded btn-success btn to-disable"><i class="icon icon-eye_open"></i> Preview</button>
                 <div class="btn-group pl-1 pull-right">
@@ -157,12 +157,12 @@
             query: $('#querying').val()
           },
           success: function (data) {
+
             $('.to-disable').prop('disabled', false);
             $('.afterPreview').css('display', 'block');
 
             try {
-              if (typeof data.count !== 0 && data.count !== undefined) {
-                $('#results-title').append(' (' + data.count + ' entries)');
+              if (data.entries && data.entries.length) {
                 for (var columnName in data.entries[0]) {
                   $('#result thead tr').append('<th>' + columnName + '</th>');
                 }
@@ -196,19 +196,22 @@
               }
             }
           },
-          error: function (err) {
-            // $('.to-disable').prop('disabled', false);
-            // $('#error-query').empty().css('display', 'block').append(err.message);
-            // good_query = original_query;
-            // window.parent.postMessage(JSON.stringify({
-            //   from: 'embedded-ship',
-            //   action: 'update',
-            //   ship: {
-            //     private_settings: {
-            //       query: good_query
-            //     }
-            //   }
-            // }), '*');
+          error: function (res) {
+            var err = res.responseJSON;
+            $('.to-disable').prop("disabled", false);
+            if (err) {
+              $("#error-query").empty().css("display", "block").append(err.message);
+              good_query = original_query;
+              window.parent.postMessage(JSON.stringify({
+                from: "embedded-ship",
+                action: "update",
+                ship: {
+                  private_settings: {
+                    query: good_query
+                  }
+                }
+              }), "*");
+            }
           }
         });
       });

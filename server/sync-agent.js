@@ -25,21 +25,12 @@ const awsS3 = require("s3-upload-stream")(awsAccount);
 
 import * as Adapters from "./adapters";
 
-// Configure the AWS S3 bucket.
-const s3Params = {
-  Bucket: process.env.BUCKET_PATH,
-  ACL: "private",
-  StorageClass: "STANDARD",
-  ContentType: "application/json",
-  Expires: 86400
-};
-
 
 /**
  * Export the sync agent for the SQL ship.
  */
 
-module.exports = class SyncAgent {
+export default class SyncAgent {
 
   /**
    * Constructor.
@@ -49,11 +40,11 @@ module.exports = class SyncAgent {
    *   @hull Object*
    */
 
-  constructor(ship, hull) {
+  constructor({ ship, client }) {
     // Expose the ship settings
     // and the Hull instance.
     this.ship = ship;
-    this.hull = hull;
+    this.hull = client;
 
     // Get the DB type.
     const { db_type } = this.ship.private_settings;
@@ -63,21 +54,29 @@ module.exports = class SyncAgent {
     // If not, throw an error.
     // Otherwise, use the correct adapter.
     if (!this.adapter) {
-      return {
-        error: 405,
-        message: `Invalid database type '${db_type}'.`
-      };
+      throw new Error(`Invalid database type '${db_type}'.`);
     }
 
     this.client = this.adapter.openConnection(this.ship.private_settings.connection_string);
     return this;
   }
 
+
+  updateShipSettings(settings) {
+    return this.hull.get(this.ship.id).then(({ private_settings }) => {
+      return this.hull.put(this.ship.id, {
+        private_settings: {
+          ...private_settings,
+          ...settings
+        }
+      });
+    });
+  }
+
   /**
    * Run a wrapped query.
    *
    * Params:
-   *   @connection_string String*
    *   @query String*
    *   @callback Function*
    *
@@ -87,38 +86,26 @@ module.exports = class SyncAgent {
    *     - @success Object
    */
 
-  runQuery(connection_string, query, callback) {
-    const self = this;
-    const client = self.client;
+  runQuery(query, options = {}) {
+    // Wrap the query.
+    const wrappedQuery = this.adapter.wrapQuery(query);
+    // Run the method for the specific adapter.
+    return this.adapter.runQuery(this.client, wrappedQuery, options)
+      .then(result => {
+        return { entries: result.rows };
+      });
+  }
+
+  streamQuery(query, options = {}) {
+    const { last_sync_at } = options;
 
     // Wrap the query.
-    const countQuery = self.adapter.countQuery(query);
-    const wrappedQuery = self.adapter.wrapQuery(query);
+    const wrappedQuery = this.adapter.wrapQuery(query, last_sync_at);
 
     // Run the method for the specific adapter.
-    self.adapter.runQuery(client, wrappedQuery, countQuery, (err, data) => {
-      if (err) {
-        let message;
-        if (err.message.substr(0, 11) === "getaddrinfo") {
-          message = "impossible to connect to the database.";
-        } else {
-          message = err.message;
-        }
-
-        return callback({
-          error: 400,
-          message: `An error occured with the request you provided: ${message}`
-        });
-      }
-
-      // Close the connection.
-      self.adapter.closeConnection(client);
-
-      // Return the result.
-      return callback(null, {
-        count: data.count,
-        entries: data.entries
-      });
+    return this.adapter.streamQuery(this.client, wrappedQuery).then(stream => {
+      stream.on("error", err => this.hull.logger.error("Query error", { message: err.toString() }));
+      return stream;
     });
   }
 
@@ -136,94 +123,61 @@ module.exports = class SyncAgent {
    *     - @success Object
    */
 
-  streamQuery(connection_string, query, last_sync_at, callback) {
-    const self = this;
-    const client = self.client;
-
-    // Wrap the query.
-    const wrappedQuery = this.adapter.wrapQuery(query, last_sync_at);
-
-    // We need to know when we start the job.
-    const started_sync_at = new Date();
-
-    // Run the method for the specific adapter.
-    self.adapter.streamQuery(client, wrappedQuery, (err, streamedQuery) => {
-      if (err) {
-        return callback({
-          error: 400,
-          message: `An error occured while streaming the data: ${err.message}`
-        });
-      }
-
-      // Create the stream and return it.
-      const stream = streamedQuery.pipe(transform());
-
-      // Use a unique location for every ship.
-      const now = new Date().getTime();
-      s3Params.Key = `extracts/${self.ship.id}/${now}.json`;
-
-      // Stream and upload the data to S3.
-      const upload = awsS3.upload(s3Params);
-      const uploader = stream.pipe(upload);
-
-      // On a stream error.
-      stream.on("error", (error) => {
-        return callback({
-          error: 400,
-          message: `An error occured while streaming the data: ${error.message}`
+  startSync(stream, started_sync_at) {
+    return this.uploadStream(stream.pipe(transform()), started_sync_at)
+      .then(url => this.startImportJob(url))
+      .then(job => {
+        return this.updateShipSettings({
+          last_sync_at: started_sync_at,
+          last_job_id: job.id
         });
       });
+  }
+
+  startImportJob(url) {
+    const params = {
+      url,
+      format: "json",
+      notify: true,
+      emit_event: false
+    };
+    return this.hull.post("/import/users", params);
+  }
+
+  uploadStream(stream, started_sync_at) {
+    const s3Params = {
+      Bucket: process.env.BUCKET_PATH,
+      ACL: "private",
+      StorageClass: "STANDARD",
+      ContentType: "application/json",
+      Expires: 86400,
+      Key: `extracts/${this.ship.id}/${started_sync_at.getTime()}.json`
+    };
+
+    // Stream and upload the data to S3.
+    const uploader = stream.pipe(awsS3.upload(s3Params));
+
+    return new Promise((resolve, reject) => {
+      // On a stream error.
+      stream.on("error", reject);
 
       // On a stream error.
-      uploader.on("error", (error) => {
-        return callback({
-          error: 400,
-          message: `An error occured while streaming the data: ${error.message}`
-        });
-      });
+      uploader.on("error", reject);
 
       // Make sure the stream has finish
       // before doing everything else.
       stream.on("end", () => {
-        self.adapter.closeConnection(client);
-
-        // Get the bucket URL.
-        const url = awsAccount.getSignedUrl("getObject", _.pick(s3Params, [
-          "Bucket",
-          "Key",
-          "Expires"
-        ]));
-
-        // When the file is uploaded, import the data to Hull.
+        this.adapter.closeConnection(this.client);
         uploader.on("uploaded", () => {
-          self.hull.post("/import/users", {
-            url,
-            format: "json",
-            notify: true,
-            emit_event: false
-          })
-            .then(job => {
-              self.hull.get(self.ship.id).then(({ private_settings }) => {
-                self.hull.put(self.ship.id, {
-                  private_settings: {
-                    ...private_settings,
-                    last_sync_at: started_sync_at,
-                    last_job_id: job.id
-                  }
-                });
-              });
-              return callback(null, job);
-            })
-            .catch(error => {
-              return callback({
-                error: 400,
-                message: `An error occured while streaming the data: ${error.message}`
-              });
-            });
+          // Get the bucket URL.
+          const url = awsAccount.getSignedUrl("getObject", _.pick(s3Params, [
+            "Bucket",
+            "Key",
+            "Expires"
+          ]));
+          resolve(url);
         });
       });
-
-      return stream;
     });
   }
-};
+}

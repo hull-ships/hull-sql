@@ -1,2 +1,2 @@
-import postgres from "./postgres";
+import * as postgres from "./postgres";
 export { postgres };
