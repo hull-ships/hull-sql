@@ -23,7 +23,7 @@ Aws.config.update({
 const awsAccount = new Aws.S3();
 const awsS3 = require("s3-upload-stream")(awsAccount);
 
-import Adapters from "./adapters";
+import * as Adapters from "./adapters";
 
 // Configure the AWS S3 bucket.
 const s3Params = {
@@ -34,14 +34,6 @@ const s3Params = {
   Expires: 86400
 };
 
-/**
- * Known adapters.
- */
-
-const adapters = [
-  "postgres",
-  // 'mysql'
-];
 
 /**
  * Export the sync agent for the SQL ship.
@@ -64,18 +56,19 @@ module.exports = class SyncAgent {
     this.hull = hull;
 
     // Get the DB type.
-    const { db_type } = this.ship.private_settings.db_type;
+    const { db_type } = this.ship.private_settings;
+    this.adapter = Adapters[db_type];
 
     // Make sure the DB type is known.
     // If not, throw an error.
     // Otherwise, use the correct adapter.
-    if (!_.includes(adapters, db_type)) {
+    if (!this.adapter) {
       return {
         error: 405,
-        message: "No adapter specified."
+        message: `Invalid database type '${db_type}'.`
       };
     }
-    this.adapter = Adapters[db_type];
+
     this.client = this.adapter.openConnection(this.ship.private_settings.connection_string);
     return this;
   }
