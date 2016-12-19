@@ -2,8 +2,8 @@
  * Module dependencies.
  */
 
-const Pg = require('pg');
-const QueryStream = require('pg-query-stream');
+const Pg = require("pg");
+const QueryStream = require("pg-query-stream");
 
 /**
  * PostgreSQL adapter.
@@ -50,7 +50,6 @@ module.exports = {
    */
 
   wrapQuery: (query, last_sync_at) => {
-
     // Wrap the query.
     const wrappedQuery = `WITH hull_users AS (${query})
       SELECT * FROM hull_users
@@ -98,7 +97,6 @@ module.exports = {
    */
 
   runQuery: (client, wrappedQuery, countQuery, callback) => {
-
     // Limit the result.
     wrappedQuery = `${wrappedQuery} LIMIT 100`;
 
@@ -153,14 +151,13 @@ module.exports = {
    */
 
   streamQuery: (client, wrappedQuery, callback) => {
-
     // After connecting the connection, stream the query.
     client.connect((err) => {
       if (err) {
         return callback({
           error: 503,
           message: err.message
-        })
+        });
       }
 
       // Stream the wrapped query.
