@@ -44,7 +44,7 @@ module.exports = function server(options = {}) {
     const query = req.body.query || ship.private_settings.query;
     const agent = new SyncAgent(req.hull);
     agent
-      .runQuery(query, { timeout: 1000 })
+      .runQuery(query, { timeout: 20000 })
       .then(data => res.json(data))
       .catch(({ status, message }) =>
         res.status(status || 500).send({ message })

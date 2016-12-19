@@ -55,10 +55,20 @@ export function wrapQuery(query, last_sync_at) {
   if (last_sync_at) {
     return `${wrappedQuery} AND updated_at >= '${last_sync_at}'`;
   }
-
   return wrappedQuery;
 }
 
+function cancelQuery(client) {
+  const { processID } = client;
+  const c2 = new Pg.Client(client.connectionParameters);
+  c2.connect((cErr) => {
+    if (cErr) return false;
+    c2.query(`SELECT pg_cancel_backend(${processID})`, () => {
+      c2.end();
+    });
+    return c2;
+  });
+}
 
 /**
  * Run a wrapped query.
@@ -85,6 +95,7 @@ export function runQuery(client, query, options = {}) {
     if (options.timeout) {
       timer = setTimeout(() => {
         reject(new Error("Timeout error"));
+        cancelQuery(client);
       }, options.timeout);
     }
 
