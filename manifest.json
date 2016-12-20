@@ -9,10 +9,10 @@
   ],
   "private_settings": [
     {
-      "name": "enable",
+      "name": "enabled",
       "title": "Enable Sync",
       "type": "boolean",
-      "default": "true"
+      "default": "false"
     },
     {
       "name": "db_type",
@@ -27,33 +27,19 @@
     {
       "name": "connection_string",
       "title": "Connection String",
-      "type": "string",
-      "default": "postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&...]"
+      "type": "string"
     },
     {
       "name": "query",
       "title": "Query to run",
       "type": "string",
-      "format": "textarea",
-      "default": "SELECT * FROM users"
+      "format": "textarea"
     },
     {
-      "name": "overwrite_hull",
+      "name": "overwrite",
       "title": "Overwrite data in Hull in case of a conflict",
       "type": "boolean",
       "default": "true"
-    },
-    {
-      "name": "frequency",
-      "title": "Sync Frequency",
-      "type": "string",
-      "default": "5min",
-      "enum": [
-        "5min",
-        "10min",
-        "20min",
-        "60min"
-      ]
     },
     {
       "name": "last_sync_at",
@@ -72,19 +58,11 @@
   "readme": "readme.md",
   "admin": "admin.html",
   "ui": false,
-  "subscriptions": [
-    {
-      "url": "/notify"
-    }
-  ],
   "schedules": [
     {
-      "url": "/import",
+      "url": "/sync",
       "type": "cron",
-      "value": "*/12 * * * *",
-      "params": {
-        "incremantal": true
-      }
+      "value": "0 */3 * * *"
     }
   ]
 }

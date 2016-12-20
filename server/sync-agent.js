@@ -135,12 +135,17 @@ export default class SyncAgent {
   }
 
   startImportJob(url) {
+    const { overwrite } = this.ship.private_settings;
     const params = {
       url,
       format: "json",
       notify: true,
-      emit_event: false
+      emit_event: false,
+      overwrite: !!overwrite
     };
+
+    this.hull.logger.info("startImportJob", _.omit(params, "url"));
+
     return this.hull.post("/import/users", params);
   }
 

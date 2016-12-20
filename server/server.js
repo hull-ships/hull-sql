@@ -1,9 +1,10 @@
 import express from "express";
 import bodyParser from "body-parser";
 import path from "path";
-import devMode from "./dev-mode";
 import ejs from "ejs";
+import moment from "moment";
 
+import devMode from "./dev-mode";
 import SyncAgent from "./sync-agent";
 
 module.exports = function server(options = {}) {
@@ -54,13 +55,9 @@ module.exports = function server(options = {}) {
   app.post("/import", (req, res) => {
     const { private_settings } = req.hull.ship;
 
-    let last_sync_at;
-    if (req.query.incremental) {
-      last_sync_at = private_settings.last_sync_at;
-    }
-
+    req.hull.client.logger.info("startImport");
     const agent = new SyncAgent(req.hull);
-    agent.streamQuery(private_settings.query, { last_sync_at })
+    agent.streamQuery(private_settings.query)
       .then(stream => {
         res.json({ status: "working..." });
         return agent.startSync(stream, new Date());
@@ -68,6 +65,29 @@ module.exports = function server(options = {}) {
       .catch(({ status, message }) => {
         res.status(status || 500).send({ message });
       });
+  });
+
+  app.post("/sync", (req, res) => {
+    const { private_settings = {} } = req.hull.ship;
+    const last_sync_at = private_settings.last_sync_at || moment().subtract(1, "hour");
+
+    if (private_settings.enabled === true) {
+
+      req.hull.client.logger.info("startSync", { last_sync_at });
+
+      const agent = new SyncAgent(req.hull);
+      agent.streamQuery(private_settings.query, { last_sync_at })
+        .then(stream => {
+          res.json({ status: "working" });
+          return agent.startSync(stream, new Date());
+        })
+        .catch(({ status, message }) => {
+          res.status(status || 500).send({ message });
+        });
+    } else {
+      req.hull.client.logger.info("skipSync");
+      res.json({ status: "ignored" });
+    }
   });
 
   // Error Handler
