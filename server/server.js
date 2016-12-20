@@ -72,7 +72,7 @@ module.exports = function server(options = {}) {
 
   app.post("/sync", (req, res) => {
     const { private_settings = {} } = req.hull.ship;
-    const last_sync_at = private_settings.last_sync_at || moment().subtract(1, "hour");
+    const last_sync_at = private_settings.last_sync_at || moment().subtract(1, "hour").utc().toISOString();
 
     if (private_settings.enabled === true) {
 
