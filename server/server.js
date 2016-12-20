@@ -72,10 +72,10 @@ module.exports = function server(options = {}) {
 
   app.post("/sync", (req, res) => {
     const { private_settings = {} } = req.hull.ship;
-    const last_sync_at = private_settings.last_sync_at || moment().subtract(1, "hour").utc().toISOString();
+    const oneHourAgo = moment().subtract(1, "hour").utc();
+    const last_sync_at = private_settings.last_sync_at || oneHourAgo.toISOString();
 
     if (private_settings.enabled === true) {
-
       req.hull.client.logger.info("startSync", { last_sync_at });
 
       const agent = new SyncAgent(req.hull);
