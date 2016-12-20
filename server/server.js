@@ -34,7 +34,10 @@ module.exports = function server(options = {}) {
   app.get("/admin.html", (req, res) => {
     const { ship } = req.hull;
     if (ship.private_settings.connection_string) {
-      res.render("connected.html", ship.private_settings);
+      res.render("connected.html", {
+        last_sync_at: null,
+        ...ship.private_settings
+      });
     } else {
       res.render("home.html", {});
     }

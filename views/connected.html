@@ -21,19 +21,13 @@
               </div>
             </div>
             <div class="media-body pt-1">
-              <!-- <span class="pull-right">
-                <form action="/test" id="test" method="POST">
-                  <input type="submit" class="btn btn-rounded btn-pill btn-secondary to-disable" value="Test connection">
-                </form>
-              </span> -->
               <h4 class="m-0 pt-05 text-muted">Connected to your <%= db_type %> database</h4>
             </div>
           </div>
-
-          <!-- <h5>Last Sync <small class="pull-right"><strong>0 Users</strong> on <span data-time=""><%= last_sync_at %></span></small></h5> -->
-
+          <% if (last_sync_at) { %>
+          <h5>Last Sync <small class="pull-right">on <span data-time=""><%= last_sync_at %></span></small></h5>
+          <% } %>
           <hr>
-
           <div class="row">
             <div class="col-sm-12">
               <h4 class="mt-0 text-muted">SQL Query</h4>
