@@ -21,7 +21,6 @@ module.exports = () => {
     // Register eveything else inside the "traits" object.
     user.traits = _.omit(record, "external_id", "updated_at");
 
-    // Return the user, stringified, so we can stream it.
-    return `${JSON.stringify(user)}\n`;
+    return user;
   });
 };

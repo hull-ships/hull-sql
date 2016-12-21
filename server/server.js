@@ -57,16 +57,15 @@ module.exports = function server(options = {}) {
 
   app.post("/import", (req, res) => {
     const { private_settings } = req.hull.ship;
-
-    req.hull.client.logger.info("startImport");
     const agent = new SyncAgent(req.hull);
     agent.streamQuery(private_settings.query)
+      .catch((err) => {
+        const { status, message } = err || {};
+        res.status(status || 500).send({ message });
+      })
       .then(stream => {
         res.json({ status: "working..." });
         return agent.startSync(stream, new Date());
-      })
-      .catch(({ status, message }) => {
-        res.status(status || 500).send({ message });
       });
   });
 
@@ -77,11 +76,10 @@ module.exports = function server(options = {}) {
 
     if (private_settings.enabled === true) {
       req.hull.client.logger.info("startSync", { last_sync_at });
-
       const agent = new SyncAgent(req.hull);
       agent.streamQuery(private_settings.query, { last_sync_at })
         .then(stream => {
-          res.json({ status: "working" });
+          res.json({ status: "working", last_sync_at });
           return agent.startSync(stream, new Date());
         })
         .catch(({ status, message }) => {

@@ -6,6 +6,7 @@ const _ = require("lodash");
 
 // Map each record of the stream.
 const transform = require("./utils/transform");
+const map = require("through2-map");
 
 /**
  * Configure the streaming to AWS.
@@ -124,13 +125,28 @@ export default class SyncAgent {
    */
 
   startSync(stream, started_sync_at) {
-    return this.uploadStream(stream.pipe(transform()), started_sync_at)
+    this.hull.logger.info("sync.start");
+    let processed = 0;
+    const progress = map({ objectMode: true }, (user) => {
+      processed += 1;
+      if (processed % 100 === 0) this.hull.logger.info("sync.progress", { processed, elapsed: new Date() - started_sync_at });
+      return `${JSON.stringify(user)}\n`;
+    });
+
+    return this.uploadStream(stream.pipe(transform()).pipe(progress), started_sync_at)
       .then(url => this.startImportJob(url))
       .then(job => {
         return this.updateShipSettings({
           last_sync_at: started_sync_at,
           last_job_id: job.id
         });
+      })
+      .then(() => {
+        this.hull.logger.info("sync.done", { processed, duration: new Date() - started_sync_at });
+      })
+      .catch(err => {
+        console.warn("WTF: ", err);
+        this.hull.logger.error("sync.error", err);
       });
   }
 
@@ -144,7 +160,7 @@ export default class SyncAgent {
       overwrite: !!overwrite
     };
 
-    this.hull.logger.info("startImportJob", _.omit(params, "url"));
+    this.hull.logger.info("sync.import", _.omit(params, "url"));
 
     return this.hull.post("/import/users", params);
   }
