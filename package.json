@@ -57,6 +57,9 @@
     "express": "^4.14.0",
     "hull": "0.10.0",
     "json-loader": "^0.5.3",
+    "kue": "^0.11.5",
+    "kue-ui": "^0.1.0",
+    "librato-node": "^4.1.0",
     "lodash": "^4.13.1",
     "minimist": "^1.2.0",
     "moment": "^2.17.1",
@@ -68,6 +71,7 @@
     "rimraf": "^2.4.3",
     "s3-upload-stream": "^1.0.7",
     "through2-map": "^3.0.0",
+    "urijs": "^1.18.4",
     "webpack": "^1.13.1",
     "webpack-dev-middleware": "^1.2.0"
   },

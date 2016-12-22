@@ -2,32 +2,34 @@
  * Module dependencies.
  */
 
-const _ = require("lodash");
+import _ from "lodash";
+import URI from "urijs";
 
 // Map each record of the stream.
-const map = require("through2-map");
+import map from "through2-map";
 
 /**
  * Configure the streaming to AWS.
  */
 
-// Configure the AWS SDK.
-const Aws = require("aws-sdk");
-Aws.config.update({
-  accessKeyId: process.env.AWS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_KEY
-});
-
-// Configure the AWS S3 account with
-// a new AWS instance.
-const awsAccount = new Aws.S3();
-const awsS3 = require("s3-upload-stream")(awsAccount);
+import Aws from "aws-sdk";
+import S3UploadStream from "s3-upload-stream";
 
 import * as Adapters from "./adapters";
 
 /**
  * Export the sync agent for the SQL ship.
  */
+
+
+class ConfigurationError extends Error {
+  constructor(msg) {
+    super(msg);
+    this.status = 403;
+  }
+}
+
+
 
 export default class SyncAgent {
 
@@ -53,13 +55,39 @@ export default class SyncAgent {
     // If not, throw an error.
     // Otherwise, use the correct adapter.
     if (!this.adapter) {
-      throw new Error(`Invalid database type '${db_type}'.`);
+      throw new ConfigurationError(`Invalid database type ${db_type}.`);
     }
 
-    this.client = this.adapter.openConnection(this.ship.private_settings.connection_string);
+    const connectionString = this.connectionString();
+
+    if (!connectionString) {
+      throw new ConfigurationError(`Missing database configuration`);
+    }
+
+    this.client = this.adapter.openConnection(connectionString);
     return this;
   }
 
+  connectionString() {
+    const conn = ["type", "host", "port", "name", "user", "password"].reduce((c, key) => {
+      const val = this.ship.private_settings[`db_${key}`];
+      if (c && val && val.length > 0) {
+        return { ...c, [key]: val };
+      }
+      return false;
+    }, {});
+    if (conn) {
+      return URI()
+              .protocol(conn.type)
+              .username(conn.user)
+              .password(conn.password)
+              .host(conn.host)
+              .port(conn.port)
+              .path(conn.name)
+              .toString();
+    }
+    return false;
+  }
 
   updateShipSettings(settings) {
     return this.hull.get(this.ship.id).then(({ private_settings }) => {
@@ -104,6 +132,10 @@ export default class SyncAgent {
     return this.adapter.streamQuery(this.client, wrappedQuery).then(stream => {
       stream.on("error", err => this.hull.logger.error("sync.error", { message: err.toString() }));
       return stream;
+    }, err => {
+      this.hull.logger.error("sync.error", { message: err.toString() });
+      err.status = 403;
+      throw err;
     });
   }
 
@@ -198,8 +230,10 @@ export default class SyncAgent {
       Key: `extracts/${this.ship.id}/${started_sync_at.getTime()}.json`
     };
 
+    const s3 = new Aws.S3();
+
     // Stream and upload the data to S3.
-    const uploader = stream.pipe(awsS3.upload(s3Params));
+    const uploader = stream.pipe(S3UploadStream(s3).upload(s3Params));
 
     return new Promise((resolve, reject) => {
       // On a stream error.
@@ -214,7 +248,7 @@ export default class SyncAgent {
         this.adapter.closeConnection(this.client);
         uploader.on("uploaded", () => {
           // Get the bucket URL.
-          const url = awsAccount.getSignedUrl("getObject", _.pick(s3Params, [
+          const url = s3.getSignedUrl("getObject", _.pick(s3Params, [
             "Bucket",
             "Key",
             "Expires"

@@ -71,15 +71,16 @@ module.exports = function server(options = {}) {
 
   app.post("/sync", (req, res) => {
     const { private_settings = {} } = req.hull.ship;
+
     const oneHourAgo = moment().subtract(1, "hour").utc();
-    const last_sync_at = private_settings.last_sync_at || oneHourAgo.toISOString();
+    const last_updated_at = private_settings.last_updated_at || private_settings.last_sync_at || oneHourAgo.toISOString();
 
     if (private_settings.enabled === true) {
-      req.hull.client.logger.info("startSync", { last_sync_at });
+      req.hull.client.logger.info("startSync", { last_updated_at });
       const agent = new SyncAgent(req.hull);
-      agent.streamQuery(private_settings.query, { last_sync_at })
+      agent.streamQuery(private_settings.query, { last_updated_at })
         .then(stream => {
-          res.json({ status: "working", last_sync_at });
+          res.json({ status: "working", last_updated_at });
           return agent.startSync(stream, new Date());
         })
         .catch(({ status, message }) => {
@@ -94,17 +95,8 @@ module.exports = function server(options = {}) {
   // Error Handler
   app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
     if (err) {
-      const data = {
-        status: err.status,
-        segmentBody: req.segment,
-        method: req.method,
-        headers: req.headers,
-        url: req.url,
-        params: req.params
-      };
-      console.log("Error ----------------");
-      console.log(err.message, err.status, data);
-      console.log(err.stack);
+      const logger = req.hull.client ? req.hull.client.logger : Hull.logger;
+      logger.error("unhandled error", { message: err.message, status: err.status, method: req.method, url: req.url, params: req.params });
     }
 
     return res.status(err.status || 500).send({ message: err.message });
