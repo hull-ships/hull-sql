@@ -5,7 +5,6 @@
 const _ = require("lodash");
 
 // Map each record of the stream.
-const transform = require("./utils/transform");
 const map = require("through2-map");
 
 /**
@@ -25,7 +24,6 @@ const awsAccount = new Aws.S3();
 const awsS3 = require("s3-upload-stream")(awsAccount);
 
 import * as Adapters from "./adapters";
-
 
 /**
  * Export the sync agent for the SQL ship.
@@ -98,14 +96,13 @@ export default class SyncAgent {
   }
 
   streamQuery(query, options = {}) {
-    const { last_sync_at } = options;
+    const { last_updated_at } = options;
 
     // Wrap the query.
-    const wrappedQuery = this.adapter.wrapQuery(query, last_sync_at);
-
+    const wrappedQuery = this.adapter.wrapQuery(query, last_updated_at);
     // Run the method for the specific adapter.
     return this.adapter.streamQuery(this.client, wrappedQuery).then(stream => {
-      stream.on("error", err => this.hull.logger.error("Query error", { message: err.toString() }));
+      stream.on("error", err => this.hull.logger.error("sync.error", { message: err.toString() }));
       return stream;
     });
   }
@@ -127,17 +124,43 @@ export default class SyncAgent {
   startSync(stream, started_sync_at) {
     this.hull.logger.info("sync.start");
     let processed = 0;
-    const progress = map({ objectMode: true }, (user) => {
+    let last_updated_at;
+
+
+    const transform = map({ objectMode: true }, (record) => {
+      const user = {};
       processed += 1;
-      if (processed % 100 === 0) this.hull.logger.info("sync.progress", { processed, elapsed: new Date() - started_sync_at });
+
+      if (processed % 1000 === 0) {
+        this.hull.logger.info("sync.progress", { processed, elapsed: new Date() - started_sync_at });
+      }
+
+      // Add the user id if exists.
+      if (record.external_id) {
+        user.userId = record.external_id.toString();
+      }
+
+      // console.warn("Hello record", { record });
+
+      if (record.updated_at) {
+        last_updated_at = last_updated_at || record.updated_at;
+        if (record.updated_at > last_updated_at) {
+          last_updated_at = record.updated_at;
+        }
+      }
+
+      // Register eveything else inside the "traits" object.
+      user.traits = _.omit(record, "external_id", "updated_at");
+
       return `${JSON.stringify(user)}\n`;
     });
 
-    return this.uploadStream(stream.pipe(transform()).pipe(progress), started_sync_at)
+    return this.uploadStream(stream.pipe(transform), started_sync_at)
       .then(url => this.startImportJob(url))
       .then(job => {
         return this.updateShipSettings({
           last_sync_at: started_sync_at,
+          last_updated_at: last_updated_at || started_sync_at,
           last_job_id: job.id
         });
       })

@@ -41,19 +41,19 @@ export function closeConnection(client) {
  *
  * Params:
  *   @query String*
- *   @last_sync_at String
+ *   @last_updated_at String
  *
  * Return:
  *   @wrappedQuery String
  */
 
-export function wrapQuery(query, last_sync_at) {
+export function wrapQuery(query, last_updated_at) {
   // Wrap the query.
   const wrappedQuery = `WITH __qry__ AS (${query}) SELECT * FROM __qry__`;
 
   // Add a condition if needed.
-  if (query.match(/updated_at/) && last_sync_at) {
-    return `${wrappedQuery} WHERE updated_at >= '${last_sync_at}'`;
+  if (query.match(/updated_at/) && last_updated_at) {
+    return `${wrappedQuery} WHERE updated_at > '${last_updated_at}'`;
   }
   return wrappedQuery;
 }

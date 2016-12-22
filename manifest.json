@@ -48,6 +48,12 @@
       "format": "hidden"
     },
     {
+      "name": "last_updated_at",
+      "title": "Last updated_at",
+      "type": "string",
+      "format": "hidden"
+    },
+    {
       "name": "last_job_id",
       "title": "Last job ID",
       "type": "string",
