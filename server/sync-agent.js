@@ -57,12 +57,14 @@ export default class SyncAgent {
     });
   }
 
-  static async({ queue, hull }, method, ...args) {
-    queue.create("SyncAgent", { method, args, configuration: hull.configuration() }).save();
-  }
-
   async(method, ...args) {
-    this.queue.create("SyncAgent", { method, args, configuration: this.hull.configuration() }).save();
+    const configuration = _.pick(this.hull.configuration(), "id", "organization", "secret");
+    const params = { method, args, configuration };
+    const job = this.queue.create("SyncAgent", params);
+    return job.removeOnComplete(true)
+      .attempts(3)
+      .backoff({ type: "exponential" })
+      .save();
   }
 
   /**
