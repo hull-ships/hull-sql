@@ -15,31 +15,63 @@
       "default": "false"
     },
     {
+      "name": "overwrite",
+      "title": "Overwrite data in Hull in case of a conflict",
+      "type": "boolean",
+      "default": "true"
+    },
+    {
+      "type": "string",
+      "format": "title",
+      "name": "db_info",
+      "title": "Database connection"
+    },
+    {
       "name": "db_type",
       "type": "string",
-      "title": "Database Type",
+      "title": "Type",
       "enum": [
         "postgres",
         "mysql"
       ],
-      "default": "postgres"
+      "default": "postgres",
+      "required" : true
     },
     {
-      "name": "connection_string",
-      "title": "Connection String",
-      "type": "string"
+      "name": "db_host",
+      "type": "string",
+      "title": "Host Name",
+      "required" : true
+    },
+    {
+      "name": "db_port",
+      "type": "string",
+      "title": "Port",
+      "required" : true
+    },
+    {
+      "name": "db_name",
+      "type": "string",
+      "title": "Database",
+      "required" : true
+    },
+    {
+      "name": "db_user",
+      "type": "string",
+      "title": "Usernane",
+      "required" : true
+    },
+    {
+      "name": "db_password",
+      "type": "string",
+      "title": "Password",
+      "required" : true
     },
     {
       "name": "query",
       "title": "Query to run",
       "type": "string",
-      "format": "textarea"
-    },
-    {
-      "name": "overwrite",
-      "title": "Overwrite data in Hull in case of a conflict",
-      "type": "boolean",
-      "default": "true"
+      "format": "hidden"
     },
     {
       "name": "last_sync_at",
