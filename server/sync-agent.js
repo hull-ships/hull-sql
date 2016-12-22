@@ -3,18 +3,19 @@
  */
 
 import _ from "lodash";
+import moment from "moment";
 import URI from "urijs";
+import Hull from "hull";
 
 // Map each record of the stream.
 import map from "through2-map";
+import Stream from "stream";
 
 /**
  * Configure the streaming to AWS.
  */
 
 import Aws from "aws-sdk";
-import S3UploadStream from "s3-upload-stream";
-
 import * as Adapters from "./adapters";
 
 /**
@@ -29,9 +30,40 @@ class ConfigurationError extends Error {
   }
 }
 
-
-
 export default class SyncAgent {
+
+  static work(queue) {
+    queue.process("SyncAgent", (job, done) => {
+      try {
+        const { method, configuration, args } = job.data;
+        const hull = new Hull(configuration);
+        return hull.get("app").then(ship => {
+          const agent = new SyncAgent({ ship, client: hull, queue, job });
+          if (agent[method]) {
+            const ret = agent[method](...args);
+            if (ret && ret.then) {
+              ret.then(done.bind(this, null), done);
+            } else {
+              done(null, ret);
+            }
+          } else {
+            done(new Error(`Unknown method ${method}`));
+          }
+        }, done);
+      } catch (err) {
+        done(err);
+        return err;
+      }
+    });
+  }
+
+  static async({ queue, hull }, method, ...args) {
+    queue.create("SyncAgent", { method, args, configuration: hull.configuration() }).save();
+  }
+
+  async(method, ...args) {
+    this.queue.create("SyncAgent", { method, args, configuration: this.hull.configuration() }).save();
+  }
 
   /**
    * Constructor.
@@ -41,11 +73,13 @@ export default class SyncAgent {
    *   @hull Object*
    */
 
-  constructor({ ship, client }) {
+  constructor({ ship, client, queue, job }) {
     // Expose the ship settings
     // and the Hull instance.
     this.ship = ship;
     this.hull = client;
+    this.queue = queue;
+    this.job = job;
 
     // Get the DB type.
     const { db_type } = this.ship.private_settings;
@@ -60,12 +94,16 @@ export default class SyncAgent {
 
     const connectionString = this.connectionString();
 
-    if (!connectionString) {
-      throw new ConfigurationError(`Missing database configuration`);
-    }
-
     this.client = this.adapter.openConnection(connectionString);
     return this;
+  }
+
+  isEnabled() {
+    return this.ship.private_settings.enabled === true;
+  }
+
+  isConfigured() {
+    return !!this.connectionString();
   }
 
   connectionString() {
@@ -100,6 +138,10 @@ export default class SyncAgent {
     });
   }
 
+  getQuery() {
+    return this.ship.private_settings.query;
+  }
+
   /**
    * Run a wrapped query.
    *
@@ -123,6 +165,25 @@ export default class SyncAgent {
       });
   }
 
+  startImport(options) {
+    this.hull.logger.info("sync.start", options);
+    const { query } = this.ship.private_settings;
+    const started_sync_at = new Date();
+    return this.streamQuery(query, options)
+              .then(stream => this.sync(stream, started_sync_at))
+              .then(({ processed, duration, job }) => {
+                this.hull.logger.info("sync.done", { processed, duration, job: job.id });
+                return { processed, duration, job: job.id };
+              });
+  }
+
+  startSync(options) {
+    const private_settings = this.ship.private_settings;
+    const oneHourAgo = moment().subtract(1, "hour").utc();
+    const last_updated_at = private_settings.last_updated_at || private_settings.last_sync_at || oneHourAgo.toISOString();
+    return this.startImport({ ...options, last_updated_at });
+  }
+
   streamQuery(query, options = {}) {
     const { last_updated_at } = options;
 
@@ -130,7 +191,7 @@ export default class SyncAgent {
     const wrappedQuery = this.adapter.wrapQuery(query, last_updated_at);
     // Run the method for the specific adapter.
     return this.adapter.streamQuery(this.client, wrappedQuery).then(stream => {
-      stream.on("error", err => this.hull.logger.error("sync.error", { message: err.toString() }));
+      stream.on("error", err => this.hull.logger.error("sync.error", { message: err.toString(), query: wrappedQuery }));
       return stream;
     }, err => {
       this.hull.logger.error("sync.error", { message: err.toString() });
@@ -153,26 +214,27 @@ export default class SyncAgent {
    *     - @success Object
    */
 
-  startSync(stream, started_sync_at) {
-    this.hull.logger.info("sync.start");
+  sync(stream, started_sync_at) {
     let processed = 0;
     let last_updated_at;
-
 
     const transform = map({ objectMode: true }, (record) => {
       const user = {};
       processed += 1;
 
-      if (processed % 1000 === 0) {
-        this.hull.logger.info("sync.progress", { processed, elapsed: new Date() - started_sync_at });
+      if (processed % 100 === 0) {
+        const elapsed = new Date() - started_sync_at;
+        this.hull.logger.info("sync.progress", { processed, elapsed });
+        if (this.job) {
+          this.job.progress(processed);
+          this.job.log("%d proceesed in  %d ms", processed, elapsed);
+        }
       }
 
       // Add the user id if exists.
       if (record.external_id) {
         user.userId = record.external_id.toString();
       }
-
-      // console.warn("Hello record", { record });
 
       if (record.updated_at) {
         last_updated_at = last_updated_at || record.updated_at;
@@ -187,20 +249,20 @@ export default class SyncAgent {
       return `${JSON.stringify(user)}\n`;
     });
 
-    return this.uploadStream(stream.pipe(transform), started_sync_at)
+    return this.uploadStream(stream.pipe(transform))
       .then(url => this.startImportJob(url))
       .then(job => {
         return this.updateShipSettings({
           last_sync_at: started_sync_at,
           last_updated_at: last_updated_at || started_sync_at,
           last_job_id: job.id
-        });
+        }).then((ship) => { return { ship, job }; });
       })
-      .then(() => {
-        this.hull.logger.info("sync.done", { processed, duration: new Date() - started_sync_at });
+      .then(({ ship, job }) => {
+        const duration = new Date() - started_sync_at;
+        return { ship, job, duration, processed };
       })
       .catch(err => {
-        console.warn("WTF: ", err);
         this.hull.logger.error("sync.error", err);
       });
   }
@@ -220,42 +282,27 @@ export default class SyncAgent {
     return this.hull.post("/import/users", params);
   }
 
-  uploadStream(stream, started_sync_at) {
-    const s3Params = {
-      Bucket: process.env.BUCKET_PATH,
+  uploadStream(stream) {
+    const Body = new Stream.PassThrough();
+    const Bucket = process.env.BUCKET_PATH;
+    const Key = `extracts/${this.ship.id}/${new Date().getTime()}.json`;
+    const params = {
+      Bucket, Key, Body,
       ACL: "private",
-      StorageClass: "STANDARD",
       ContentType: "application/json",
-      Expires: 86400,
-      Key: `extracts/${this.ship.id}/${started_sync_at.getTime()}.json`
     };
 
-    const s3 = new Aws.S3();
-
-    // Stream and upload the data to S3.
-    const uploader = stream.pipe(S3UploadStream(s3).upload(s3Params));
-
     return new Promise((resolve, reject) => {
-      // On a stream error.
-      stream.on("error", reject);
+      const s3 = new Aws.S3();
 
-      // On a stream error.
-      uploader.on("error", reject);
-
-      // Make sure the stream has finish
-      // before doing everything else.
-      stream.on("end", () => {
-        this.adapter.closeConnection(this.client);
-        uploader.on("uploaded", () => {
-          // Get the bucket URL.
-          const url = s3.getSignedUrl("getObject", _.pick(s3Params, [
-            "Bucket",
-            "Key",
-            "Expires"
-          ]));
-          resolve(url);
-        });
+      s3.upload(params, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(s3.getSignedUrl("getObject", { Bucket, Key, Expires: 86400 }));
+        }
       });
+      stream.pipe(Body);
     });
   }
 }
