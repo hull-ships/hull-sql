@@ -52,7 +52,9 @@ module.exports = function server(options = {}) {
 
   app.get("/admin.html", ({ agent }, res) => {
     if (agent.isConfigured()) {
+      const query = agent.getQuery();
       res.render("connected.html", {
+        query: query,
         last_sync_at: null,
         ...agent.ship.private_settings
       });
