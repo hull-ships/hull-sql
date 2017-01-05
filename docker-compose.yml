@@ -12,9 +12,15 @@ services:
             - .:/app
         links:
             - redis
+            - postgres
     redis:
         image: redis:3
         ports:
           - "6379:6379"
         logging:
             driver: none
+    postgres:
+        image: postgres:9.6
+        ports:
+            - "5433:5432"
+        env_file: .env
