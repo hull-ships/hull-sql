@@ -31,7 +31,7 @@
           <div class="row">
             <div class="col-sm-12">
               <h4 class="mt-0 text-muted">SQL Query</h4>
-              <textarea name="" rows="15" id="querying" class="form-control"><%= query %></textarea>
+              <textarea name="" rows="15" id="querying" class="form-control"><%= query_template %></textarea>
               <div class="pt-1 pb-1">
                 <button id="button_preview" class="btn-pill btn-rounded btn-success btn to-disable"><i class="icon icon-eye_open"></i> Preview</button>
                 <div class="btn-group pl-1 pull-right">
@@ -81,7 +81,8 @@
     }
   </style>
   <script>
-    var original_query = `<%- query %>`;
+    alert('<%- query_template %>')
+    var original_query = `<%- query_template %>`;
     var good_query;
     $(function() {
       $('.to-disable').prop('disabled', false);
@@ -118,7 +119,7 @@
                 url: '/import' + window.location.search,
                 type: 'post',
                 data: {
-                  query: $('#querying').val(),
+                  query_template: $('#querying').val(),
                   incremental: true
                 },
                 success: function (data) {
@@ -148,7 +149,7 @@
           url: '/run' + window.location.search,
           type: 'post',
           data: {
-            query: $('#querying').val()
+            query_template: $('#querying').val()
           },
           success: function (data) {
 
@@ -183,7 +184,7 @@
                   action: 'update',
                   ship: {
                     private_settings: {
-                      query: good_query
+                      query_template: good_query
                     }
                   }
                 }), '*');
@@ -201,7 +202,7 @@
                 action: "update",
                 ship: {
                   private_settings: {
-                    query: good_query
+                    query_template: good_query
                   }
                 }
               }), "*");

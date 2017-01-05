@@ -68,8 +68,8 @@
       "required" : true
     },
     {
-      "name": "query",
-      "title": "Query to run",
+      "name": "query_template",
+      "title": "Template of query to run",
       "type": "string",
       "format": "hidden"
     },

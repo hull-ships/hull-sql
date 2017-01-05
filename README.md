@@ -21,3 +21,23 @@ npm run watch #builds client package
 npm run build # build
 # Checkout package.json for more tasks
 ```
+
+### Schema requirements :
+
+The `users` table requires the following columns:
+- email (text/varchar)
+- updated_at (timestamp)
+
+### Usage:
+
+Inside the query editor you can use **extra variables**: 
+- `${last_updated_at}` - timestamp of last update
+
+
+#####Example:
+
+```sql
+SELECT id as external_id, email as email, updated_at as updated_at
+FROM users
+WHERE updated_at > ${last_updated_at}
+```

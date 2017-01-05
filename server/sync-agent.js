@@ -18,6 +18,8 @@ import Stream from "stream";
 import Aws from "aws-sdk";
 import * as Adapters from "./adapters";
 
+const MIN_DATETIME = "1970-01-01 01:00:00 +0100";
+
 /**
  * Export the sync agent for the SQL ship.
  */
@@ -140,15 +142,15 @@ export default class SyncAgent {
     });
   }
 
-  getQuery() {
-    return this.ship.private_settings.query;
+  getQueryTemplate() {
+    return this.ship.private_settings.query_template;
   }
 
   /**
    * Run a wrapped query.
    *
    * Params:
-   *   @query String*
+   *   @query Object*
    *   @callback Function*
    *
    * Return:
@@ -159,7 +161,8 @@ export default class SyncAgent {
 
   runQuery(query, options = {}) {
     // Wrap the query.
-    const wrappedQuery = this.adapter.wrapQuery(query);
+    const wrappedQuery = this.adapter.wrapQuery(
+      query, this.getBaseQueryContext());
     // Run the method for the specific adapter.
     return this.adapter.runQuery(this.client, wrappedQuery, options)
       .then(result => {
@@ -169,7 +172,8 @@ export default class SyncAgent {
 
   startImport(options) {
     this.hull.logger.info("sync.start", options);
-    const { query } = this.ship.private_settings;
+    const query = this.adapter.makeQuery(
+      this.ship.private_settings.query_template);
     const started_sync_at = new Date();
     return this.streamQuery(query, options)
               .then(stream => this.sync(stream, started_sync_at))
@@ -187,10 +191,10 @@ export default class SyncAgent {
   }
 
   streamQuery(query, options = {}) {
-    const { last_updated_at } = options;
-
+    const context = this.getBaseQueryContext();
+    Object.assign(context, options);
     // Wrap the query.
-    const wrappedQuery = this.adapter.wrapQuery(query, last_updated_at);
+    const wrappedQuery = this.adapter.wrapQuery(query, context);
     // Run the method for the specific adapter.
     return this.adapter.streamQuery(this.client, wrappedQuery).then(stream => {
       stream.on("error", err => this.hull.logger.error("sync.error", { message: err.toString(), query: wrappedQuery }));
@@ -306,5 +310,14 @@ export default class SyncAgent {
       });
       stream.pipe(Body);
     });
+  }
+
+  makeQuery(template, context) {
+    return this.adapter.makeQuery(template, context);
+  }
+
+  getBaseQueryContext() {
+    const datetime = this.ship.private_settings.last_updated_at || MIN_DATETIME;
+    return { last_updated_at: `'${datetime}'` };
   }
 }

@@ -8,7 +8,6 @@ import SyncAgent from "./sync-agent";
 
 import KueRouter from "./util/kue-router";
 
-
 module.exports = function server(options = {}) {
   const { Hull, hostSecret, queue } = options;
   const { Routes } = Hull;
@@ -52,9 +51,9 @@ module.exports = function server(options = {}) {
 
   app.get("/admin.html", ({ agent }, res) => {
     if (agent.isConfigured()) {
-      const query = agent.getQuery();
+      const query_template = agent.getQueryTemplate();
       res.render("connected.html", {
-        query: query,
+        query_template,
         last_sync_at: null,
         ...agent.ship.private_settings
       });
@@ -64,7 +63,10 @@ module.exports = function server(options = {}) {
   });
 
   app.post("/run", ({ body, agent }, res) => {
-    const query = body.query || agent.getQuery();
+    const query = agent.makeQuery(
+      body.query_template || agent.getQueryTemplate(),
+      agent.getBaseQueryContext()
+    );
     agent
       .runQuery(query, { timeout: 20000 })
       .then(data => res.json(data))
