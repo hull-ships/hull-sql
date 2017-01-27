@@ -3,7 +3,7 @@ import bodyParser from "body-parser";
 import path from "path";
 import ejs from "ejs";
 
-import devMode from "./dev-mode";
+import devMode from "./util/dev-mode";
 import SyncAgent from "./sync-agent";
 
 import KueRouter from "./util/kue-router";
@@ -33,7 +33,7 @@ module.exports = function server(options = {}) {
 
   app.use("/kue", KueRouter({ hostSecret, queue }));
 
-  app.use(Hull.Middleware({ hostSecret, fetchShip: true, cacheShip: false, requireCredentials: false }));
+  app.use(Hull.Middleware({ hostSecret, fetchShip: true, cacheShip: false, requireCredentials: true }));
 
   app.use((req, res, next) => {
     req.agent = new SyncAgent({ ...req.hull, queue });
@@ -79,7 +79,6 @@ module.exports = function server(options = {}) {
   });
 
   app.post("/sync", checkConfiguration, ({ agent }, res) => {
-    // Return early if sync not enabled
     agent.async("startSync");
     res.json({ status: "scheduled" });
   });

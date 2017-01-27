@@ -1,6 +1,6 @@
 import webpackMiddleware from "webpack-dev-middleware";
 import webpack from "webpack";
-import webpackConfig from "../webpack.config.js";
+import webpackConfig from "../../webpack.config.js";
 
 export default function devMode() {
   const compiler = webpack(webpackConfig);

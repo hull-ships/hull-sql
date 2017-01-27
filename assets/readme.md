@@ -10,6 +10,6 @@ Once Users are imported in Hull, only those who have changed will actually be re
 
 The SQL imported does not write in your database - we recommend you provide read-only credentials to increase security.
 
-To connect the SQL Database connector, go to Ships. You’ll need to select your Database type (Postgres or MySQL), enter it’s location, username and password, enter a Connection String and write a SQL query to extract the right data into Hull.
+To connect the SQL Database connector, go to Ships. You’ll need to select your Database type (Postgres or MySQL), enter its location, username and password, enter a Connection String and write a SQL query to extract the right data into Hull.
 
-By default, this will run every 3 hours. 
+By default, this will run every 3 hours.
