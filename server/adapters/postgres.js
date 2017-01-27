@@ -5,6 +5,9 @@
 import Pg from "pg";
 import QueryStream from "pg-query-stream";
 import Promise from "bluebird";
+import Query from "../util/query";
+
+
 /**
  * PostgreSQL adapter.
  */
@@ -20,8 +23,7 @@ import Promise from "bluebird";
  */
 
 export function openConnection(connection_string) {
-  const client = new Pg.Client(connection_string);
-  return client;
+  return new Pg.Client(connection_string);
 }
 
 /**
@@ -35,27 +37,35 @@ export function closeConnection(client) {
   client.end();
 }
 
+
+export function makeQuery(template, context = null) {
+  return new Query(template, context);
+}
+
+
 /**
  * Wrap the user query
  * inside a PostgreSQL request.
  *
  * Params:
  *   @query String*
- *   @last_updated_at String
+ *   @context Object
  *
  * Return:
  *   @wrappedQuery String
  */
 
-export function wrapQuery(query, last_updated_at) {
-  // Wrap the query.
-  const wrappedQuery = `WITH __qry__ AS (${query}) SELECT * FROM __qry__`;
-
-  // Add a condition if needed.
-  if (query.match(/updated_at/) && last_updated_at) {
-    return `${wrappedQuery} WHERE updated_at > '${last_updated_at}'`;
+export function wrapQuery(query, context) {
+  if (query.isEmpty()) {
+    return query.freeze();
   }
-  return wrappedQuery;
+
+  return makeQuery(
+    `WITH __qry__ AS (${query.toSql()}) 
+      SELECT * FROM __qry__ ` +
+      "WHERE updated_at > ${last_updated_at}",
+    context
+  );
 }
 
 function cancelQuery(client) {
@@ -75,7 +85,7 @@ function cancelQuery(client) {
  *
  * Params:
  *   @client Instance*
- *   @wrappedQuery String*
+ *   @query Object*
  *   @callback Function*
  *
  * Return:
@@ -87,7 +97,8 @@ function cancelQuery(client) {
 export function runQuery(client, query, options = {}) {
   return new Promise((resolve, reject) => {
     // Limit the result.
-    query = `${query} LIMIT 100`;
+
+    query.append("LIMIT 100");
 
     let timer;
     let currentQuery;
@@ -107,7 +118,8 @@ export function runQuery(client, query, options = {}) {
       }
 
       // Run the query.
-      currentQuery = client.query(query, (queryError, result) => {
+      console.log("SQL", query.toSql());
+      currentQuery = client.query(query.toSql(), (queryError, result) => {
         if (timer) clearTimeout(timer);
         client.end();
         if (queryError) {
@@ -143,10 +155,9 @@ export function streamQuery(client, query) {
       if (connectionError) {
         return reject(connectionError);
       }
-      const stream = client.query(new QueryStream(query));
+      const stream = client.query(new QueryStream(query.toSql()));
       resolve(stream);
       return stream;
     });
   });
 }
-
