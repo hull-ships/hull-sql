@@ -32,6 +32,15 @@
             <div class="col-sm-12">
               <h4 class="mt-0 text-muted">SQL Query</h4>
               <textarea name="" rows="15" id="querying" class="form-control"><%= query %></textarea>
+
+              <div class="pt-1 pb-1 text-muted">
+                <p>You can run incremental queries based on the date of the last sync. <br />The query will be rewritten to replace <code>:last_updated_at</code> with the date of the last successful sync operation.</p>
+                <br />
+                <p>For example to import entries from a <code>users</code> table with a date column named <code>updated_at</code>, you can write :</p>
+                <code>SELECT id as external_id, email as email FROM users WHERE updated_at <= :last_updated_at</code>
+                <hr />
+              </div>
+
               <div class="pt-1 pb-1">
                 <button id="button_preview" class="btn-pill btn-rounded btn-success btn to-disable"><i class="icon icon-eye_open"></i> Preview</button>
                 <div class="btn-group pl-1 pull-right">
