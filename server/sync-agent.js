@@ -193,6 +193,9 @@ export default class SyncAgent {
 
     // Wrap the query.
     const wrappedQuery = this.adapter.wrapQuery(query, last_updated_at);
+
+    this.hull.logger.debug("sync.query", { query: wrappedQuery });
+
     // Run the method for the specific adapter.
     return this.adapter.streamQuery(this.client, wrappedQuery).then(stream => {
       stream.on("error", err => this.hull.logger.error("sync.error", { message: err.toString(), query: wrappedQuery }));
