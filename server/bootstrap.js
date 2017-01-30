@@ -24,11 +24,11 @@ export default function (env) {
   const PORT = env.PORT || 8082;
 
   return {
-    PORT,
-    queue,
-    Hull,
     hostSecret: env.SECRET,
     devMode: env.NODE_ENV === "development",
-    workerMode: env.WORKER_MODE || "standalone"
+    workerMode: env.WORKER_MODE || "standalone",
+    PORT,
+    queue,
+    Hull
   };
 }

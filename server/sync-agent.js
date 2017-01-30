@@ -252,13 +252,24 @@ export default class SyncAgent {
     });
 
     return this.uploadStream(stream.pipe(transform))
-      .then(url => this.startImportJob(url))
+      .then(url => {
+        if (processed > 0) {
+          return this.startImportJob(url);
+        }
+        return false;
+      })
       .then(job => {
-        return this.updateShipSettings({
+        const settings = {
           last_sync_at: started_sync_at,
-          last_updated_at: last_updated_at || started_sync_at,
-          last_job_id: job.id
-        }).then((ship) => { return { ship, job }; });
+          last_updated_at: last_updated_at || started_sync_at
+        };
+
+        if (job && job.id) {
+          settings.last_job_id = job.id;
+        }
+
+        return this.updateShipSettings(settings)
+                   .then((ship) => { return { ship, job }; });
       })
       .then(({ ship, job }) => {
         const duration = new Date() - started_sync_at;

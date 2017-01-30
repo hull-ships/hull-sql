@@ -1,2 +1,0 @@
-web: NODE_ENV=development ./node_modules/.bin/babel-watch -L server/web
-worker: NODE_ENV=development ./node_modules/.bin/babel-watch -L server/worker
