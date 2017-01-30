@@ -37,7 +37,7 @@
                 <p>You can run incremental queries based on the date of the last sync. <br />The query will be rewritten to replace <code>:last_updated_at</code> with the date of the last successful sync operation.</p>
                 <br />
                 <p>For example to import entries from a <code>users</code> table with a date column named <code>updated_at</code>, you can write :</p>
-                <code>SELECT id as external_id, email as email FROM users WHERE updated_at <= :last_updated_at</code>
+                <code>SELECT id as external_id, email as email FROM users WHERE updated_at >= :last_updated_at</code>
                 <hr />
               </div>
 

@@ -159,7 +159,9 @@ export default class SyncAgent {
 
   runQuery(query, options = {}) {
     // Wrap the query.
-    const wrappedQuery = this.adapter.wrapQuery(query);
+    const oneDayAgo = moment().subtract(1, "day").utc();
+    const last_updated_at = options.last_updated_at || oneDayAgo.toISOString();
+    const wrappedQuery = this.adapter.wrapQuery(query, last_updated_at);
     // Run the method for the specific adapter.
     return this.adapter.runQuery(this.client, wrappedQuery, options)
       .then(result => {
