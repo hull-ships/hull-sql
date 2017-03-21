@@ -229,7 +229,7 @@ export default class SyncAgent {
       const user = {};
       processed += 1;
 
-      if (processed % 100 === 0) {
+      if (processed % 1000 === 0) {
         const elapsed = new Date() - started_sync_at;
         this.hull.logger.info("sync.progress", { processed, elapsed });
         if (this.job) {

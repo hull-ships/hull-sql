@@ -34,11 +34,30 @@
               <textarea name="" rows="15" id="querying" class="form-control"><%= query %></textarea>
 
               <div class="pt-1 pb-1 text-muted">
-                <p>You can run incremental queries based on the date of the last sync. <br />The query will be rewritten to replace <code>:last_updated_at</code> with the date of the last successful sync operation.</p>
-                <br />
-                <p>For example to import entries from a <code>users</code> table with a date column named <code>updated_at</code>, you can write :</p>
-                <code>SELECT id as external_id, email as email FROM users WHERE updated_at >= :last_updated_at</code>
-                <hr />
+                <h6>How to write queries</h6>
+                <p>
+                  Valid queries MUST expose an `external_id` column or an `email` column. Lines with no `external_id` or `email` will be ignored.
+                  <br />
+                  All other fields will be imported as traits on the matching users.
+                  <br />
+                  For example, the following query will map the column `users.id` to your Hull users' `external_id`.
+                  <pre><code>
+                    SELECT user_id as external_id, plan_name, monthly_amount FROM users_subscriptions
+                  </code></pre>
+                </p>
+                <h6>Using incremental queries</h6>
+                <p>
+                  You can run incremental queries based on the date of the last sync.
+                  <br />
+                  The query will be rewritten to replace <code>:last_updated_at</code> with the date of the last successful sync operation.
+                  <br /><br />
+                  For example to import entries from a <code>users</code> table with a date column named <code>updated_at</code>, you can write :
+                  <pre><code>
+                    SELECT id as external_id, email as email, firstname as first_name
+                    FROM users
+                    WHERE updated_at >= :last_updated_at
+                  </code></pre>
+                </p>
               </div>
 
               <div class="pt-1 pb-1">
