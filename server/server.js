@@ -42,8 +42,10 @@ module.exports = function server(options = {}) {
 
   function checkConfiguration({ agent }, res, next) {
     if (!agent.isEnabled()) {
+      console.error({ status: "ignored" });
       res.status(403).json({ status: "ignored" });
     } else if (!agent.isConfigured()) {
+      console.error({ status: "not configured" });
       res.status(403).json({ status: "not configured" });
     } else {
       next();
