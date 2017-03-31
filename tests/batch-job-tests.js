@@ -1,5 +1,6 @@
 const assert = require("assert");
 
+import _ from "lodash";
 import fs from "fs";
 import path from "path";
 import SyncAgent from "../server/sync-agent";
@@ -52,7 +53,11 @@ describe("Batch SQL import jobs", () => {
     assert.equal(files.length, 2);
     files.forEach((file) => {
       fs.readFile(path.join(extractsDir, file), (err, data) => {
-        assert.equal(data.match(/,/g || []).length, 2);
+        if (_.endsWith(file, "1.json")) {
+          assert.equal(data.match(/,/g || []).length, 2);
+        } else if (_.endsWith(file, "2.json")) {
+          assert.equal(data.match(/,/g || []).length, 1);
+        }
       });
     });
   });
