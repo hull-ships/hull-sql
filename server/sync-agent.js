@@ -14,7 +14,7 @@ import map from "through2-map";
 
 import * as Adapters from "./adapters";
 
-const BATCH_SIZE = 10000;
+const DEFAULT_BATCH_SIZE = 10000;
 const NB_CONCURRENT_BATCH = 3;
 
 function randomSchedule(min = 0, max = 60) {
@@ -80,16 +80,17 @@ export default class SyncAgent {
    *   @hull Object*
    */
 
-  constructor({ ship, client, queue, job }) {
+  constructor({ ship, client, queue, job, batchSize = DEFAULT_BATCH_SIZE }) {
     // Expose the ship settings
     // and the Hull instance.
     this.ship = ship;
     this.hull = client;
     this.queue = queue;
     this.job = job;
+    this.batchSize = batchSize;
 
     // Get the DB type.
-    const { db_type, output_type = 's3' } = this.ship.private_settings;
+    const { db_type, output_type = "s3" } = this.ship.private_settings;
     this.adapter = { in: Adapters[db_type], out: Adapters[output_type] };
 
     // Make sure the DB type is known.
@@ -262,7 +263,7 @@ export default class SyncAgent {
       return user;
     });
 
-    const batch = new BatchStream({ size : BATCH_SIZE });
+    const batch = new BatchStream({ size: this.batchSize });
 
     let partNumber = 0;
 
@@ -281,7 +282,7 @@ export default class SyncAgent {
         })
         .then(({ job, partNumber }) => {
           last_job_id = job.id;
-          this.hull.logger.info(`sync.job.part.${partNumber}`, JSON.stringify({ job }))
+          this.hull.logger.info(`sync.job.part.${partNumber}`, JSON.stringify({ job }));
           return { job };
         })
         .catch(err => {
@@ -289,7 +290,7 @@ export default class SyncAgent {
         });
       }))
       .wait()
-      .then((done) => {
+      .then(() => {
         const duration = new Date() - started_sync_at;
 
         this.hull.logger.info("sync.done", { duration, processed });
@@ -302,7 +303,7 @@ export default class SyncAgent {
         if (last_job_id) {
           settings.last_job_id = last_job_id;
         }
-        return this.updateShipSettings(settings)
+        return this.updateShipSettings(settings);
       });
   }
 
@@ -316,12 +317,14 @@ export default class SyncAgent {
       overwrite: !!overwrite,
       name: `Import from hull-sql ${this.ship.name} - part ${partNumber}`,
       schedule_at: randomSchedule(partNumber * 5, partNumber * 10),
-      stats: { size: size }
+      stats: { size }
     };
 
     this.hull.logger.info("sync.import", _.omit(params, "url"));
 
     return this.hull.post("/import/users", params)
-    .then(job => { return { job, partNumber }});
+    .then(job => {
+      return { job, partNumber };
+    });
   }
 }

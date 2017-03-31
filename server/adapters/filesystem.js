@@ -45,8 +45,8 @@ export function closeConnection(client) {}
  *   @wrappedQuery String
  */
 
-export function wrapQuery(sql, last_updated_at) {
-  return "data.json";
+export function wrapQuery(query, last_updated_at) {
+  return query;
 }
 
 function cancelQuery(client) {}
@@ -96,13 +96,12 @@ export function streamQuery(client, query) {
 export function upload(users, shipId, partNumber) {
   const data = users.map(user => JSON.stringify(user)).join("\n");
   return new Promise((resolve, reject) => {
-    const filename = `extracts/${shipId}/${new Date().getTime()}-${partNumber}.json`
-    fs.writeFile(filename, data, function(err) {
+    const filename = `tests/extracts/${new Date().getTime()}-${partNumber}.json`;
+    fs.writeFile(filename, data, (err) => {
       if (err) {
         return reject(err);
-      } else {
-        return resolve({ url: `http://fake.url/${filename}`, partNumber, size: users.length });
       }
+      return resolve({ url: `http://fake.url/${filename}`, partNumber, size: users.length });
     });
   });
 }
