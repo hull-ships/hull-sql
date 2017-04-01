@@ -83,6 +83,8 @@ export default class SyncAgent {
     this.job = job;
     this.batchSize = batchSize;
 
+    this.importDelay = _.random(0, 120);
+
     // Get the DB type.
     const { db_type, output_type = "s3" } = this.ship.private_settings;
     this.adapter = { in: Adapters[db_type], out: Adapters[output_type] };
@@ -303,7 +305,6 @@ export default class SyncAgent {
 
   startImportJob(url, partNumber, size) {
     const { overwrite } = this.ship.private_settings;
-    const delay = _.random(0, 120);
     const params = {
       url,
       format: "json",
@@ -311,7 +312,7 @@ export default class SyncAgent {
       emit_event: false,
       overwrite: !!overwrite,
       name: `Import from hull-sql ${this.ship.name} - part ${partNumber}`,
-      schedule_at: moment().add(delay + (2 * partNumber), "minutes").toISOString(),
+      schedule_at: moment().add(this.importDelay + (2 * partNumber), "minutes").toISOString(),
       stats: { size }
     };
 
