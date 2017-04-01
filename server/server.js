@@ -41,10 +41,7 @@ module.exports = function server(options = {}) {
   });
 
   function checkConfiguration({ agent }, res, next) {
-    if (!agent.isEnabled()) {
-      console.error({ status: "ignored" });
-      res.status(403).json({ status: "ignored" });
-    } else if (!agent.isConfigured()) {
+    if (!agent.isConfigured()) {
       console.error({ status: "not configured" });
       res.status(403).json({ status: "not configured" });
     } else {
@@ -81,8 +78,13 @@ module.exports = function server(options = {}) {
   });
 
   app.post("/sync", checkConfiguration, ({ agent }, res) => {
-    agent.async("startSync");
-    res.json({ status: "scheduled" });
+    const response = { status: "ignored" };
+    if (agent.isEnabled()) {
+      response.status = "scheduled";
+      agent.async("startSync");
+    }
+
+    res.json(response);
   });
 
   // Error Handler
