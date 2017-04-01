@@ -8,7 +8,6 @@ import SyncAgent from "../server/sync-agent";
 function identity() {}
 
 describe("Batch SQL import jobs", () => {
-
   const extractsDir = "tests/extracts";
   const shipId = "ship-id-1234";
   const ship = {
@@ -52,7 +51,8 @@ describe("Batch SQL import jobs", () => {
 
     assert.equal(files.length, 2);
     files.forEach((file) => {
-      fs.readFile(path.join(extractsDir, file), (err, data) => {
+      fs.readFile(path.join(extractsDir, file), (err, buf) => {
+        const data = buf.toString();
         if (_.endsWith(file, "1.json")) {
           assert.equal(data.match(/,/g || []).length, 2);
         } else if (_.endsWith(file, "2.json")) {
