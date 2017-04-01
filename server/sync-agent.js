@@ -17,12 +17,6 @@ import * as Adapters from "./adapters";
 const DEFAULT_BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "10000", 10);
 const NB_CONCURRENT_BATCH = 3;
 
-function randomSchedule(min = 0, max = 60) {
-  const date = new Date();
-  const delay = _.random(min, max);
-  date.setMinutes(date.getMinutes() + delay);
-  return date.toISOString();
-}
 
 /**
  * Export the sync agent for the SQL ship.
@@ -309,6 +303,7 @@ export default class SyncAgent {
 
   startImportJob(url, partNumber, size) {
     const { overwrite } = this.ship.private_settings;
+    const delay = _.random(0, 120);
     const params = {
       url,
       format: "json",
@@ -316,7 +311,7 @@ export default class SyncAgent {
       emit_event: false,
       overwrite: !!overwrite,
       name: `Import from hull-sql ${this.ship.name} - part ${partNumber}`,
-      schedule_at: randomSchedule(partNumber * 5, partNumber * 10),
+      schedule_at: moment().add(delay + (2 * partNumber), "minutes").toISOString(),
       stats: { size }
     };
 
