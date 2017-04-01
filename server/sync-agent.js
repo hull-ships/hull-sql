@@ -265,7 +265,7 @@ export default class SyncAgent {
 
     const batch = new BatchStream({ size: this.batchSize });
 
-    let partNumber = 0;
+    let num = 0;
 
     let last_job_id = null;
 
@@ -273,8 +273,8 @@ export default class SyncAgent {
       .pipe(transform)
       .pipe(batch)
       .pipe(ps.map({ concurrent: NB_CONCURRENT_BATCH }, users => {
-        partNumber += 1;
-        return this.adapter.out.upload(users, this.ship.id, partNumber).then(({ url, partNumber, size }) => {
+        num += 1;
+        return this.adapter.out.upload(users, this.ship.id, num).then(({ url, partNumber, size }) => {
           if (users.length > 0) {
             return this.startImportJob(url, partNumber, size);
           }

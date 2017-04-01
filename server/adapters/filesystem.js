@@ -3,8 +3,6 @@
  */
 
 import Promise from "bluebird";
-import SequelizeUtils from "sequelize/lib/utils";
-import moment from "moment";
 import fs from "fs";
 import JSONStream from "JSONStream";
 
@@ -22,7 +20,7 @@ import JSONStream from "JSONStream";
  *   @client Instance
  */
 
-export function openConnection(connection_string) {}
+export function openConnection() {}
 
 /**
  * Close the connection.
@@ -31,7 +29,7 @@ export function openConnection(connection_string) {}
  *   @client Instance
  */
 
-export function closeConnection(client) {}
+export function closeConnection() {}
 
 /**
  * Wrap the user query
@@ -45,11 +43,11 @@ export function closeConnection(client) {}
  *   @wrappedQuery String
  */
 
-export function wrapQuery(query, last_updated_at) {
+export function wrapQuery(query) {
   return query;
 }
 
-function cancelQuery(client) {}
+export function cancelQuery() {}
 
 /**
  * Run a wrapped query.
@@ -65,8 +63,8 @@ function cancelQuery(client) {}
  *     - @rows Array
  */
 
-export function runQuery(client, query, options = {}) {
-  return new Promise((resolve, reject) => {
+export function runQuery(client, query = {}) {
+  return new Promise((resolve) => {
     return resolve(query);
   });
 }
@@ -86,7 +84,7 @@ export function runQuery(client, query, options = {}) {
  */
 
 export function streamQuery(client, query) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const stream = fs.createReadStream(query).pipe(JSONStream.parse());
     resolve(stream);
     return stream;
