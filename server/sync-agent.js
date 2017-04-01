@@ -6,22 +6,21 @@ import _ from "lodash";
 import moment from "moment";
 import URI from "urijs";
 import Hull from "hull";
+import BatchStream from "batch-stream";
+import ps from "promise-streams";
 
 // Map each record of the stream.
 import map from "through2-map";
-import Stream from "stream";
 
-/**
- * Configure the streaming to AWS.
- */
-
-import Aws from "aws-sdk";
 import * as Adapters from "./adapters";
+
+const DEFAULT_BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "10000", 10);
+const NB_CONCURRENT_BATCH = 3;
+
 
 /**
  * Export the sync agent for the SQL ship.
  */
-
 
 class ConfigurationError extends Error {
   constructor(msg) {
@@ -75,28 +74,32 @@ export default class SyncAgent {
    *   @hull Object*
    */
 
-  constructor({ ship, client, queue, job }) {
+  constructor({ ship, client, queue, job, batchSize = DEFAULT_BATCH_SIZE }) {
     // Expose the ship settings
     // and the Hull instance.
     this.ship = ship;
     this.hull = client;
     this.queue = queue;
     this.job = job;
+    this.batchSize = batchSize;
 
     // Get the DB type.
-    const { db_type } = this.ship.private_settings;
-    this.adapter = Adapters[db_type];
+    const { db_type, output_type = "s3" } = this.ship.private_settings;
+    this.adapter = { in: Adapters[db_type], out: Adapters[output_type] };
 
     // Make sure the DB type is known.
     // If not, throw an error.
     // Otherwise, use the correct adapter.
-    if (!this.adapter) {
+    if (!this.adapter.in) {
       throw new ConfigurationError(`Invalid database type ${db_type}.`);
+    }
+    if (!this.adapter.out) {
+      throw new ConfigurationError(`Invalid output type ${output_type}.`);
     }
 
     const connectionString = this.connectionString();
 
-    this.client = this.adapter.openConnection(connectionString);
+    this.client = this.adapter.in.openConnection(connectionString);
     return this;
   }
 
@@ -161,9 +164,9 @@ export default class SyncAgent {
     // Wrap the query.
     const oneDayAgo = moment().subtract(1, "day").utc();
     const last_updated_at = options.last_updated_at || oneDayAgo.toISOString();
-    const wrappedQuery = this.adapter.wrapQuery(query, last_updated_at);
+    const wrappedQuery = this.adapter.in.wrapQuery(query, last_updated_at);
     // Run the method for the specific adapter.
-    return this.adapter.runQuery(this.client, wrappedQuery, options)
+    return this.adapter.in.runQuery(this.client, wrappedQuery, options)
       .then(result => {
         return { entries: result.rows };
       });
@@ -175,9 +178,8 @@ export default class SyncAgent {
     const started_sync_at = new Date();
     return this.streamQuery(query, options)
               .then(stream => this.sync(stream, started_sync_at))
-              .then(({ processed, duration, job }) => {
-                this.hull.logger.info("sync.done", { processed, duration, job: job.id });
-                return { processed, duration, job: job.id };
+              .catch(err => {
+                this.hull.logger.error("sync.error", { message: err.message });
               });
   }
 
@@ -192,12 +194,12 @@ export default class SyncAgent {
     const { last_updated_at } = options;
 
     // Wrap the query.
-    const wrappedQuery = this.adapter.wrapQuery(query, last_updated_at);
+    const wrappedQuery = this.adapter.in.wrapQuery(query, last_updated_at);
 
     this.hull.logger.debug("sync.query", { query: wrappedQuery });
 
     // Run the method for the specific adapter.
-    return this.adapter.streamQuery(this.client, wrappedQuery).then(stream => {
+    return this.adapter.in.streamQuery(this.client, wrappedQuery).then(stream => {
       stream.on("error", err => this.hull.logger.error("sync.error", { message: err.toString(), query: wrappedQuery }));
       return stream;
     }, err => {
@@ -252,75 +254,72 @@ export default class SyncAgent {
 
       // Register eveything else inside the "traits" object.
       user.traits = _.omit(record, "external_id", "updated_at");
-
-      return `${JSON.stringify(user)}\n`;
+      return user;
     });
 
-    return this.uploadStream(stream.pipe(transform))
-      .then(url => {
-        if (processed > 0) {
-          return this.startImportJob(url);
-        }
-        return false;
-      })
-      .then(job => {
+    const batch = new BatchStream({ size: this.batchSize });
+
+    let num = 0;
+
+    let last_job_id = null;
+
+    return stream
+      .pipe(transform)
+      .pipe(batch)
+      .pipe(ps.map({ concurrent: NB_CONCURRENT_BATCH }, users => {
+        num += 1;
+        return this.adapter.out.upload(users, this.ship.id, num).then(({ url, partNumber, size }) => {
+          if (users.length > 0) {
+            return this.startImportJob(url, partNumber, size);
+          }
+          return false;
+        })
+        .then(({ job, partNumber }) => {
+          last_job_id = job.id;
+          this.hull.logger.info(`sync.job.part.${partNumber}`, JSON.stringify({ job }));
+          return { job };
+        })
+        .catch(err => {
+          this.hull.logger.error("sync.error", err.message);
+        });
+      }))
+      .wait()
+      .then(() => {
+        const duration = new Date() - started_sync_at;
+
+        this.hull.logger.info("sync.done", { duration, processed });
+
         const settings = {
           last_sync_at: started_sync_at,
           last_updated_at: last_updated_at || started_sync_at
         };
 
-        if (job && job.id) {
-          settings.last_job_id = job.id;
+        if (last_job_id) {
+          settings.last_job_id = last_job_id;
         }
-
-        return this.updateShipSettings(settings)
-                   .then((ship) => { return { ship, job }; });
-      })
-      .then(({ ship, job }) => {
-        const duration = new Date() - started_sync_at;
-        return { ship, job, duration, processed };
-      })
-      .catch(err => {
-        this.hull.logger.error("sync.error", err);
+        return this.updateShipSettings(settings);
       });
   }
 
-  startImportJob(url) {
+  startImportJob(url, partNumber, size) {
     const { overwrite } = this.ship.private_settings;
+    const delay = _.random(0, 120);
     const params = {
       url,
       format: "json",
       notify: true,
       emit_event: false,
-      overwrite: !!overwrite
+      overwrite: !!overwrite,
+      name: `Import from hull-sql ${this.ship.name} - part ${partNumber}`,
+      schedule_at: moment().add(delay + (2 * partNumber), "minutes").toISOString(),
+      stats: { size }
     };
 
     this.hull.logger.info("sync.import", _.omit(params, "url"));
 
-    return this.hull.post("/import/users", params);
-  }
-
-  uploadStream(stream) {
-    const Body = new Stream.PassThrough();
-    const Bucket = process.env.BUCKET_PATH;
-    const Key = `extracts/${this.ship.id}/${new Date().getTime()}.json`;
-    const params = {
-      Bucket, Key, Body,
-      ACL: "private",
-      ContentType: "application/json",
-    };
-
-    return new Promise((resolve, reject) => {
-      const s3 = new Aws.S3();
-
-      s3.upload(params, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(s3.getSignedUrl("getObject", { Bucket, Key, Expires: 86400 }));
-        }
-      });
-      stream.pipe(Body);
+    return this.hull.post("/import/users", params)
+    .then(job => {
+      return { job, partNumber };
     });
   }
 }
