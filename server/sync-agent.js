@@ -14,7 +14,7 @@ import map from "through2-map";
 
 import * as Adapters from "./adapters";
 
-const DEFAULT_BATCH_SIZE = 10000;
+const DEFAULT_BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "10000", 10);
 const NB_CONCURRENT_BATCH = 3;
 
 function randomSchedule(min = 0, max = 60) {
