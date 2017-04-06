@@ -58,7 +58,7 @@
     {
       "name": "db_user",
       "type": "string",
-      "title": "Usernane",
+      "title": "Username",
       "required" : true
     },
     {
