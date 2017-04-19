@@ -16,6 +16,8 @@ export default function (env) {
     Hull.logger.transports.console.level = env.LOG_LEVEL;
   }
 
+  Hull.logger.transports.console.json = true;
+
   const queue = kue.createQueue({
     prefix: env.KUE_PREFIX || "hull-sql",
     redis: env.REDIS_URL
