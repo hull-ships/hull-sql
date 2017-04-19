@@ -10,5 +10,4 @@ newrelic_agent.log
 dist
 build
 tests/extracts
-
 .idea
