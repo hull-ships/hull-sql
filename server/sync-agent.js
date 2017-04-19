@@ -5,7 +5,6 @@
 import _ from "lodash";
 import moment from "moment";
 import URI from "urijs";
-import Hull from "hull";
 import BatchStream from "batch-stream";
 import ps from "promise-streams";
 
@@ -31,41 +30,6 @@ class ConfigurationError extends Error {
 
 export default class SyncAgent {
 
-  static work(queue) {
-    queue.process("SyncAgent", (job, done) => {
-      try {
-        const { method, configuration, args } = job.data;
-        const hull = new Hull(configuration);
-        return hull.get("app").then(ship => {
-          const agent = new SyncAgent({ ship, client: hull, queue, job });
-          if (agent[method]) {
-            const ret = agent[method](...args);
-            if (ret && ret.then) {
-              ret.then(done.bind(this, null), done);
-            } else {
-              done(null, ret);
-            }
-          } else {
-            done(new Error(`Unknown method ${method}`));
-          }
-        }, done);
-      } catch (err) {
-        done(err);
-        return err;
-      }
-    });
-  }
-
-  async(method, ...args) {
-    const configuration = _.pick(this.hull.configuration(), "id", "organization", "secret");
-    const params = { method, args, configuration };
-    const job = this.queue.create("SyncAgent", params);
-    return job.removeOnComplete(true)
-      .attempts(3)
-      .backoff({ type: "exponential" })
-      .save();
-  }
-
   /**
    * Constructor.
    *
@@ -74,16 +38,15 @@ export default class SyncAgent {
    *   @hull Object*
    */
 
-  constructor({ ship, client, queue, job, batchSize = DEFAULT_BATCH_SIZE }) {
+  constructor({ ship, client, job, batchSize = DEFAULT_BATCH_SIZE }) {
     // Expose the ship settings
     // and the Hull instance.
     this.ship = ship;
     this.hull = client;
-    this.queue = queue;
     this.job = job;
     this.batchSize = batchSize;
 
-    this.importDelay = _.random(0, 120);
+    this.importDelay = _.random(0, process.env.IMPORT_DELAY || 120);
 
     // Get the DB type.
     const { db_type, output_type = "s3" } = this.ship.private_settings;
@@ -123,13 +86,13 @@ export default class SyncAgent {
     }, {});
     if (conn) {
       return URI()
-              .protocol(conn.type)
-              .username(conn.user)
-              .password(conn.password)
-              .host(conn.host)
-              .port(conn.port)
-              .path(conn.name)
-              .toString();
+        .protocol(conn.type)
+        .username(conn.user)
+        .password(conn.password)
+        .host(conn.host)
+        .port(conn.port)
+        .path(conn.name)
+        .toString();
     }
     return false;
   }
@@ -179,10 +142,10 @@ export default class SyncAgent {
     const { query } = this.ship.private_settings;
     const started_sync_at = new Date();
     return this.streamQuery(query, options)
-              .then(stream => this.sync(stream, started_sync_at))
-              .catch(err => {
-                this.hull.logger.error("sync.error", { message: err.message });
-              });
+      .then(stream => this.sync(stream, started_sync_at))
+      .catch(err => {
+        this.hull.logger.error("sync.error", { message: err.message });
+      });
   }
 
   startSync(options) {
@@ -254,7 +217,7 @@ export default class SyncAgent {
         }
       }
 
-      // Register eveything else inside the "traits" object.
+      // Register everything else inside the "traits" object.
       user.traits = _.omit(record, "external_id", "updated_at");
       return user;
     });
@@ -276,14 +239,14 @@ export default class SyncAgent {
           }
           return false;
         })
-        .then(({ job, partNumber }) => {
-          last_job_id = job.id;
-          this.hull.logger.info(`sync.job.part.${partNumber}`, JSON.stringify({ job }));
-          return { job };
-        })
-        .catch(err => {
-          this.hull.logger.error("sync.error", err.message);
-        });
+          .then(({ job, partNumber }) => {
+            last_job_id = job.id;
+            this.hull.logger.info(`sync.job.part.${partNumber}`, JSON.stringify({ job }));
+            return { job };
+          })
+          .catch(err => {
+            this.hull.logger.error("sync.error", err.message);
+          });
       }))
       .wait()
       .then(() => {
@@ -319,8 +282,8 @@ export default class SyncAgent {
     this.hull.logger.info("sync.import", _.omit(params, "url"));
 
     return this.hull.post("/import/users", params)
-    .then(job => {
-      return { job, partNumber };
-    });
+      .then(job => {
+        return { job, partNumber };
+      });
   }
 }
