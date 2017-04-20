@@ -1,7 +1,7 @@
+import bodyParser from "body-parser";
 import devMode from "./util/dev-mode";
 import SyncAgent from "./sync-agent";
 import KueRouter from "./util/kue-router";
-import bodyParser from "body-parser";
 
 
 module.exports = function server(options = {}) {
@@ -57,9 +57,9 @@ module.exports = function server(options = {}) {
     res.json({ status: "scheduled" });
   });
 
-  app.post("/sync", checkConfiguration, ({ agent }, req, res) => {
+  app.post("/sync", checkConfiguration, (req, res) => {
     const response = { status: "ignored" };
-    if (agent.isEnabled()) {
+    if (req.agent.isEnabled()) {
       response.status = "scheduled";
       req.hull.enqueue("startSync");
     }
