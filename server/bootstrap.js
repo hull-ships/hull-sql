@@ -26,7 +26,6 @@ export default function (env) {
     store: "memory",
     ttl: 1
   });
-
   Hull.logger.transports.console.json = true;
 
   const connector = new Hull.Connector({ hostSecret, port, cache });
