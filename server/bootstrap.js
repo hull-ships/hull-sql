@@ -1,9 +1,9 @@
 /* eslint global-require: 0 */
 
 import Hull from "hull";
-import kue from "kue";
+import express from "express";
 import Aws from "aws-sdk";
-
+import { Cache } from "hull/lib/infra";
 
 export default function (env) {
   Aws.config.update({
@@ -16,21 +16,24 @@ export default function (env) {
     Hull.logger.transports.console.level = env.LOG_LEVEL;
   }
 
+  const app = express();
+
+  const port = env.PORT || 8082;
+
+  const hostSecret = env.SECRET;
+
+  const cache = new Cache({
+    store: "memory",
+    ttl: 1
+  });
   Hull.logger.transports.console.json = true;
 
-  const queue = kue.createQueue({
-    prefix: env.KUE_PREFIX || "hull-sql",
-    redis: env.REDIS_URL
-  });
-
-  const PORT = env.PORT || 8082;
+  const connector = new Hull.Connector({ hostSecret, port, cache });
 
   return {
-    hostSecret: env.SECRET,
     devMode: env.NODE_ENV === "development",
     workerMode: env.WORKER_MODE || "standalone",
-    PORT,
-    queue,
-    Hull
+    connector,
+    app
   };
 }
