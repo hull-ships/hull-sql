@@ -26,8 +26,7 @@ app.use((req, res, next) => {
   req.hull.ship = {
     private_settings: {
       db_type: "filesystem",
-      output_type: "filesystem",
-      query
+      output_type: "filesystem"
     }
   };
 
@@ -49,7 +48,7 @@ describe("Server", () => {
       method: "POST",
       path: "/run",
       headers: {
-        'Content-Type': 'application/json', //todo check it
+        'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(postData)
       }
     };
