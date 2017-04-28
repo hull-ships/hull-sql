@@ -9,7 +9,7 @@ import Server from "../server/server"
 
 /* Test Configuration */
 
-const port = 8080;
+const port = 8070;
 const app = express();
 const cache = new Cache({
   store: "memory",
