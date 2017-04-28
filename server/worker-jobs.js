@@ -1,6 +1,7 @@
+/* @flow */
 import SyncAgent from "./sync-agent";
 
-module.exports = function workerJobs(options = {}) {
+module.exports = function workerJobs(options: any = {}) {
   const { connector } = options;
 
   connector.worker({

@@ -1,10 +1,11 @@
+/* @flow */
 import bodyParser from "body-parser";
 import devMode from "./util/dev-mode";
 import SyncAgent from "./sync-agent";
 import KueRouter from "./util/kue-router";
 
 
-module.exports = function server(options) {
+module.exports = function server(options: any) {
   const { app, hostSecret } = options;
 
   if (options.devMode) {
