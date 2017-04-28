@@ -42,7 +42,7 @@ export default class SyncAgent {
     // Expose the ship settings
     // and the Hull instance.
     this.ship = ship;
-    this.hull = client;
+    this.client = client;
     this.job = job;
     this.batchSize = batchSize;
 
@@ -98,8 +98,8 @@ export default class SyncAgent {
   }
 
   updateShipSettings(settings) {
-    return this.hull.get(this.ship.id).then(({ private_settings }) => {
-      return this.hull.put(this.ship.id, {
+    return this.client.get(this.ship.id).then(({ private_settings }) => {
+      return this.client.put(this.ship.id, {
         private_settings: {
           ...private_settings,
           ...settings
@@ -138,13 +138,13 @@ export default class SyncAgent {
   }
 
   startImport(options) {
-    this.hull.logger.info("sync.start", options);
+    this.client.logger.info("sync.start", options);
     const { query } = this.ship.private_settings;
     const started_sync_at = new Date();
     return this.streamQuery(query, options)
       .then(stream => this.sync(stream, started_sync_at))
       .catch(err => {
-        this.hull.logger.error("sync.error", { message: err.message });
+        this.client.logger.error("sync.error", { message: err.message });
       });
   }
 
@@ -161,14 +161,14 @@ export default class SyncAgent {
     // Wrap the query.
     const wrappedQuery = this.adapter.in.wrapQuery(query, last_updated_at);
 
-    this.hull.logger.debug("sync.query", { query: wrappedQuery });
+    this.client.logger.debug("sync.query", { query: wrappedQuery });
 
     // Run the method for the specific adapter.
     return this.adapter.in.streamQuery(this.client, wrappedQuery).then(stream => {
-      stream.on("error", err => this.hull.logger.error("sync.error", { message: err.toString(), query: wrappedQuery }));
+      stream.on("error", err => this.client.logger.error("sync.error", { message: err.toString(), query: wrappedQuery }));
       return stream;
     }, err => {
-      this.hull.logger.error("sync.error", { message: err.toString() });
+      this.client.logger.error("sync.error", { message: err.toString() });
       err.status = 403;
       throw err;
     });
@@ -198,7 +198,7 @@ export default class SyncAgent {
 
       if (processed % 1000 === 0) {
         const elapsed = new Date() - started_sync_at;
-        this.hull.logger.info("sync.progress", { processed, elapsed });
+        this.client.logger.info("sync.progress", { processed, elapsed });
         if (this.job) {
           this.job.progress(processed);
           this.job.log("%d proceesed in  %d ms", processed, elapsed);
@@ -241,18 +241,18 @@ export default class SyncAgent {
         })
           .then(({ job, partNumber }) => {
             last_job_id = job.id;
-            this.hull.logger.info(`sync.job.part.${partNumber}`, JSON.stringify({ job }));
+            this.client.logger.info(`sync.job.part.${partNumber}`, JSON.stringify({ job }));
             return { job };
           })
           .catch(err => {
-            this.hull.logger.error("sync.error", err.message);
+            this.client.logger.error("sync.error", err.message);
           });
       }))
       .wait()
       .then(() => {
         const duration = new Date() - started_sync_at;
 
-        this.hull.logger.info("sync.done", { duration, processed });
+        this.client.logger.info("sync.done", { duration, processed });
 
         const settings = {
           last_sync_at: started_sync_at,
@@ -279,9 +279,9 @@ export default class SyncAgent {
       stats: { size }
     };
 
-    this.hull.logger.info("sync.import", _.omit(params, "url"));
+    this.client.logger.info("sync.import", _.omit(params, "url"));
 
-    return this.hull.post("/import/users", params)
+    return this.client.post("/import/users", params)
       .then(job => {
         return { job, partNumber };
       });
