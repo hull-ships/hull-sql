@@ -4,7 +4,7 @@ import SyncAgent from "./sync-agent";
 import KueRouter from "./util/kue-router";
 
 
-module.exports = function server(options = {}) {
+module.exports = function server(options) {
   const { app, hostSecret } = options;
 
   if (options.devMode) {

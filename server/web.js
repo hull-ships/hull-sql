@@ -1,3 +1,4 @@
+/* @flow */
 import Bootstrap from "./bootstrap";
 import Server from "./server";
 import WorkerJobs from "./worker-jobs";

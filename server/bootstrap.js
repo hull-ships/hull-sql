@@ -1,5 +1,4 @@
 /* eslint global-require: 0 */
-
 import Hull from "hull";
 import express from "express";
 import Aws from "aws-sdk";
@@ -27,10 +26,12 @@ export default function (env) {
     ttl: 1
   });
   Hull.logger.transports.console.json = true;
+  Hull.logger.transports.console.stringify = true;
 
   const connector = new Hull.Connector({ hostSecret, port, cache });
 
   return {
+    hostSecret,
     devMode: env.NODE_ENV === "development",
     workerMode: env.WORKER_MODE || "standalone",
     connector,
