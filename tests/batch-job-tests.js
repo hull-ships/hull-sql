@@ -3,10 +3,9 @@ const assert = require("assert");
 import _ from "lodash";
 import fs from "fs";
 import path from "path";
-import SyncAgent from "../server/sync-agent";
 import sinon from "sinon";
-
-function identity() {}
+import SyncAgent from "../server/sync-agent";
+import ClientMock from "./client-mock";
 
 describe("Batch SQL import jobs", () => {
   const extractsDir = "tests/extracts";
@@ -16,31 +15,10 @@ describe("Batch SQL import jobs", () => {
     private_settings: {
       db_type: "filesystem",
       output_type: "filesystem",
-      query: "tests/fixtures/data.json",
+      query: "tests/fixtures/batch-data.json",
     },
   };
 
-  function getMockClient() {
-    return {
-      configuration: identity,
-      logger: {
-        info: (msg, data) => console.log(msg, data),
-        error: (msg, data) => console.log(msg, data),
-        debug: (msg, data) => console.log(msg, data),
-        log: (msg, data) => console.log(msg, data)
-      },
-      get: (url, params) => {
-        return Promise.resolve({});
-      },
-      post: (url, params) => {
-        return Promise.resolve({});
-      },
-      put: (url, params) => {
-        return Promise.resolve({});
-      }
-    };
-
-  }
 
   const job = {};
 
@@ -58,7 +36,7 @@ describe("Batch SQL import jobs", () => {
   });
 
   it("should read file", (done) => {
-    const client = getMockClient();
+    const client = ClientMock();
     const agent = new SyncAgent({ ship, client, job, batchSize: 2 });
 
     const createJob = sinon.spy(client, "post").withArgs("/import/users");

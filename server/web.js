@@ -1,13 +1,15 @@
+/* @flow */
 import Bootstrap from "./bootstrap";
 import Server from "./server";
-import SyncAgent from "./sync-agent";
+import WorkerJobs from "./worker-jobs";
 
 const options = Bootstrap(process.env);
 
 if (options.workerMode === "embedded") {
-  console.warn("Starting worker from queue", options.queue.id);
-  SyncAgent.work(options.queue);
+  WorkerJobs(options);
 }
 
-console.log(`Listening on port ${options.PORT}`);
-Server(options).listen(options.PORT);
+const { connector, app } = options;
+
+connector.setupApp(app);
+connector.startApp(Server(options));

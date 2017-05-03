@@ -13,6 +13,9 @@
     },
     "BUCKET_PATH": {
       "description": "The AWS S3 bucket directory where the JSON are stored."
+    },
+    "IMPORT_DELAY": {
+      "description": "Defines how many seconds system should evaluate the job."
     }
   },
   "scripts": {}
