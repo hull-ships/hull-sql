@@ -72,8 +72,12 @@ export default class SyncAgent {
     return this.ship.private_settings.enabled === true;
   }
 
-  isConfigured() {
+  isConnectionStringConfigured() {
     return !!this.connectionString();
+  }
+
+  isQueryStringConfigured() {
+    return !!this.getQuery();
   }
 
   connectionString() {
