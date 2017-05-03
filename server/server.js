@@ -73,8 +73,12 @@ module.exports = function server(options = {}) {
   });
 
   app.post("/import", checkConfiguration, ({ agent }, res) => {
-    agent.async("startImport");
-    res.json({ status: "scheduled" });
+    try {
+      agent.async("startImport");
+      res.json({ status: "scheduled" });
+    } catch (err) {
+      res.status(400).send({ message: err.message });
+    }
   });
 
   app.post("/sync", checkConfiguration, ({ agent }, res) => {

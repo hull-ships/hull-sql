@@ -57,6 +57,10 @@ export default class SyncAgent {
   }
 
   async(method, ...args) {
+    if (!this.getQuery()) {
+      this.hull.logger.error("Empty query");
+      throw Error("Empty query");
+    }
     const configuration = _.pick(this.hull.configuration(), "id", "organization", "secret");
     const params = { method, args, configuration };
     const job = this.queue.create("SyncAgent", params);
@@ -176,7 +180,7 @@ export default class SyncAgent {
 
   startImport(options) {
     this.hull.logger.info("sync.start", options);
-    const { query } = this.ship.private_settings;
+    const query = this.getQuery();
     const started_sync_at = new Date();
     return this.streamQuery(query, options)
               .then(stream => this.sync(stream, started_sync_at))
