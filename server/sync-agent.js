@@ -139,7 +139,7 @@ export default class SyncAgent {
 
   startImport(options) {
     this.hull.logger.info("sync.start", options);
-    const { query } = this.ship.private_settings;
+    const query = this.getQuery();
     const started_sync_at = new Date();
     return this.streamQuery(query, options)
       .then(stream => this.sync(stream, started_sync_at))
