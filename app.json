@@ -5,18 +5,33 @@
   "website": "http://www.hull.io",
   "success_url": "/readme",
   "env": {
+    "SECRET": {
+      "description": "Connector secret string",
+      "required": true,
+      "generator": "secret"
+    },
     "AWS_KEY_ID": {
-      "description": "The AWS key ID to use for the S3 bucket."
+      "description": "The AWS key ID to use for the S3 bucket.",
+      "required": true
     },
     "AWS_SECRET_KEY": {
-      "description": "The AWS secret key to use for the S3 bucket."
+      "description": "The AWS secret key to use for the S3 bucket.",
+      "required": true
     },
     "BUCKET_PATH": {
-      "description": "The AWS S3 bucket directory where the JSON are stored."
+      "description": "The AWS S3 bucket directory where the JSON are stored.",
+      "required": true
     },
     "IMPORT_DELAY": {
       "description": "Defines how many seconds system should evaluate the job."
-    }
+    },
+    "LOG_LEVEL": {
+      "description": "Level of logs"
+    },
+    "NEW_RELIC_APP_NAME": {},
+    "NEW_RELIC_LICENSE_KEY": {},
+    "DATADOG_API_KEY": {},
+    "SENTRY_URL": {}
   },
   "scripts": {}
 }
