@@ -1,3 +1,5 @@
+/* eslint-env node, mocha */
+
 const assert = require("assert");
 
 import _ from "lodash";
@@ -16,6 +18,11 @@ describe("Batch SQL import jobs", () => {
       db_type: "filesystem",
       output_type: "filesystem",
       query: "tests/fixtures/batch-data.json",
+      db_host: "localhost",
+      db_port: "5433",
+      db_name: "hullsql",
+      db_user: "hullsql",
+      db_password: "hullsql"
     },
   };
 

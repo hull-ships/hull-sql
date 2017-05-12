@@ -21,17 +21,22 @@ module.exports = function server(options: any) {
     next();
   });
 
-  function checkConfiguration({ agent }, res, next) {
-    if (!agent.isConfigured()) {
-      console.error({ status: "not configured" });
-      res.status(403).json({ status: "not configured" });
-    } else {
-      next();
+  function checkConfiguration({ hull, agent }, res, next) {
+    if (!agent.isConnectionStringConfigured()) {
+      hull.client.logger.error("connection string not configured");
+      return res.status(403).json({ status: "connection string not configured" });
     }
+
+    if (!agent.isQueryStringConfigured()) {
+      hull.client.logger.error("query string not configured");
+      return res.status(403).json({ status: "query string not configured" });
+    }
+
+    return next();
   }
 
   app.get("/admin.html", ({ agent }, res) => {
-    if (agent.isConfigured()) {
+    if (agent.isConnectionStringConfigured()) {
       const query = agent.getQuery();
       res.render("connected.html", {
         query,
@@ -43,7 +48,7 @@ module.exports = function server(options: any) {
     }
   });
 
-  app.post("/run", ({ body, agent }, res) => {
+  app.post("/run", checkConfiguration, ({ body, agent }, res) => {
     const query = body.query || agent.getQuery();
     agent
       .runQuery(query, { timeout: 20000 })
