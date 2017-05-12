@@ -1,7 +1,6 @@
 /**
  * Module dependencies.
  */
-
 import Pg from "pg";
 import QueryStream from "pg-query-stream";
 import Promise from "bluebird";
