@@ -1,15 +1,17 @@
 /* @flow */
+import express from "express";
 import bodyParser from "body-parser";
-import devMode from "./util/dev-mode";
-import SyncAgent from "./sync-agent";
+
+import devModeMiddleware from "./util/dev-mode";
+import syncAgent from "./sync-agent";
 import kueRouter from "./util/kue-router";
 
 
-module.exports = function server(options: any) {
-  const { app, hostSecret, queue } = options;
+module.exports = function server(app: express, options: any) {
+  const { hostSecret, queue, devMode } = options;
 
-  if (options.devMode) {
-    app.use(devMode());
+  if (devMode) {
+    app.use(devModeMiddleware());
   }
 
   app.use(bodyParser.urlencoded({ extended: true }));
@@ -17,7 +19,7 @@ module.exports = function server(options: any) {
   app.use("/kue", kueRouter({ hostSecret, queue }));
 
   app.use((req, res, next) => {
-    req.agent = new SyncAgent(req.hull);
+    req.agent = new syncAgent(req.hull);
     next();
   });
 

@@ -22,7 +22,7 @@ const queue = new Queue("kue", {
   redis: process.env.REDIS_URL
 });
 const connector = new Hull.Connector({ port, cache, queue });
-const options = { connector, app, queue };
+const options = { connector, queue };
 
 const query = "tests/fixtures/query-data.json";
 
@@ -44,8 +44,8 @@ app.use((req, res, next) => {
 
   next();
 });
-
-connector.startApp(Server(options));
+Server(app, options)
+connector.startApp(app);
 
 
 describe("Server", () => {

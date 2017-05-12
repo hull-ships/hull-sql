@@ -1,7 +1,20 @@
 /* @flow */
-import Bootstrap from "./bootstrap";
-import WorkerJobs from "./worker-jobs";
+import { Connector } from "hull";
 
-const options = Bootstrap(process.env);
+import SyncAgent from "./sync-agent";
 
-WorkerJobs(options);
+module.exports = function workerJobs(connector: Connector): Connector {
+  connector.worker({
+    startSync: (ctx) => {
+      ctx.job = this;
+      const agent = new SyncAgent(ctx);
+      agent.startSync(ctx);
+    },
+    startImport: (ctx) => {
+      ctx.job = this;
+      const agent = new SyncAgent(ctx);
+      agent.startImport({});
+    }
+  });
+  return connector;
+};

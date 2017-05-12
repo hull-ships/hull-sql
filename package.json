@@ -27,7 +27,7 @@
     "build:server": "babel server -d build",
     "clean": "rimraf build",
     "start": "nf start",
-    "start:dev": "WORKER_MODE=embedded SECRET=12345 babel-watch -L server/web",
+    "start:dev": "COMBINED=true babel-watch -L server",
     "test": "npm run test:lint && npm run test:units && npm run test:flow",
     "test:lint": "eslint server",
     "test:units": "NODE_ENV=test mocha --require babel-register -R spec ./tests",
