@@ -107,6 +107,10 @@
       width: 37px;
       position: relative;
     }
+    th em {
+      color: #8091AD;
+      font-size: .8em;
+    }
   </style>
   <script>
     var original_query = `<%- query %>`;
@@ -186,7 +190,8 @@
             try {
               if (data.entries && data.entries.length) {
                 for (var columnName in data.entries[0]) {
-                  $('#result thead tr').append('<th>' + columnName + '</th>');
+                  var columnType = data.entries[0][columnName].constructor.name;
+                  $('#result thead tr').append('<th>' + columnName + ' <em>(' + columnType + ')</em></th>');
                 }
 
                 data.entries.forEach(function(element, index) {
