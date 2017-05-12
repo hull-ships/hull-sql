@@ -6,8 +6,8 @@ import express from "express";
 import http from "http";
 import fs from "fs";
 import Hull from "hull";
-import { Cache } from "hull/lib/infra";
-import Server from "../server/server";
+import { Cache, Queue } from "hull/lib/infra";
+import Server from "../server/server"
 
 /* Test Configuration */
 
@@ -17,8 +17,12 @@ const cache = new Cache({
   store: "memory",
   ttl: 1
 });
-const connector = new Hull.Connector({ port, cache });
-const options = { connector, app };
+const queue = new Queue("kue", {
+  prefix: process.env.KUE_PREFIX || "hull-sql",
+  redis: process.env.REDIS_URL
+});
+const connector = new Hull.Connector({ port, cache, queue });
+const options = { connector, app, queue };
 
 const query = "tests/fixtures/query-data.json";
 

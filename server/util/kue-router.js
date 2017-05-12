@@ -1,7 +1,6 @@
 import { Router } from "express";
 import basicAuth from "basic-auth";
 import ui from "kue-ui";
-import kue from "kue";
 
 ui.setup({
   apiURL: "/kue/_api", // IMPORTANT: specify the api url
@@ -22,11 +21,11 @@ function auth(pass) {
   };
 }
 
-export default function ({ hostSecret }) {
+export default function kueRouter({ hostSecret, queue }) {
   const router = Router();
 
   router.use(auth(hostSecret));
-  router.use("/_api", kue.app);
+  router.use("/_api", queue.adapter.app);
   router.use("/", ui.app);
 
   return router;

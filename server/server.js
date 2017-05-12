@@ -2,11 +2,11 @@
 import bodyParser from "body-parser";
 import devMode from "./util/dev-mode";
 import SyncAgent from "./sync-agent";
-import KueRouter from "./util/kue-router";
+import kueRouter from "./util/kue-router";
 
 
 module.exports = function server(options: any) {
-  const { app, hostSecret } = options;
+  const { app, hostSecret, queue } = options;
 
   if (options.devMode) {
     app.use(devMode());
@@ -14,7 +14,7 @@ module.exports = function server(options: any) {
 
   app.use(bodyParser.urlencoded({ extended: true }));
 
-  app.use("/kue", KueRouter({ hostSecret }));
+  app.use("/kue", kueRouter({ hostSecret, queue }));
 
   app.use((req, res, next) => {
     req.agent = new SyncAgent(req.hull);

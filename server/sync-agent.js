@@ -245,7 +245,7 @@ export default class SyncAgent {
         })
           .then(({ job, partNumber }) => {
             last_job_id = job.id;
-            this.hull.logger.info(`sync.job.part.${partNumber}`, JSON.stringify({ job }));
+            this.hull.logger.info(`sync.job.part.${partNumber}`, { job });
             return { job };
           })
           .catch(err => {
