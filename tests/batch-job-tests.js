@@ -6,7 +6,7 @@ import _ from "lodash";
 import fs from "fs";
 import path from "path";
 import sinon from "sinon";
-import SyncAgent from "../server/sync-agent";
+import SyncAgent from "../server/lib/sync-agent";
 import ClientMock from "./client-mock";
 
 describe("Batch SQL import jobs", () => {

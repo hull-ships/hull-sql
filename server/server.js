@@ -1,11 +1,10 @@
 /* @flow */
 import express from "express";
 import bodyParser from "body-parser";
+import queueUiRouter from "hull/lib/infra/queue/ui-router";
 
-import devModeMiddleware from "./util/dev-mode";
-import syncAgent from "./sync-agent";
-import kueRouter from "./util/kue-router";
-
+import devModeMiddleware from "./lib/dev-mode";
+import SyncAgent from "./lib/sync-agent";
 
 module.exports = function server(app: express, options: any) {
   const { hostSecret, queue, devMode } = options;
@@ -16,10 +15,10 @@ module.exports = function server(app: express, options: any) {
 
   app.use(bodyParser.urlencoded({ extended: true }));
 
-  app.use("/kue", kueRouter({ hostSecret, queue }));
+  app.use("/kue", queueUiRouter({ hostSecret, queueAgent: queue }));
 
   app.use((req, res, next) => {
-    req.agent = new syncAgent(req.hull);
+    req.agent = new SyncAgent(req.hull);
     next();
   });
 

@@ -1,7 +1,7 @@
 /* @flow */
 import { Connector } from "hull";
 
-import SyncAgent from "./sync-agent";
+import SyncAgent from "./lib/sync-agent";
 
 module.exports = function workerJobs(connector: Connector): Connector {
   connector.worker({
