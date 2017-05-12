@@ -21,16 +21,18 @@ module.exports = function server(options: any) {
     next();
   });
 
-  function checkConfiguration({ agent }, res, next) {
+  function checkConfiguration({ hull, agent }, res, next) {
     if (!agent.isConnectionStringConfigured()) {
-      // agent.hull.logger.log("connection string not configured");
-      res.status(403).json({ status: "connection string not configured" });
-    } else if (!agent.isQueryStringConfigured()) {
-      // agent.hull.logger.log("query string not configured");
-      res.status(403).json({ status: "query string not configured" });
-    } else {
-      next();
+      hull.client.logger.error("connection string not configured");
+      return res.status(403).json({ status: "connection string not configured" });
     }
+
+    if (!agent.isQueryStringConfigured()) {
+      hull.client.logger.error("query string not configured");
+      return res.status(403).json({ status: "query string not configured" });
+    }
+
+    return next();
   }
 
   app.get("/admin.html", ({ agent }, res) => {

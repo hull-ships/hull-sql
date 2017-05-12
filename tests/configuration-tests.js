@@ -40,7 +40,11 @@ app.use((req, res, next) => {
       db_password: "hullsql"
     }
   };
-
+  req.hull.client = {
+    logger: {
+      error: () => {}
+    }
+  };
   next();
 });
 
