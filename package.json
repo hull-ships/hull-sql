@@ -24,16 +24,15 @@
   "scripts": {
     "build": "npm run clean && npm run build:server",
     "build:client": "NODE_ENV=production ./node_modules/.bin/webpack --config ./webpack.config.js --progress --profile --colors",
-    "build:server": "./node_modules/.bin/babel server -d build",
-    "clean": "./node_modules/.bin/rimraf build",
+    "build:server": "babel server -d build",
+    "clean": "rimraf build",
     "start": "nf start",
     "start:dev": "WORKER_MODE=embedded SECRET=12345 babel-watch -L server/web",
     "test": "npm run test:lint && npm run test:units && npm run test:flow",
     "test:lint": "eslint server",
-    "test:units": "NODE_ENV=test mocha -R spec ./tests/index",
+    "test:units": "NODE_ENV=test mocha --require babel-register -R spec ./tests",
     "test:flow": "flow check",
-    "update": "./node_modules/.bin/updtr",
-    "watch": "./node_modules/.bin/watch 'clear && npm run test:lint -s && npm run test:units -s && npm run build:client -s' server src",
+    "update": "updtr",
     "postinstall": "npm run build"
   },
   "keywords": [
@@ -77,13 +76,13 @@
     "through2-map": "^3.0.0",
     "urijs": "^1.18.4",
     "webpack": "^1.13.1",
+    "babel-preset-flow": "^6.23.0",
     "webpack-dev-middleware": "^1.2.0"
   },
   "devDependencies": {
     "babel-core": "^6.10.4",
     "babel-eslint": "^6.0.5",
     "babel-loader": "^6.2.4",
-    "babel-preset-flow": "^6.23.0",
     "babel-watch": "^2.0.5",
     "eslint": "^2.13.1",
     "eslint-config-airbnb-base": "^3.0.1",
