@@ -31,7 +31,15 @@
     "NEW_RELIC_APP_NAME": {},
     "NEW_RELIC_LICENSE_KEY": {},
     "DATADOG_API_KEY": {},
-    "SENTRY_URL": {}
+    "SENTRY_URL": {},
+    "KUE_PREFIX": {},
+
   },
-  "scripts": {}
+  "scripts": {},
+  "addons": [
+    {
+      "plan": "heroku-redis:hobby-dev",
+      "as": "REDIS"
+    }
+  ]
 }

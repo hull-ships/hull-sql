@@ -3,7 +3,7 @@ import { Connector } from "hull";
 
 import SyncAgent from "./lib/sync-agent";
 
-module.exports = function workerJobs(connector: Connector): Connector {
+export default function workerJobs(connector: Connector): Connector {
   connector.worker({
     startSync: (ctx) => {
       ctx.job = this;
@@ -17,4 +17,4 @@ module.exports = function workerJobs(connector: Connector): Connector {
     }
   });
   return connector;
-};
+}

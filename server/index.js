@@ -47,7 +47,7 @@ if (process.env.COMBINED || process.env.WORKER) {
   connector.startWorker();
 }
 
-if (process.env.COMBINED || process.env.WEB) {
+if (process.env.COMBINED || process.env.SERVER) {
   server(app, { hostSecret, queue, devMode });
   connector.startApp(app);
 }

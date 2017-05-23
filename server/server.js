@@ -6,7 +6,7 @@ import queueUiRouter from "hull/lib/infra/queue/ui-router";
 import devModeMiddleware from "./lib/dev-mode";
 import SyncAgent from "./lib/sync-agent";
 
-module.exports = function server(app: express, options: any) {
+export default function server(app: express, options: any):express {
   const { hostSecret, queue, devMode } = options;
 
   if (devMode) {
@@ -75,4 +75,4 @@ module.exports = function server(app: express, options: any) {
   });
 
   return app;
-};
+}
