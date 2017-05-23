@@ -26,14 +26,24 @@
       "description": "Defines how many seconds system should evaluate the job."
     },
     "LOG_LEVEL": {
-      "description": "Level of logs"
+      "description": "Level of logs",
+      "required": false
     },
-    "NEW_RELIC_APP_NAME": {},
-    "NEW_RELIC_LICENSE_KEY": {},
-    "DATADOG_API_KEY": {},
-    "SENTRY_URL": {},
-    "KUE_PREFIX": {}
-
+    "NEW_RELIC_APP_NAME": {
+      "required": false
+    },
+    "NEW_RELIC_LICENSE_KEY": {
+      "required": false
+    },
+    "DATADOG_API_KEY": {
+      "required": false
+    },
+    "SENTRY_URL": {
+      "required": false
+    },
+    "KUE_PREFIX": {
+      "required": false
+    }
   },
   "scripts": {},
   "addons": [
