@@ -32,7 +32,7 @@
     "NEW_RELIC_LICENSE_KEY": {},
     "DATADOG_API_KEY": {},
     "SENTRY_URL": {},
-    "KUE_PREFIX": {},
+    "KUE_PREFIX": {}
 
   },
   "scripts": {},
