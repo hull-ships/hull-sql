@@ -22,3 +22,5 @@ CREATE VIEW users_view AS SELECT user_id as id, first_name as name, email, foo_i
 -- to load the schema
 -- docker run -it --rm -v `pwd`:/app -w /app --network=host postgres:9.6 bash -c 'cat tests/schema/postgres_schema.sql | PGPASSWORD=postgres psql -h localhost -U postgres'
 
+-- example query:
+-- SELECT id as external_id, name as first_name, foo_numeric as testing_trait FROM users_view

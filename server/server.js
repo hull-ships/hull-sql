@@ -5,6 +5,7 @@ import queueUiRouter from "hull/lib/infra/queue/ui-router";
 
 import devModeMiddleware from "./lib/dev-mode";
 import SyncAgent from "./lib/sync-agent";
+import checkConfiguration from "./lib/check-conf-middleware";
 
 export default function server(app: express, options: any):express {
   const { hostSecret, queue, devMode } = options;
@@ -22,20 +23,6 @@ export default function server(app: express, options: any):express {
     next();
   });
 
-  function checkConfiguration({ hull, agent }, res, next) {
-    if (!agent.isConnectionStringConfigured()) {
-      hull.client.logger.error("connection string not configured");
-      return res.status(403).json({ status: "connection string not configured" });
-    }
-
-    if (!agent.isQueryStringConfigured()) {
-      hull.client.logger.error("query string not configured");
-      return res.status(403).json({ status: "query string not configured" });
-    }
-
-    return next();
-  }
-
   app.get("/admin.html", ({ agent }, res) => {
     if (agent.isConnectionStringConfigured()) {
       const query = agent.getQuery();
@@ -49,9 +36,14 @@ export default function server(app: express, options: any):express {
     }
   });
 
-  app.post("/run", checkConfiguration, ({ body, agent }, res) => {
+  app.post("/run", checkConfiguration(), ({ body, agent }, res) => {
     const query = body.query || agent.getQuery();
-    agent
+
+    if (!query) {
+      return res.status(403).json({ status: "query string empty" });
+    }
+
+    return agent
       .runQuery(query, { timeout: 20000 })
       .then(data => res.json(data))
       .catch(({ status, message }) =>
@@ -59,12 +51,12 @@ export default function server(app: express, options: any):express {
       );
   });
 
-  app.post("/import", checkConfiguration, (req, res) => {
+  app.post("/import", checkConfiguration({ checkQueryString: true }), (req, res) => {
     req.hull.enqueue("startImport");
     res.json({ status: "scheduled" });
   });
 
-  app.post("/sync", checkConfiguration, (req, res) => {
+  app.post("/sync", checkConfiguration({ checkQueryString: true }), (req, res) => {
     const response = { status: "ignored" };
     if (req.agent.isEnabled()) {
       response.status = "scheduled";
