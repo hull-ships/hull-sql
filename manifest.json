@@ -2,7 +2,7 @@
   "name": "SQL Importer",
   "description": "Import SQL data from your own database",
   "picture": "picture.png",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "tags": [
     "incoming",
     "oneColumn"
@@ -19,6 +19,13 @@
       "title": "Overwrite data in Hull in case of a conflict",
       "type": "boolean",
       "default": "true"
+    },
+    {
+      "name": "import_days",
+      "title": "Days to import",
+      "description": "Imports the last x days of data. Use in your query with 'import_start_date'",
+      "type": "number",
+      "default": "5"
     },
     {
       "type": "string",

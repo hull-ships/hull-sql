@@ -5,7 +5,6 @@
 import _ from "lodash";
 import moment from "moment";
 import URI from "urijs";
-import Hull from "hull";
 import BatchStream from "batch-stream";
 import ps from "promise-streams";
 
@@ -16,7 +15,7 @@ import * as Adapters from "./adapters";
 
 const DEFAULT_BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "10000", 10);
 const NB_CONCURRENT_BATCH = 3;
-
+const FULL_IMPORT_DAYS = process.env.FULL_IMPORT_DAYS || "10000";
 
 /**
  * Export the sync agent for the SQL ship.
@@ -31,41 +30,6 @@ class ConfigurationError extends Error {
 
 export default class SyncAgent {
 
-  static work(queue) {
-    queue.process("SyncAgent", (job, done) => {
-      try {
-        const { method, configuration, args } = job.data;
-        const hull = new Hull(configuration);
-        return hull.get("app").then(ship => {
-          const agent = new SyncAgent({ ship, client: hull, queue, job });
-          if (agent[method]) {
-            const ret = agent[method](...args);
-            if (ret && ret.then) {
-              ret.then(done.bind(this, null), done);
-            } else {
-              done(null, ret);
-            }
-          } else {
-            done(new Error(`Unknown method ${method}`));
-          }
-        }, done);
-      } catch (err) {
-        done(err);
-        return err;
-      }
-    });
-  }
-
-  async(method, ...args) {
-    const configuration = _.pick(this.hull.configuration(), "id", "organization", "secret");
-    const params = { method, args, configuration };
-    const job = this.queue.create("SyncAgent", params);
-    return job.removeOnComplete(true)
-      .attempts(3)
-      .backoff({ type: "exponential" })
-      .save();
-  }
-
   /**
    * Constructor.
    *
@@ -74,16 +38,15 @@ export default class SyncAgent {
    *   @hull Object*
    */
 
-  constructor({ ship, client, queue, job, batchSize = DEFAULT_BATCH_SIZE }) {
+  constructor({ ship, client, job, batchSize = DEFAULT_BATCH_SIZE }) {
     // Expose the ship settings
     // and the Hull instance.
     this.ship = ship;
     this.hull = client;
-    this.queue = queue;
     this.job = job;
     this.batchSize = batchSize;
 
-    this.importDelay = _.random(0, 120);
+    this.importDelay = _.random(0, process.env.IMPORT_DELAY || 120);
 
     // Get the DB type.
     const { db_type, output_type = "s3" } = this.ship.private_settings;
@@ -109,8 +72,12 @@ export default class SyncAgent {
     return this.ship.private_settings.enabled === true;
   }
 
-  isConfigured() {
+  isConnectionStringConfigured() {
     return !!this.connectionString();
+  }
+
+  isQueryStringConfigured() {
+    return !!this.getQuery();
   }
 
   connectionString() {
@@ -123,26 +90,15 @@ export default class SyncAgent {
     }, {});
     if (conn) {
       return URI()
-              .protocol(conn.type)
-              .username(conn.user)
-              .password(conn.password)
-              .host(conn.host)
-              .port(conn.port)
-              .path(conn.name)
-              .toString();
+        .protocol(conn.type)
+        .username(conn.user)
+        .password(conn.password)
+        .host(conn.host)
+        .port(conn.port)
+        .path(conn.name)
+        .toString();
     }
     return false;
-  }
-
-  updateShipSettings(settings) {
-    return this.hull.get(this.ship.id).then(({ private_settings }) => {
-      return this.hull.put(this.ship.id, {
-        private_settings: {
-          ...private_settings,
-          ...settings
-        }
-      });
-    });
   }
 
   getQuery() {
@@ -165,8 +121,11 @@ export default class SyncAgent {
   runQuery(query, options = {}) {
     // Wrap the query.
     const oneDayAgo = moment().subtract(1, "day").utc();
-    const last_updated_at = options.last_updated_at || oneDayAgo.toISOString();
-    const wrappedQuery = this.adapter.in.wrapQuery(query, last_updated_at);
+    const replacements = {
+      last_updated_at: options.last_updated_at || oneDayAgo.toISOString(),
+      import_start_date: moment().subtract(this.ship.private_settings.import_days, "days").format()
+    };
+    const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
     // Run the method for the specific adapter.
     return this.adapter.in.runQuery(this.client, wrappedQuery, options)
       .then(result => {
@@ -174,29 +133,36 @@ export default class SyncAgent {
       });
   }
 
-  startImport(options) {
+  startImport(options = {}) {
     this.hull.logger.info("sync.start", options);
-    const { query } = this.ship.private_settings;
+    const query = this.getQuery();
     const started_sync_at = new Date();
+    if (!options.import_days) {
+      options.import_days = FULL_IMPORT_DAYS;
+    }
     return this.streamQuery(query, options)
-              .then(stream => this.sync(stream, started_sync_at))
-              .catch(err => {
-                this.hull.logger.error("sync.error", { message: err.message });
-              });
+      .then(stream => this.sync(stream, started_sync_at))
+      .catch(err => {
+        this.hull.logger.error("sync.error", { message: err.message });
+      });
   }
 
-  startSync(options) {
+  startSync(options = {}) {
     const private_settings = this.ship.private_settings;
     const oneHourAgo = moment().subtract(1, "hour").utc();
+    options.import_days = private_settings.import_days;
     const last_updated_at = private_settings.last_updated_at || private_settings.last_sync_at || oneHourAgo.toISOString();
     return this.startImport({ ...options, last_updated_at });
   }
 
   streamQuery(query, options = {}) {
     const { last_updated_at } = options;
-
+    const replacements = {
+      last_updated_at,
+      import_start_date: moment().subtract(options.import_days, "days").format()
+    };
     // Wrap the query.
-    const wrappedQuery = this.adapter.in.wrapQuery(query, last_updated_at);
+    const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
 
     this.hull.logger.debug("sync.query", { query: wrappedQuery });
 
@@ -254,7 +220,7 @@ export default class SyncAgent {
         }
       }
 
-      // Register eveything else inside the "traits" object.
+      // Register everything else inside the "traits" object.
       user.traits = _.omit(record, "external_id", "updated_at");
       return user;
     });
@@ -276,14 +242,14 @@ export default class SyncAgent {
           }
           return false;
         })
-        .then(({ job, partNumber }) => {
-          last_job_id = job.id;
-          this.hull.logger.info(`sync.job.part.${partNumber}`, JSON.stringify({ job }));
-          return { job };
-        })
-        .catch(err => {
-          this.hull.logger.error("sync.error", err.message);
-        });
+          .then(({ job, partNumber }) => {
+            last_job_id = job.id;
+            this.hull.logger.info(`sync.job.part.${partNumber}`, { job });
+            return { job };
+          })
+          .catch(err => {
+            this.hull.logger.error("sync.error", err.message);
+          });
       }))
       .wait()
       .then(() => {
@@ -299,7 +265,7 @@ export default class SyncAgent {
         if (last_job_id) {
           settings.last_job_id = last_job_id;
         }
-        return this.updateShipSettings(settings);
+        return this.hull.utils.settings.update(settings);
       });
   }
 
@@ -319,8 +285,8 @@ export default class SyncAgent {
     this.hull.logger.info("sync.import", _.omit(params, "url"));
 
     return this.hull.post("/import/users", params)
-    .then(job => {
-      return { job, partNumber };
-    });
+      .then(job => {
+        return { job, partNumber };
+      });
   }
 }

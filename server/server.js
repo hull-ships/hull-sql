@@ -1,56 +1,30 @@
+/* @flow */
 import express from "express";
 import bodyParser from "body-parser";
-import path from "path";
-import ejs from "ejs";
+import queueUiRouter from "hull/lib/infra/queue/ui-router";
 
-import devMode from "./util/dev-mode";
-import SyncAgent from "./sync-agent";
+import devModeMiddleware from "./lib/dev-mode";
+import SyncAgent from "./lib/sync-agent";
+import checkConfiguration from "./lib/check-conf-middleware";
 
-import KueRouter from "./util/kue-router";
+export default function server(app: express, options: any):express {
+  const { hostSecret, queue, devMode } = options;
 
-
-module.exports = function server(options = {}) {
-  const { Hull, hostSecret, queue } = options;
-  const { Routes } = Hull;
-  const { Readme, Manifest } = Routes;
-  const app = express();
-
-  if (options.devMode) {
-    app.use(devMode());
+  if (devMode) {
+    app.use(devModeMiddleware());
   }
 
-  app.engine("html", ejs.renderFile);
-  app.set("views", path.resolve(__dirname, "..", "views"));
-  app.use(express.static(path.resolve(__dirname, "..", "dist")));
-  app.use(express.static(path.resolve(__dirname, "..", "assets")));
-
-  app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
 
-  app.get("/manifest.json", Manifest(__dirname));
-  app.get("/", Readme);
-  app.get("/readme", Readme);
-
-  app.use("/kue", KueRouter({ hostSecret, queue }));
-
-  app.use(Hull.Middleware({ hostSecret, fetchShip: true, cacheShip: false, requireCredentials: true }));
+  app.use("/kue", queueUiRouter({ hostSecret, queueAgent: queue }));
 
   app.use((req, res, next) => {
-    req.agent = new SyncAgent({ ...req.hull, queue });
+    req.agent = new SyncAgent(req.hull);
     next();
   });
 
-  function checkConfiguration({ agent }, res, next) {
-    if (!agent.isConfigured()) {
-      console.error({ status: "not configured" });
-      res.status(403).json({ status: "not configured" });
-    } else {
-      next();
-    }
-  }
-
   app.get("/admin.html", ({ agent }, res) => {
-    if (agent.isConfigured()) {
+    if (agent.isConnectionStringConfigured()) {
       const query = agent.getQuery();
       res.render("connected.html", {
         query,
@@ -62,9 +36,14 @@ module.exports = function server(options = {}) {
     }
   });
 
-  app.post("/run", ({ body, agent }, res) => {
+  app.post("/run", checkConfiguration(), ({ body, agent }, res) => {
     const query = body.query || agent.getQuery();
-    agent
+
+    if (!query) {
+      return res.status(403).json({ status: "query string empty" });
+    }
+
+    return agent
       .runQuery(query, { timeout: 20000 })
       .then(data => res.json(data))
       .catch(({ status, message }) =>
@@ -72,30 +51,20 @@ module.exports = function server(options = {}) {
       );
   });
 
-  app.post("/import", checkConfiguration, ({ agent }, res) => {
-    agent.async("startImport");
+  app.post("/import", checkConfiguration({ checkQueryString: true }), (req, res) => {
+    req.hull.enqueue("startImport");
     res.json({ status: "scheduled" });
   });
 
-  app.post("/sync", checkConfiguration, ({ agent }, res) => {
+  app.post("/sync", checkConfiguration({ checkQueryString: true }), (req, res) => {
     const response = { status: "ignored" };
-    if (agent.isEnabled()) {
+    if (req.agent.isEnabled()) {
       response.status = "scheduled";
-      agent.async("startSync");
+      req.hull.enqueue("startSync");
     }
 
     res.json(response);
   });
 
-  // Error Handler
-  app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
-    if (err) {
-      const logger = req.hull.client ? req.hull.client.logger : Hull.logger;
-      logger.error("unhandled error", { message: err.message, status: err.status, method: req.method, url: req.url, params: req.params });
-    }
-
-    return res.status(err.status || 500).send({ message: err.message });
-  });
-
   return app;
-};
+}

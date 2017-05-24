@@ -1,12 +1,10 @@
 /**
  * Module dependencies.
  */
-
 import Pg from "pg";
 import QueryStream from "pg-query-stream";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
-import moment from "moment";
 
 /**
  * PostgreSQL adapter.
@@ -50,8 +48,7 @@ export function closeConnection(client) {
  *   @wrappedQuery String
  */
 
-export function wrapQuery(sql, last_updated_at) {
-  const replacements = { last_updated_at: (last_updated_at || moment(0).toISOString()) };
+export function wrapQuery(sql, replacements) {
   const query = SequelizeUtils.formatNamedParameters(sql, replacements, "postgres");
   return `WITH __qry__ AS (${query}) SELECT * FROM __qry__`;
 }

@@ -1,7 +1,20 @@
-import Bootstrap from "./bootstrap";
-import SyncAgent from "./sync-agent";
+/* @flow */
+import { Connector } from "hull";
 
-const options = Bootstrap(process.env);
+import SyncAgent from "./lib/sync-agent";
 
-console.warn("Starting worker from queue", options.queue.id);
-SyncAgent.work(options.queue);
+export default function workerJobs(connector: Connector): Connector {
+  connector.worker({
+    startSync: (ctx) => {
+      ctx.job = this;
+      const agent = new SyncAgent(ctx);
+      return agent.startSync();
+    },
+    startImport: (ctx) => {
+      ctx.job = this;
+      const agent = new SyncAgent(ctx);
+      return agent.startImport();
+    }
+  });
+  return connector;
+}

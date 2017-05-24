@@ -65,7 +65,8 @@ export function cancelQuery() {}
 
 export function runQuery(client, query = {}) {
   return new Promise((resolve) => {
-    return resolve(query);
+    const file = fs.readFileSync(query, { encoding: "utf8" });
+    resolve({ rows: file });
   });
 }
 
