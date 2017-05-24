@@ -8,12 +8,12 @@ export default function workerJobs(connector: Connector): Connector {
     startSync: (ctx) => {
       ctx.job = this;
       const agent = new SyncAgent(ctx);
-      agent.startSync(ctx);
+      return agent.startSync();
     },
     startImport: (ctx) => {
       ctx.job = this;
       const agent = new SyncAgent(ctx);
-      agent.startImport({});
+      return agent.startImport();
     }
   });
   return connector;

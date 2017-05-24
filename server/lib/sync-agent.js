@@ -15,7 +15,7 @@ import * as Adapters from "./adapters";
 
 const DEFAULT_BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "10000", 10);
 const NB_CONCURRENT_BATCH = 3;
-
+const FULL_IMPORT_DAYS = process.env.FULL_IMPORT_DAYS || "10000";
 
 /**
  * Export the sync agent for the SQL ship.
@@ -101,17 +101,6 @@ export default class SyncAgent {
     return false;
   }
 
-  updateShipSettings(settings) {
-    return this.hull.get(this.ship.id).then(({ private_settings }) => {
-      return this.hull.put(this.ship.id, {
-        private_settings: {
-          ...private_settings,
-          ...settings
-        }
-      });
-    });
-  }
-
   getQuery() {
     return this.ship.private_settings.query;
   }
@@ -132,8 +121,11 @@ export default class SyncAgent {
   runQuery(query, options = {}) {
     // Wrap the query.
     const oneDayAgo = moment().subtract(1, "day").utc();
-    const last_updated_at = options.last_updated_at || oneDayAgo.toISOString();
-    const wrappedQuery = this.adapter.in.wrapQuery(query, last_updated_at);
+    const replacements = {
+      last_updated_at: options.last_updated_at || oneDayAgo.toISOString(),
+      import_start_date: moment().subtract(this.ship.private_settings.import_days, "days").format()
+    };
+    const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
     // Run the method for the specific adapter.
     return this.adapter.in.runQuery(this.client, wrappedQuery, options)
       .then(result => {
@@ -141,10 +133,13 @@ export default class SyncAgent {
       });
   }
 
-  startImport(options) {
+  startImport(options = {}) {
     this.hull.logger.info("sync.start", options);
     const query = this.getQuery();
     const started_sync_at = new Date();
+    if (!options.import_days) {
+      options.import_days = FULL_IMPORT_DAYS;
+    }
     return this.streamQuery(query, options)
       .then(stream => this.sync(stream, started_sync_at))
       .catch(err => {
@@ -152,18 +147,22 @@ export default class SyncAgent {
       });
   }
 
-  startSync(options) {
+  startSync(options = {}) {
     const private_settings = this.ship.private_settings;
     const oneHourAgo = moment().subtract(1, "hour").utc();
+    options.import_days = private_settings.import_days;
     const last_updated_at = private_settings.last_updated_at || private_settings.last_sync_at || oneHourAgo.toISOString();
     return this.startImport({ ...options, last_updated_at });
   }
 
   streamQuery(query, options = {}) {
     const { last_updated_at } = options;
-
+    const replacements = {
+      last_updated_at,
+      import_start_date: moment().subtract(options.import_days, "days").format()
+    };
     // Wrap the query.
-    const wrappedQuery = this.adapter.in.wrapQuery(query, last_updated_at);
+    const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
 
     this.hull.logger.debug("sync.query", { query: wrappedQuery });
 
@@ -266,7 +265,7 @@ export default class SyncAgent {
         if (last_job_id) {
           settings.last_job_id = last_job_id;
         }
-        return this.updateShipSettings(settings);
+        return this.hull.utils.settings.update(settings);
       });
   }
 

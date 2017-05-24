@@ -47,7 +47,7 @@ describe("Batch SQL import jobs", () => {
     const agent = new SyncAgent({ ship, client, job, batchSize: 2 });
 
     const createJob = sinon.spy(client, "post").withArgs("/import/users");
-    const updateShip = sinon.spy(client, "put").withArgs(ship.id);
+    const updateShip = sinon.spy(client.utils.settings, "update");
 
 
     agent.startImport().then(() => {

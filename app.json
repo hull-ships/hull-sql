@@ -43,6 +43,9 @@
     },
     "KUE_PREFIX": {
       "required": false
+    },
+    "FULL_IMPORT_DAYS": {
+      "required": false
     }
   },
   "scripts": {},

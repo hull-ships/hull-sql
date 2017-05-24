@@ -21,6 +21,13 @@
       "default": "true"
     },
     {
+      "name": "import_days",
+      "title": "Days to import",
+      "description": "Imports the last x days of data. Use in your query with 'import_start_date'",
+      "type": "number",
+      "default": "5"
+    },
+    {
       "type": "string",
       "format": "title",
       "name": "db_info",
