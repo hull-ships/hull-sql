@@ -38,12 +38,13 @@ export default class SyncAgent {
    *   @hull Object*
    */
 
-  constructor({ ship, client, job, batchSize = DEFAULT_BATCH_SIZE }) {
+  constructor({ ship, client, job, metric, batchSize = DEFAULT_BATCH_SIZE }) {
     // Expose the ship settings
     // and the Hull instance.
     this.ship = ship;
     this.hull = client;
     this.job = job;
+    this.metric = metric;
     this.batchSize = batchSize;
 
     this.importDelay = _.random(0, process.env.IMPORT_DELAY || 120);
@@ -255,6 +256,7 @@ export default class SyncAgent {
       .then(() => {
         const duration = new Date() - started_sync_at;
 
+        this.metric.increment("ship.incoming.users", processed);
         this.hull.logger.info("sync.done", { duration, processed });
 
         const settings = {

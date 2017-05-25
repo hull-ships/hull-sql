@@ -25,6 +25,9 @@ describe("Batch SQL import jobs", () => {
       db_password: "hullsql"
     },
   };
+  const metric = {
+    increment: () => {}
+  };
 
 
   const job = {};
@@ -44,7 +47,7 @@ describe("Batch SQL import jobs", () => {
 
   it("should read file", (done) => {
     const client = ClientMock();
-    const agent = new SyncAgent({ ship, client, job, batchSize: 2 });
+    const agent = new SyncAgent({ ship, client, job, metric, batchSize: 2 });
 
     const createJob = sinon.spy(client, "post").withArgs("/import/users");
     const updateShip = sinon.spy(client.utils.settings, "update");
