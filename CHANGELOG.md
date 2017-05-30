@@ -1,3 +1,7 @@
+## v0.1.2 - sbellity - 2017-05-30
+- return early with a 403 error if no credentials in URL
+- add tests for instrumentation of incoming users count
+
 ## v0.1.1
 - add instrumentation for incoming users count
 
