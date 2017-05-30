@@ -1,4 +1,5 @@
 /* @flow */
+
 import express from "express";
 import bodyParser from "body-parser";
 import queueUiRouter from "hull/lib/infra/queue/ui-router";
@@ -19,8 +20,12 @@ export default function server(app: express, options: any):express {
   app.use("/kue", queueUiRouter({ hostSecret, queueAgent: queue }));
 
   app.use((req, res, next) => {
-    req.agent = new SyncAgent(req.hull);
-    next();
+    if (req.hull && req.hull.ship) {
+      req.agent = new SyncAgent(req.hull);
+      return next();
+    }
+
+    return res.status(403).json({ status: "missing credentials" });
   });
 
   app.get("/admin.html", ({ agent }, res) => {
