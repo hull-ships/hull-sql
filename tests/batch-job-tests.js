@@ -51,6 +51,7 @@ describe("Batch SQL import jobs", () => {
 
     const createJob = sinon.spy(client, "post").withArgs("/import/users");
     const updateShip = sinon.spy(client.utils.settings, "update");
+    const metricIncrement = sinon.spy(metric, "increment");
 
 
     agent.startImport().then(() => {
@@ -60,6 +61,10 @@ describe("Batch SQL import jobs", () => {
       assert(createJob.secondCall.args[1].name.match(/part 2/));
 
       assert(updateShip.calledOnce);
+
+      assert(metricIncrement.calledOnce);
+      assert.equal(metricIncrement.firstCall.args[0], "ship.incoming.users");
+      assert.equal(metricIncrement.firstCall.args[1], 3);
 
 
       // Make sure files where extracted

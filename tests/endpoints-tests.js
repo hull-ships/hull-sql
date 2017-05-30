@@ -7,7 +7,7 @@ import http from "http";
 import fs from "fs";
 import Hull from "hull";
 import { Cache, Queue } from "hull/lib/infra";
-import Server from "../server/server"
+import Server from "../server/server";
 
 /* Test Configuration */
 
@@ -44,7 +44,7 @@ app.use((req, res, next) => {
 
   next();
 });
-Server(app, options)
+Server(app, options);
 connector.startApp(app);
 
 
