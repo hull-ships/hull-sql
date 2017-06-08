@@ -275,7 +275,8 @@ export default class SyncAgent {
         }
         return this.hull.utils.settings.update(settings)
           .then(resolve);
-      });
+      })
+      .catch(reject);
     });
   }
 
