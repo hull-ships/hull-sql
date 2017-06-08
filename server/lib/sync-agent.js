@@ -145,6 +145,7 @@ export default class SyncAgent {
       .then(stream => this.sync(stream, started_sync_at))
       .catch(err => {
         this.hull.logger.error("sync.error", { message: err.message });
+        return Promise.reject(err);
       });
   }
 
@@ -169,7 +170,6 @@ export default class SyncAgent {
 
     // Run the method for the specific adapter.
     return this.adapter.in.streamQuery(this.client, wrappedQuery).then(stream => {
-      stream.on("error", err => this.hull.logger.error("sync.error", { message: err.toString(), query: wrappedQuery }));
       return stream;
     }, err => {
       this.hull.logger.error("sync.error", { message: err.toString() });
@@ -231,8 +231,14 @@ export default class SyncAgent {
     let num = 0;
 
     let last_job_id = null;
-
-    return stream
+    return new Promise((resolve, reject) => {
+      stream
+      .on("error", (err) => {
+        this.hull.logger.error("sync.error", { message: err.toString() });
+        stream.close();
+        this.adapter.in.closeConnection(this.client);
+        reject(err);
+      })
       .pipe(transform)
       .pipe(batch)
       .pipe(ps.map({ concurrent: NB_CONCURRENT_BATCH }, users => {
@@ -267,8 +273,10 @@ export default class SyncAgent {
         if (last_job_id) {
           settings.last_job_id = last_job_id;
         }
-        return this.hull.utils.settings.update(settings);
+        return this.hull.utils.settings.update(settings)
+          .then(resolve);
       });
+    });
   }
 
   startImportJob(url, partNumber, size) {
