@@ -2534,9 +2534,9 @@ https-proxy-agent@^0.3.5:
     debug "2"
     extend "3"
 
-hull@^0.11.2:
-  version "0.11.2"
-  resolved "https://registry.yarnpkg.com/hull/-/hull-0.11.2.tgz#0ec62fbc5cbb635ce7d40cefee22c34969b50c5a"
+hull@^0.11.3:
+  version "0.11.3"
+  resolved "https://registry.yarnpkg.com/hull/-/hull-0.11.3.tgz#f2157fbf7d95e6febb754cbda5e4cca772766d5c"
   dependencies:
     JSONStream "^1.1.2"
     basic-auth "^1.1.0"
@@ -2566,6 +2566,7 @@ hull@^0.11.2:
     sns-validator "^0.3.0"
     supply "0.0.4"
     urijs "^1.18.7"
+    uuid "^3.0.1"
     winston "^2.2.0"
 
 iconv-lite@0.2.11:
@@ -5153,6 +5154,10 @@ uuid@3.0.0, uuid@^3.0.0:
 uuid@^2.0.1:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-2.0.3.tgz#67e2e863797215530dff318e5bf9dcebfd47b21a"
+
+uuid@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.0.1.tgz#6544bba2dfda8c1cf17e629a3a305e2bb1fee6c1"
 
 v8flags@^2.0.10:
   version "2.0.11"
