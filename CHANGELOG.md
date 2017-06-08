@@ -1,3 +1,6 @@
+## v0.1.3
+- handle stream errors and make them fail the job not to stale the whole worker
+
 ## v0.1.2 - sbellity - 2017-05-30
 - return early with a 403 error if no credentials in URL
 - add tests for instrumentation of incoming users count
