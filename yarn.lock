@@ -1008,13 +1008,13 @@ bluebird@^2.10.2:
   version "2.11.0"
   resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-2.11.0.tgz#534b9033c022c9579c56ba3b3e5a5caafbb650e1"
 
-bluebird@^3.3.4, bluebird@^3.4.6, bluebird@^3.4.7:
-  version "3.5.0"
-  resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.5.0.tgz#791420d7f551eea2897453a8a77653f96606d67c"
-
-bluebird@^3.4.1:
+bluebird@^3.3.4, bluebird@^3.4.1, bluebird@^3.4.6:
   version "3.4.6"
   resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.4.6.tgz#01da8d821d87813d158967e743d5fe6c62cf8c0f"
+
+bluebird@^3.4.7:
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.5.0.tgz#791420d7f551eea2897453a8a77653f96606d67c"
 
 body-parser@^1.12.2, body-parser@^1.15.2:
   version "1.15.2"
@@ -2534,9 +2534,9 @@ https-proxy-agent@^0.3.5:
     debug "2"
     extend "3"
 
-hull@0.11.0:
-  version "0.11.0"
-  resolved "https://registry.yarnpkg.com/hull/-/hull-0.11.0.tgz#5797c7acdbd7e9b4920fd8acf5430449f91f0d10"
+hull@^0.11.2:
+  version "0.11.2"
+  resolved "https://registry.yarnpkg.com/hull/-/hull-0.11.2.tgz#0ec62fbc5cbb635ce7d40cefee22c34969b50c5a"
   dependencies:
     JSONStream "^1.1.2"
     basic-auth "^1.1.0"
@@ -3126,11 +3126,11 @@ lodash@4.12.0:
   version "4.12.0"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.12.0.tgz#2bd6dc46a040f59e686c972ed21d93dc59053258"
 
-lodash@^4.0.0, lodash@^4.13.1, lodash@^4.2.0:
+lodash@^4.0.0, lodash@^4.13.1, lodash@^4.2.0, lodash@^4.3.0:
   version "4.17.2"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.2.tgz#34a3055babe04ce42467b607d700072c7ff6bf42"
 
-lodash@^4.3.0, lodash@latest:
+lodash@latest:
   version "4.17.4"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
 
