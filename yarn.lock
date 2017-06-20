@@ -2534,9 +2534,9 @@ https-proxy-agent@^0.3.5:
     debug "2"
     extend "3"
 
-hull@^0.11.3:
-  version "0.11.3"
-  resolved "https://registry.yarnpkg.com/hull/-/hull-0.11.3.tgz#f2157fbf7d95e6febb754cbda5e4cca772766d5c"
+hull@^0.11.4:
+  version "0.11.4"
+  resolved "https://registry.yarnpkg.com/hull/-/hull-0.11.4.tgz#ff9a91130bdd75a1b03f63f382d27f268921f076"
   dependencies:
     JSONStream "^1.1.2"
     basic-auth "^1.1.0"
