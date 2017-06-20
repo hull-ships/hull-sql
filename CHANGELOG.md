@@ -1,3 +1,6 @@
+## v0.1.4
+- upgrade hull-node
+
 ## v0.1.3
 - handle stream errors and make them fail the job not to stale the whole worker
 
