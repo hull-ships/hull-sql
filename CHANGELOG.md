@@ -1,3 +1,6 @@
+## 0.1.6 
+- Add option to enter custom option in connection string
+
 ## 0.1.5
 - Fix display preview if first record has a null value
 

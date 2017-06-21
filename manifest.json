@@ -2,7 +2,7 @@
   "name": "SQL Importer",
   "description": "Import SQL data from your own database",
   "picture": "picture.png",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "tags": [
     "incoming",
     "oneColumn"
@@ -55,6 +55,12 @@
       "type": "string",
       "title": "Port",
       "required" : true
+    },
+    {
+      "name": "db_options",
+      "type": "string",
+      "title": "Connection string options",
+      "required" : false
     },
     {
       "name": "db_name",

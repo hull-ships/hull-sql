@@ -82,23 +82,29 @@ export default class SyncAgent {
   }
 
   connectionString() {
+    const settings = this.ship.private_settings;
     const conn = ["type", "host", "port", "name", "user", "password"].reduce((c, key) => {
-      const val = this.ship.private_settings[`db_${key}`];
+      const val = settings[`db_${key}`];
       if (c && val && val.length > 0) {
         return { ...c, [key]: val };
       }
       return false;
     }, {});
     if (conn) {
-      return URI()
+      const uri = URI()
         .protocol(conn.type)
         .username(conn.user)
         .password(conn.password)
         .host(conn.host)
         .port(conn.port)
-        .path(conn.name)
-        .toString();
+        .path(conn.name);
+
+      if (settings.db_options) {
+        return uri.query(settings.db_options).toString();
+      }
+      return uri.toString();
     }
+
     return false;
   }
 
