@@ -167,6 +167,21 @@
         }
       });
 
+      function getColumnType(entries, columnName) {
+        try {
+          if (entries && entries.length) {
+            var values = entries.reduce(function(ret, e) {
+              var val = e && e[columnName];
+              if (val) ret.push(val);
+              return ret;
+            }, []);
+            return values[0] && values[0].constructor && values[0].constructor.name;
+          }
+        } catch(err) {
+          return undefined;
+        }
+      }
+
       $('#button_preview').click(function () {
         $('.afterPreview').css('display', 'none');
         $('.to-disable').prop('disabled', true);
@@ -183,14 +198,14 @@
             query: $('#querying').val()
           },
           success: function (data) {
-
             $('.to-disable').prop('disabled', false);
             $('.afterPreview').css('display', 'block');
 
             try {
               if (data.entries && data.entries.length) {
                 for (var columnName in data.entries[0]) {
-                  var columnType = data.entries[0][columnName].constructor.name;
+                  var columnType = getColumnType(data.entries, columnName);
+
                   $('#result thead tr').append('<th>' + columnName + ' <em>(' + columnType + ')</em></th>');
                 }
 
