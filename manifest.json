@@ -38,8 +38,7 @@
       "type": "string",
       "title": "Type",
       "enum": [
-        "postgres",
-        "mysql"
+        "postgres"
       ],
       "default": "postgres",
       "required" : true
