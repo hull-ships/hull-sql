@@ -2,7 +2,7 @@
   "name": "SQL Importer",
   "description": "Import SQL data from your own database",
   "picture": "picture.png",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "tags": [
     "incoming",
     "oneColumn"

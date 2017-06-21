@@ -1,3 +1,6 @@
+## 0.1.5
+- Fix display preview if first record has a null value
+
 ## v0.1.4
 - upgrade hull-node
 
