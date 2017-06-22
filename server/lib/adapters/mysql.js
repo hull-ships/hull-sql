@@ -115,7 +115,7 @@ export function streamQuery(client, query, options = {}) {
         return reject(connectionError);
       }
 
-      const params = { sql: `${query} LIMIT 100` };
+      const params = { sql: query };
 
       if (options.timeout && options.timeout > 0) {
         params.timeout = options.timeout;
