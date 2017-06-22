@@ -28,7 +28,7 @@ const cache = new Cache({
   ttl: 1
 });
 
-const queue = new Queue("kue", {
+const queue = new Queue("bull", {
   prefix: process.env.KUE_PREFIX || "hull-sql",
   redis: process.env.REDIS_URL
 });
