@@ -1,9 +1,6 @@
 <html><head>
   <title>Hull SQL</title>
   <link rel="stylesheet" href="//dd04rofzygnm0.cloudfront.net/releases/master/865f04865d2448286626bac92c518a8f8ea8bafe/stylesheets/neue.css">
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-sweetalert/1.0.1/sweetalert.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-sweetalert/1.0.1/sweetalert.min.css">
   <script type="text/javascript" charset="utf-8">
     var original_query = "<%- query %>";
   </script>
@@ -52,32 +49,30 @@
                 </div>
               </div>
 
-              <div class="results">
-                  <hr>
+              <hr>
 
-                  <h4 class="text-muted">Results Preview <span id="results-title"></span></h4>
+              <h4 class="text-muted">Results Preview <span id="results-title"></span></h4>
 
-                  <div id="error-query" class="alert alert-danger">
-                  </div>
-
-                  <div id="preview-query" class="alert alert-success">
-                    Click "Preview" to see what the query returns. You need to preview before you can save.
-                  </div>
-
-                  <div id="loading-query" class="alert alert-warning">
-                    Loading. Please wait.
-                  </div>
-
-                  <table id="result" class="table table-striped table-responsive table-bordered table-condensed">
-                    <thead>
-                      <tr></tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                  </table>
-
-                  <hr>
+              <div id="error-query" class="alert alert-danger">
               </div>
+
+              <div id="preview-query" class="alert alert-success">
+                Click "Preview" to see what the query returns. You need to preview before you can save.
+              </div>
+
+              <div id="loading-query" class="alert alert-warning">
+                Loading. Please wait.
+              </div>
+
+              <table id="result" class="table table-striped table-responsive table-bordered table-condensed">
+                <thead>
+                  <tr></tr>
+                </thead>
+                <tbody>
+                </tbody>
+              </table>
+
+              <hr>
 
 
 

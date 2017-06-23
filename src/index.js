@@ -1,17 +1,17 @@
 /* @flow */
-/* global original_query, $, swal */
+/* global original_query, swal */
 import CodeMirror from "codemirror";
+import $ from "jquery";
 import "codemirror/lib/codemirror.css";
-import "../node_modules/codemirror/mode/sql/sql.js";
+import "sweetalert/dist/sweetalert.css";
+import "sweetalert";
+import "codemirror/mode/sql/sql.js";
 
 (function boot() {
   let good_query = null;
-  const original_query = window.original_query;
-  const $ = window.$;
-  const swal = window.swal;
+  const { original_query, swal } = window;
 
   $(() => {
-
     const editor = CodeMirror.fromTextArea(document.getElementById("querying"), {
       mode: "text/x-pgsql",
       indentWithTabs: false,
@@ -37,50 +37,51 @@ import "../node_modules/codemirror/mode/sql/sql.js";
 
     $("#button_import").click(() => {
       const query = editor.getValue();
-      if (query !== original_query) {
-        swal("Unsaved query", "The current query is not the query you saved. Please save your query first.", "warning");
-      } else {
-        swal({
-          title: "Import the users from the current query? ",
-          text: "If you continue, we will import the users from the currently saved query.",
-          type: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#DD6B55",
-          confirmButtonText: "Let's Go",
-          closeOnConfirm: false
-        }, isConfirm => {
-          if (isConfirm === true) {
-            $("#button_import")
-              .prop("disabled", true);
-            $("#button_import").text("Importing...");
-            empty();
+
+      if (query === "") return swal("Empty query", "The current query is empty", "warning");
+
+      if (query !== original_query) return swal("Unsaved query", "The current query is not the query you saved. Please save your query first.", "warning");
+
+      return swal({
+        title: "Import the users from the current query? ",
+        text: "If you continue, we will import the users from the currently saved query.",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#DD6B55",
+        confirmButtonText: "Let's Go",
+        closeOnConfirm: false
+      }, isConfirm => {
+        if (isConfirm === true) {
+          $("#button_import")
+            .prop("disabled", true);
+          $("#button_import").text("Importing...");
+          empty();
 
 
-            swal("Started importing users. Results will be available shortly in Hull!");
+          swal("Started importing users. Results will be available shortly in Hull!");
 
 
-            $.ajax({
-              url: `/import${window.location.search}`,
-              type: "post",
-              data: {
-                query,
-                incremental: true
-              },
-              success() {
-                $(".to-disable").prop("disabled", false);
-                $("#button_import").replaceWith("<button id=\"button_import\" class=\"btn-pill btn-rounded btn-danger btn to-disable\"><i class=\"icon icon-reset\"></i> Import everything</button>");
-              },
-              error(err) {
-                $(".to-disable").prop("disabled", false);
-                $("#error-query")
-                  .empty()
-                  .css("display", "block")
-                  .append(err.message);
-              }
-            });
-          }
-        });
-      }
+          $.ajax({
+            url: `/import${window.location.search}`,
+            type: "post",
+            data: {
+              query,
+              incremental: true
+            },
+            success() {
+              $(".to-disable").prop("disabled", false);
+              $("#button_import").replaceWith("<button id=\"button_import\" class=\"btn-pill btn-rounded btn-danger btn to-disable\"><i class=\"icon icon-reset\"></i> Import everything</button>");
+            },
+            error(err) {
+              $(".to-disable").prop("disabled", false);
+              $("#error-query")
+                .empty()
+                .css("display", "block")
+                .append(err.message);
+            }
+          });
+        }
+      });
     });
 
     function getColumnType(entries, columnName): string {
@@ -100,13 +101,15 @@ import "../node_modules/codemirror/mode/sql/sql.js";
     }
 
     $("#button_preview").click(() => {
-      $(".to-disable").prop("disabled", true);
-      $("#loading-query").show();
-      empty();
 
+      empty();
       good_query = null;
 
       const query = editor.getValue();
+      if (query === "") return swal("Empty query", "The current query is empty", "warning");
+
+      $(".to-disable").prop("disabled", true);
+      $("#loading-query").show();
 
       $.ajax({
         url: `/run${window.location.search}`,
