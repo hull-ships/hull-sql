@@ -34,6 +34,10 @@
               <textarea name="" rows="15" id="querying" class="form-control"><%= query %></textarea>
 
               <div class="pt-1 pb-1 text-muted">
+                <h6>Preview &amp; Save queries</h6>
+                <p>You must run a successful preview of your query before saving it.</p>
+                <p>In preview mode, your query will be run with a <code>LIMIT 100</code></p>
+
                 <h6>How to write queries</h6>
                 <p>
                   Valid queries MUST expose an `external_id` column or an `email` column. Lines with no `external_id` or `email` will be ignored.
