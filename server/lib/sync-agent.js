@@ -241,7 +241,7 @@ export default class SyncAgent {
       stream
       .on("error", (err) => {
         this.hull.logger.error("sync.error", { message: err.toString() });
-        stream.close();
+        if (stream.close) stream.close();
         this.adapter.in.closeConnection(this.client);
         reject(err);
       })

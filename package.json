@@ -1,7 +1,7 @@
 {
   "name": "hull-sql",
   "description": "Install SQL connector on your Hull dashboard",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "homepage": "https://github.com/hull-ships/hull-sql",
   "license": "MIT",
   "main": "dist/ship.js",
@@ -61,7 +61,7 @@
     "lodash": "^4.13.1",
     "minimist": "^1.2.0",
     "moment": "^2.17.1",
-    "mysql": "^2.12.0",
+    "mysql": "^2.13.0",
     "newrelic": "^1.28.1",
     "pg": "^6.1.1",
     "pg-query-stream": "^1.0.0",

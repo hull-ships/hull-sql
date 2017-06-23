@@ -2,7 +2,7 @@
   "name": "SQL Importer",
   "description": "Import SQL data from your own database",
   "picture": "picture.png",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "tags": [
     "incoming",
     "oneColumn"
@@ -38,7 +38,8 @@
       "type": "string",
       "title": "Type",
       "enum": [
-        "postgres"
+        "postgres", 
+        "mysql"
       ],
       "default": "postgres",
       "required" : true
