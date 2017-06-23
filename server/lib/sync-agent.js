@@ -63,9 +63,14 @@ export default class SyncAgent {
       throw new ConfigurationError(`Invalid output type ${output_type}.`);
     }
 
-    const connectionString = this.connectionString();
+    if (db_type === "mssql") {
+      // No connection string, we need to create a config object for tedious instead
+      this.client = this.adapter.in.openConnection(this.connectionConfig());
+    } else {
+      const connectionString = this.connectionString();
 
-    this.client = this.adapter.in.openConnection(connectionString);
+      this.client = this.adapter.in.openConnection(connectionString);
+    }
     return this;
   }
 
@@ -106,6 +111,29 @@ export default class SyncAgent {
     }
 
     return false;
+  }
+
+  connectionConfig() {
+    const settings = this.ship.private_settings;
+    const conn = ["type", "host", "port", "name", "user", "password"].reduce((c, key) => {
+      const val = settings[`db_${key}`];
+      if (c && val && val.length > 0) {
+        return { ...c, [key]: val };
+      }
+      return false;
+    }, {});
+
+    const config = {
+      userName: conn.user,
+      password: conn.password,
+      server: conn.host,
+      options: {
+        port: conn.port || 1433,
+        database: conn.name
+      }
+    }
+
+    return config;
   }
 
   getQuery() {
