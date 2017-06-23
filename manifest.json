@@ -38,6 +38,7 @@
       "type": "string",
       "title": "Type",
       "enum": [
+        "redshift",
         "postgres", 
         "mysql"
       ],
