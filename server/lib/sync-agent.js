@@ -131,7 +131,7 @@ export default class SyncAgent {
         port: conn.port || 1433,
         database: conn.name
       }
-    }
+    };
 
     return config;
   }
