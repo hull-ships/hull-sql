@@ -84,7 +84,8 @@ export default class SyncAgent {
   connectionString() {
     const settings = this.ship.private_settings;
     const conn = ["type", "host", "port", "name", "user", "password"].reduce((c, key) => {
-      const val = settings[`db_${key}`];
+      let val = settings[`db_${key}`];
+      if (key === "type" && val === "redshift") val = "postgres";
       if (c && val && val.length > 0) {
         return { ...c, [key]: val };
       }
