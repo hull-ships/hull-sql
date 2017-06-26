@@ -22,7 +22,7 @@
     "url": "https://github.com/hull-ships/hull-sql/issues"
   },
   "scripts": {
-    "build": "npm run clean && npm run build:server",
+    "build": "npm run clean && npm run build:server && npm run build:client",
     "build:client": "NODE_ENV=production ./node_modules/.bin/webpack --config ./webpack.config.js --progress --profile --colors",
     "build:server": "babel server -d build",
     "clean": "rimraf build",
