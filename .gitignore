@@ -7,8 +7,6 @@ npm-debug.log
 newrelic_agent.log
 .env
 
-dist
-build
 tests/extracts
 
 .idea
