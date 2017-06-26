@@ -1,9 +1,10 @@
 <html><head>
   <title>Hull SQL</title>
   <link rel="stylesheet" href="//dd04rofzygnm0.cloudfront.net/releases/master/865f04865d2448286626bac92c518a8f8ea8bafe/stylesheets/neue.css">
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-sweetalert/1.0.1/sweetalert.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-sweetalert/1.0.1/sweetalert.min.css">
+  <script type="text/javascript" charset="utf-8">
+    var original_query = "<%- query %>";
+  </script>
+  <script src="/ship.js" type="text/javascript" charset="utf-8" async defer></script>
 </head>
 <body>
   <div class="row">
@@ -31,62 +32,90 @@
           <div class="row">
             <div class="col-sm-12">
               <h4 class="mt-0 text-muted">SQL Query</h4>
-              <textarea name="" rows="15" id="querying" class="form-control"><%= query %></textarea>
-
-              <div class="pt-1 pb-1 text-muted">
-                <h6>How to write queries</h6>
-                <p>
-                  Valid queries MUST expose an `external_id` column or an `email` column. Lines with no `external_id` or `email` will be ignored.
-                  <br />
-                  All other fields will be imported as traits on the matching users.
-                  <br />
-                  For example, the following query will map the column `users.id` to your Hull users' `external_id`.
-                  <pre><code>
-                    SELECT user_id as external_id, plan_name, monthly_amount FROM users_subscriptions
-                  </code></pre>
-                </p>
-                <h6>Using incremental queries</h6>
-                <p>
-                  You can run incremental queries based on the number of days to import.
-                  <br />
-                  The query will be rewritten to replace <code>:import_start_date</code> with the date in past set according to Import Days setting.
-                  <br /><br />
-                  For example to import entries from a <code>users</code> table with a date column named <code>updated_at</code>, you can write :
-                  <pre><code>
-                    SELECT id as external_id, email as email, firstname as first_name
-                    FROM users
-                    WHERE updated_at >= :import_start_date
-                  </code></pre>
-                </p>
-              </div>
-
-              <div class="pt-1 pb-1">
-                <button id="button_preview" class="btn-pill btn-rounded btn-success btn to-disable"><i class="icon icon-eye_open"></i> Preview</button>
-                <div class="btn-group pl-1 pull-right">
-                  <button id="button_import" class="btn-pill btn-rounded btn-danger btn to-disable"><i class="icon icon-reset"></i> Import everything</button>
+              <div class="row mb-1">
+                <div class="col-sm-12 col-lg-8">
+                  <textarea name="" rows="15" id="querying" class="form-control"><%= query %></textarea>
+                </div>
+                <div class="col-sm-12 col-lg-4">
+                  <div class="alert alert-info">
+                    <h4 class='mt-05 mb-0'>Preview &amp; Save queries</h4>
+                    <p>Each time you change your query, you <strong>must</strong> run a successful preview by clicking the <strong>Preview</strong> below before you can <strong>Save it</strong> (with the Save button on the top right of this screen)</p>
+                    <small>In preview mode, your query will be run with a <code>LIMIT 100</code></small>
+                  </div>
+                  <div class="mt-1 mb-1">
+                    <button id="button_preview" class="mb-1 btn-block btn-pill btn-rounded btn-success btn to-disable"><i class="icon icon-eye_open"></i> Preview</button>
+                    <button id="button_import" class="mb-1 btn-block btn-pill btn-rounded btn-danger btn to-disable"><i class="icon icon-reset"></i> Import everything</button>
+                  </div>
                 </div>
               </div>
+
+              <hr>
+
+              <h4 class="text-muted">Results Preview <span id="results-title"></span></h4>
+
+              <div id="error-query" class="alert alert-danger">
+              </div>
+
+              <div id="preview-query" class="alert alert-success">
+                Click "Preview" to see what the query returns. You need to preview before you can save.
+              </div>
+
+              <div id="loading-query" class="alert alert-warning">
+                Loading. Please wait.
+              </div>
+
+              <table id="result" class="table table-striped table-responsive table-bordered table-condensed">
+                <thead>
+                  <tr></tr>
+                </thead>
+                <tbody>
+                </tbody>
+              </table>
+
+              <hr>
+
+
+
+              <div class="row">
+                <div class="col-sm-12 col-md-6">
+                  <div class="well">
+                    <h6>How to write valid queries</h6>
+                    <p>
+                      Valid queries MUST expose an <code>external_id</code> column or an <code>email</code> column. Lines with no <code>external_id</code> or <code>email</code> will be ignored.
+                      All other fields will be imported as traits on the matching users.
+                      For example, the following query will map the column <code>users.id</code> to your Hull users' <code>external_id</code>.
+                      <pre><code>SELECT user_id as external_id, plan_name, monthly_amount FROM users_subscriptions</code></pre>
+                    </p>
+                  </div>
+                </div>
+                <div class="col-sm-12 col-md-6">
+                  <div class="well">
+                    <h6>Incremental Queries</h6>
+                    <p>
+                      To reduce load on your database, you can run incremental queries based on the number of days to import.
+                      <br />
+                      The query will be rewritten to replace <code>:import_start_date</code> with the date in past set according to Import Days setting.
+                      <br /><br />
+                      For example to import entries from a <code>users</code> table with a date column named <code>updated_at</code>, you can write :
+                      <pre><code>SELECT id as external_id, email as email, firstname as first_name FROM users WHERE updated_at >= :import_start_date</code></pre>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
 
-          <hr class="afterPreview">
-
-          <h4 class="text-muted afterPreview">Results Preview <span id="results-title"></span></h4>
-
-          <p id="error-query"></p>
-
-          <table id="result" class="afterPreview table table-striped table-responsive table-bordered table-condensed">
-            <thead>
-              <tr></tr>
-            </thead>
-            <tbody>
-            </tbody>
-          </table>
         </div>
     </div>
   </div>
   <style type="text/css" media="screen">
-    .afterPreview, #error-query {
+    .alert.alert-danger {
+      background-color: #f3502f;
+      border-color: #fffaf9;
+      color: #ffffff;
+    }
+    #error-query, #loading-query {
       display: none;
     }
     .check i.icon {
@@ -111,152 +140,18 @@
       color: #8091AD;
       font-size: .8em;
     }
+    #querying {
+      font-family:  Menlo, Monaco, Consolas, "Courier New", monospace;
+      font-size: 12px;
+    }
+    .CodeMirror {
+      border: 1px solid #e6e6e6;
+    }
+    th em {
+      display: block;
+    }
+    td pre {
+      margin: 0;
+    }
   </style>
-  <script>
-    var original_query = `<%- query %>`;
-    var good_query;
-    $(function() {
-      $('.to-disable').prop('disabled', false);
-
-      $('#button_import').click(function () {
-
-        if ($('#querying').val() !== original_query) {
-          swal('Unsaved query', 'The current query is not the query you saved. Please save your query first.', 'warning');
-        } else {
-          swal({
-            title: 'Import the users from the current query? ',
-            text: "If you continue, we will import the users from the currently saved query.",
-            type: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#DD6B55',
-            confirmButtonText: 'Let\'s Go',
-            closeOnConfirm: false
-          }, function (isConfirm) {
-
-            if (isConfirm === true) {
-              $('.afterPreview').css('display', 'none');
-              $('#button_import').prop('disabled', true);
-              $('#button_import').text('Importing...');
-              $('#result thead tr').empty();
-              $('#result tbody').empty();
-              $('#error-query').empty();
-              $('#results-title').empty();
-
-
-              swal('Started importing users. Results will be available shortly in Hull!');
-
-
-              $.ajax({
-                url: '/import' + window.location.search,
-                type: 'post',
-                data: {
-                  query: $('#querying').val(),
-                  incremental: true
-                },
-                success: function (data) {
-                  $('.to-disable').prop('disabled', false);
-                  $('#button_import').replaceWith('<button id="button_import" class="btn-pill btn-rounded btn-danger btn to-disable"><i class="icon icon-reset"></i> Import everything</button>');
-                },
-                error: function (err) {
-                  $('.to-disable').prop('disabled', false);
-                  $('#error-query').empty().css('display', 'block').append(err.message);
-                }
-              });
-            }
-          });
-        }
-      });
-
-      function getColumnType(entries, columnName) {
-        try {
-          if (entries && entries.length) {
-            var values = entries.reduce(function(ret, e) {
-              var val = e && e[columnName];
-              if (val) ret.push(val);
-              return ret;
-            }, []);
-            return values[0] && values[0].constructor && values[0].constructor.name;
-          }
-        } catch(err) {
-          return undefined;
-        }
-      }
-
-      $('#button_preview').click(function () {
-        $('.afterPreview').css('display', 'none');
-        $('.to-disable').prop('disabled', true);
-        $('#result thead tr').empty();
-        $('#result tbody').empty();
-        $('#error-query').empty();
-        $('#results-title').empty();
-        good_query = null;
-
-        $.ajax({
-          url: '/run' + window.location.search,
-          type: 'post',
-          data: {
-            query: $('#querying').val()
-          },
-          success: function (data) {
-            $('.to-disable').prop('disabled', false);
-            $('.afterPreview').css('display', 'block');
-
-            try {
-              if (data.entries && data.entries.length) {
-                for (var columnName in data.entries[0]) {
-                  var columnType = getColumnType(data.entries, columnName);
-
-                  $('#result thead tr').append('<th>' + columnName + ' <em>(' + columnType + ')</em></th>');
-                }
-
-                data.entries.forEach(function(element, index) {
-                  var currentRow = '';
-                  $.each(element, function(key , value) {
-                    currentRow = currentRow.concat('<td>' + value + '</td>');
-                  });
-                  $('#result tbody').append('<tr>' + currentRow + '<tr>');
-                });
-              } else {
-                $('#error-query').empty().css('display', 'block').append('No results for this query.');
-              }
-
-              good_query = $('#querying').val();
-            } catch (err) {
-              good_query = original_query;
-              $('#error-query').empty().css('display', 'block').append(data.message);
-            } finally {
-              if (good_query !== original_query) {
-                window.parent.postMessage(JSON.stringify({
-                  from: 'embedded-ship',
-                  action: 'update',
-                  ship: {
-                    private_settings: {
-                      query: good_query
-                    }
-                  }
-                }), '*');
-              }
-            }
-          },
-          error: function (res) {
-            var err = res.responseJSON;
-            $('.to-disable').prop("disabled", false);
-            if (err) {
-              $("#error-query").empty().css("display", "block").append(err.message);
-              good_query = original_query;
-              window.parent.postMessage(JSON.stringify({
-                from: "embedded-ship",
-                action: "update",
-                ship: {
-                  private_settings: {
-                    query: good_query
-                  }
-                }
-              }), "*");
-            }
-          }
-        });
-      });
-    });
-  </script>
 </body></html>

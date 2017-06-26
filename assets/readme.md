@@ -2,7 +2,7 @@
 
 ### Install the SQL Database Importer to Pass Custom Data to Hull
 
-The SQL Database Importer hooks into your PostgreSQL or Redshift database, lets you define a query that will be run on a regular schedule and import the results into Hull.
+The SQL Database Importer hooks into your MySQL, PostgreSQL or Redshift database, lets you define a query that will be run on a regular schedule and import the results into Hull.
 
 You can choose to fetch only updated users or the full data set when you build your query. We provide a way to put in a placeholder that will be replaced with the timestamp of the previous query.
 

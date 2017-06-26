@@ -11,18 +11,20 @@ module.exports = {
     publicPath: "/"
   },
   plugins: [
-    new webpack.optimize.UglifyJsPlugin({
-      compressor: {
-        warnings: false,
-        screw_ie8: false
-      }
-    }),
+
     new webpack.DefinePlugin({
       "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV)
     })
   ],
   module: {
-    loaders: [
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          { loader: "style-loader" },
+          { loader: "css-loader" }
+        ]
+      },
       {
         test: /\.js?$/,
         exclude: /node_modules/,
@@ -30,7 +32,9 @@ module.exports = {
           path.resolve(__dirname, "test"),
           path.resolve(__dirname, "src")
         ],
-        loader: "babel"
+        use: [
+          { loader: "babel-loader" }
+        ]
       }
     ]
   }

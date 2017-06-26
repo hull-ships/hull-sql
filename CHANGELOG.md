@@ -1,3 +1,6 @@
+## 0.2.0
+- Add support for mysql
+
 ## 0.1.6 
 - Add option to enter custom option in connection string
 
