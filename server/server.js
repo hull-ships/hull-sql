@@ -29,7 +29,7 @@ export default function server(app: express, options: any):express {
   });
 
   app.get("/admin.html", ({ agent }, res) => {
-    if (agent.isConnectionStringConfigured()) {
+    if (agent.areConnectionParametersSet()) {
       const query = agent.getQuery();
       res.render("connected.html", {
         query,

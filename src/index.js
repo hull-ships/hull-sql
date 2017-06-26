@@ -84,7 +84,7 @@ import "codemirror/mode/sql/sql.js";
       });
     });
 
-    function getColumnType(entries, columnName): string {
+    function getColumnType(entries, columnName) {
       try {
         if (entries && entries.length) {
           const values = entries.reduce((ret, e) => {
@@ -100,8 +100,7 @@ import "codemirror/mode/sql/sql.js";
       return "";
     }
 
-    $("#button_preview").click(() => {
-
+    $("#button_preview").click(() => { // eslint-disable-line consistent-return
       empty();
       good_query = null;
 
@@ -121,7 +120,7 @@ import "codemirror/mode/sql/sql.js";
 
           try {
             if (data.entries && data.entries.length) {
-              for (const columnName in data.entries[0]) {
+              for (const columnName in data.entries[0]) { // eslint-disable-line no-restricted-syntax,guard-for-in
                 $("#result thead tr").append(`<th>${columnName}<em>(${getColumnType(data.entries, columnName)})</em></th>`);
               }
 
