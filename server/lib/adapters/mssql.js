@@ -13,14 +13,52 @@ import SequelizeUtils from "sequelize/lib/utils";
  * MS SQL adapter.
  */
 
+function parseConnectionConfig(settings: Object): tedious.ConnectionConfig {
+  const conn = ["type", "host", "port", "name", "user", "password"].reduce((c, key) => {
+    const val = settings[`db_${key}`];
+    if (c && val && val.length > 0) {
+      return { ...c,
+        [key]: val
+      };
+    }
+    return false;
+  }, {});
+  // Must-have options
+  let opts = {
+    port: conn.port || 1433,
+    database: conn.name
+  };
+  // All additional options are optional
+  if (settings.db_options) {
+    try {
+      const customOptions = JSON.parse(settings.db_options);
+      if (customOptions) {
+        opts = _.merge(opts, customOptions);
+      }
+    } catch (parseError) {
+      this.hull.logger.error("config.error", parseError);
+    }
+  }
+
+  const config = {
+    userName: conn.user,
+    password: conn.password,
+    server: conn.host,
+    options: opts
+  };
+
+  return config;
+}
+
 /**
  * Open a new connection.
  *
- * @param {tedious.ConnectionConfig} config The connection configuration.
+ * @param {Object} settings The ship settings.
  *
  * @return {tedious.Connection} The tedious.Connection instance
  */
-export function openConnection(config: tedious.ConnectionConfig): tedious.Connection {
+export function openConnection(settings: Object): tedious.Connection {
+  const config = parseConnectionConfig(settings);
   return new tedious.Connection(config);
 }
 
@@ -64,7 +102,7 @@ export function runQuery(client: tedious.Connection, query: string, options: Obj
         return reject(err);
       }
 
-      const qparam = query.replace("SELECT", "SELECT TOP(100)");
+      const qparam = `WITH __qry__ AS (${query}) SELECT TOP(100) * FROM __qry__`;
 
       const request = new tedious.Request(qparam, (reqError) => { // eslint-disable-line consistent-return
         if (reqError) {
@@ -86,21 +124,27 @@ export function runQuery(client: tedious.Connection, query: string, options: Obj
       request.on("done", (rowCount) => { // eslint-disable-line consistent-return
         if (_.isNumber(rowCount) && !resultReturned) {
           resultReturned = true;
-          return resolve({ rows });
+          return resolve({
+            rows
+          });
         }
       });
 
       request.on("doneInProc", (rowCount) => { // eslint-disable-line consistent-return
         if (_.isNumber(rowCount) && !resultReturned) {
           resultReturned = true;
-          return resolve({ rows });
+          return resolve({
+            rows
+          });
         }
       });
 
       request.on("doneProc", (rowCount) => { // eslint-disable-line consistent-return
         if (_.isNumber(rowCount) && !resultReturned) {
           resultReturned = true;
-          return resolve({ rows });
+          return resolve({
+            rows
+          });
         }
       });
 
@@ -131,7 +175,7 @@ export function streamQuery(client: tedious.Connection, query: string, options: 
 
     let resultReturned = false;
 
-    stream._read = function () {
+    stream._read = function () { // eslint-disable-line func-names
       conn.on("connect", (err) => { // eslint-disable-line consistent-return
         if (err) {
           stream.emit("error", err);

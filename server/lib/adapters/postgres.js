@@ -5,55 +5,51 @@ import Pg from "pg";
 import QueryStream from "pg-query-stream";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
+import parseConnectionConfig from "../utils/connstr-util";
 
 /**
  * PostgreSQL adapter.
  */
 
 /**
- * Open a new connection.
+ * Opens a new connection.
+ * @param {Object} settings The private_settings of the ship.
  *
- * Params:
- *   @connection_string String*
- *
- * Return:
- *   @client Instance
+ * @return {Pg.Client} A client instance.
  */
-
-export function openConnection(connection_string) {
+export function openConnection(settings: Object): Pg.Client {
+  const connection_string = parseConnectionConfig(settings);
   const client = new Pg.Client(connection_string);
   return client;
 }
 
 /**
- * Close the connection.
- *
- * Params:
- *   @client Instance
+ * Closes the connection.
+ * @param {Pg.Client} client The postgres client.
  */
-
-export function closeConnection(client) {
+export function closeConnection(client: Pg.Client): void {
   client.end();
 }
 
 /**
- * Wrap the user query
- * inside a PostgreSQL request.
+ * Wraps the user query into a MySql request.
+ * @param {any} sql The raw SQL query
+ * @param {any} replacements The replacement parameters
  *
- * Params:
- *   @query String*
- *   @last_updated_at String
- *
- * Return:
- *   @wrappedQuery String
+ * @return {any} The wrapped request.
  */
-
-export function wrapQuery(sql, replacements) {
+export function wrapQuery(sql: any, replacements: any): any {
   const query = SequelizeUtils.formatNamedParameters(sql, replacements, "postgres");
   return `WITH __qry__ AS (${query}) SELECT * FROM __qry__`;
 }
 
-function cancelQuery(client) {
+/**
+ * Cancels the query executed by the given client.
+ * @param {Pg.Client} client The postgres client.
+ *
+ * @return {any} The postgres client that cancelled the execution, if any.
+ */
+function cancelQuery(client: Pg.Client): any {
   const { processID } = client;
   const c2 = new Pg.Client(client.connectionParameters);
   c2.connect((cErr) => {
@@ -66,20 +62,14 @@ function cancelQuery(client) {
 }
 
 /**
- * Run a wrapped query.
+ * Runs the wrapped query
+ * @param {Pg.Client} client The postgres client.
+ * @param {any} query The wrapped query.
+ * @param {Object} options Additional options to run the query. Optional.
  *
- * Params:
- *   @client Instance*
- *   @wrappedQuery String*
- *   @callback Function*
- *
- * Return:
- *   @callback Function
- *     - @error Object
- *     - @rows Array
+ * @return {Promise} A bluebird promise that returns the thenable result: { rows: Object[] }.
  */
-
-export function runQuery(client, query, options = {}) {
+export function runQuery(client: Pg.Client, query: any, options: Object = {}): Promise {
   return new Promise((resolve, reject) => {
     // Limit the result.
     query = `${query} LIMIT 100`;
@@ -118,20 +108,13 @@ export function runQuery(client, query, options = {}) {
 }
 
 /**
- * Stream a wrapped query.
+ * Streams a wrapped query.
+ * @param {Pg.Client} client The postgres client.
+ * @param {any} query The wrapped query.
  *
- * Params:
- *   @client Instance*
- *   @wrappedQuery String*
- *   @callback Function*
- *
- * Return:
- *   @callback Function
- *     - @error Object
- *     - @stream Stream
+ * @return {Promise{Stream}} A promise that returns a Stream as thenable result.
  */
-
-export function streamQuery(client, query) {
+export function streamQuery(client: Pg.Client, query: any): Promise {
   return new Promise((resolve, reject) => {
     // After connecting the connection, stream the query.
     client.connect((connectionError) => {
@@ -144,4 +127,3 @@ export function streamQuery(client, query) {
     });
   });
 }
-

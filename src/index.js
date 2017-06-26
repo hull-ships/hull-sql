@@ -24,7 +24,6 @@ import "codemirror/mode/sql/sql.js";
       autofocus: true
     });
 
-    console.log($("$ ready"));
     $(".to-disable").prop("disabled", false);
 
     function empty() {
@@ -102,7 +101,6 @@ import "codemirror/mode/sql/sql.js";
     }
 
     $("#button_preview").click(() => { // eslint-disable-line consistent-return
-      console.log("#button_preview clicked");
       empty();
       good_query = null;
 
