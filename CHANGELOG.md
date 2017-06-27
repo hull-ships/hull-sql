@@ -1,3 +1,6 @@
+## 0.2.1
+- upgrade hull-node and switch to bull queue library
+
 ## 0.2.0
 - Add support for mysql
 
