@@ -2946,7 +2946,7 @@ https-proxy-agent@^0.3.5:
     debug "2"
     extend "3"
 
-hull@^0.11.6:
+hull@0.11.6:
   version "0.11.6"
   resolved "https://registry.yarnpkg.com/hull/-/hull-0.11.6.tgz#77407bce060e901f3a0ac67e68b9b6b121fffa16"
   dependencies:
