@@ -1,3 +1,6 @@
+## 0.2.2
+- update job progress
+
 ## 0.2.1
 - upgrade hull-node and switch to bull queue library
 
