@@ -212,7 +212,6 @@ export default class SyncAgent {
         this.hull.logger.info("sync.progress", { processed, elapsed });
         if (this.job) {
           this.job.progress(processed);
-          this.job.log("%d proceesed in  %d ms", processed, elapsed);
         }
       }
 
