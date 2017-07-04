@@ -2,7 +2,7 @@
   "name": "SQL Importer",
   "description": "Import SQL data from your own database",
   "picture": "picture.png",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "tags": [
     "incoming",
     "oneColumn"
@@ -39,7 +39,7 @@
       "title": "Type",
       "enum": [
         "redshift",
-        "postgres", 
+        "postgres",
         "mysql"
       ],
       "default": "postgres",
