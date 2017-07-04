@@ -47,3 +47,14 @@ This article explains how to create an IAM profile and grant access to a S3 buck
 You might also want to configure your S3 bucket's lifecycle to expire files automatically after a few days.
 
 In the S3 section of your AWS console, go to your bucket's Management tab and add a Lifecycle rule to automatically expire Objects after 7 days.
+
+### Logs
+  
+  Logs that are specific for SQL Connector :
+  
+  * `sync.start` - logged when started importing users from SQL database
+  * `sync.progress` - logged when continuing importing users from SQL database
+  * `sync.job.part.<number_part>` - logged on each pushed fragment to S3
+  * `sync.done` - logged on finished upload job
+  * `sync.import` - logged when started importing users to Hull
+  
