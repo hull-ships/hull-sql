@@ -37,7 +37,10 @@ const connector = new Hull.Connector({
   hostSecret,
   port,
   cache,
-  queue
+  queue,
+  clientConfig: {
+    firehoseUrl: process.env.OVERRIDE_FIREHOSE_URL
+  }
 });
 
 connector.setupApp(app);

@@ -57,8 +57,8 @@ describe("Batch SQL import jobs", () => {
     agent.startImport().then(() => {
       // Make sure jobs created
       assert(createJob.calledTwice);
-      assert(createJob.firstCall.args[1].name.match(/part 1/));
-      assert(createJob.secondCall.args[1].name.match(/part 2/));
+      assert(createJob.parent.firstCall.args[1].name.match(/part 1/));
+      assert(createJob.parent.secondCall.args[1].name.match(/part 2/));
 
       assert(updateShip.calledOnce);
 
