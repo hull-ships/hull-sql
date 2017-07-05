@@ -210,7 +210,7 @@ export default class SyncAgent {
 
       if (processed % 1000 === 0) {
         const elapsed = new Date() - started_sync_at;
-        this.hull.logger.info("sync.progress", { processed, elapsed });
+        this.hull.logger.info("incoming.job.progress", { processed, elapsed });
         if (this.job) {
           this.job.progress(processed);
           this.job.log("%d proceesed in  %d ms", processed, elapsed);
@@ -304,7 +304,7 @@ export default class SyncAgent {
       stats: { size }
     };
 
-    this.hull.logger.info("sync.import", _.omit(params, "url"));
+    this.hull.logger.info("incoming.job.progress", _.omit(params, "url"), { processed: partNumber });
 
     return this.hull.post("/import/users", params)
       .then(job => {
