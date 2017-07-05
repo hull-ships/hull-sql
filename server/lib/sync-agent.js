@@ -174,6 +174,7 @@ export default class SyncAgent {
     const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
 
     this.hull.logger.debug("sync.query", { query: wrappedQuery });
+    this.hull.logger.info("incoming.job.start");
 
     // Run the method for the specific adapter.
     return this.adapter.in.streamQuery(this.client, wrappedQuery).then(stream => {
@@ -241,7 +242,7 @@ export default class SyncAgent {
     return new Promise((resolve, reject) => {
       stream
       .on("error", (err) => {
-        this.hull.logger.error("sync.error", { message: err.toString() });
+        this.hull.logger.info("incoming.job.error", { message: err.toString() });
         if (stream.close) stream.close();
         this.adapter.in.closeConnection(this.client);
         reject(err);
@@ -251,6 +252,7 @@ export default class SyncAgent {
       .pipe(ps.map({ concurrent: NB_CONCURRENT_BATCH }, users => {
         num += 1;
         return this.adapter.out.upload(users, this.ship.id, num).then(({ url, partNumber, size }) => {
+          this.hull.logger.info("outgoing.job.progress", { processed: partNumber });
           if (users.length > 0) {
             return this.startImportJob(url, partNumber, size);
           }
@@ -258,11 +260,11 @@ export default class SyncAgent {
         })
           .then(({ job, partNumber }) => {
             last_job_id = job.id;
-            this.hull.logger.info(`sync.job.part.${partNumber}`, { job });
+            this.hull.logger.info("incoming.job.progress", { processed: partNumber, job });
             return { job };
           })
           .catch(err => {
-            this.hull.logger.error("sync.error", err.message);
+            this.hull.logger.info("incoming.job.error", err.message);
           });
       }))
       .wait()
@@ -270,7 +272,9 @@ export default class SyncAgent {
         const duration = new Date() - started_sync_at;
 
         this.metric.increment("ship.incoming.users", processed);
-        this.hull.logger.info("sync.done", { duration, processed });
+
+        this.hull.logger.info("outgoing.job.success", { duration, processed });
+        this.hull.logger.info("incoming.job.success", { duration, processed });
 
         const settings = {
           last_sync_at: started_sync_at,
