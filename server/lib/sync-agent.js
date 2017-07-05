@@ -247,8 +247,8 @@ export default class SyncAgent {
       .pipe(transform)
       .pipe(through2({ objectMode: true, highWaterMark: batchSize }, function rotate(user, enc, callback) {
         try {
-          num += 1;
-          if (currentStream === null || (num - 1) % batchSize === 0) {
+          if (currentStream === null || num % batchSize === 0) {
+            num += 1;
             if (currentStream) {
               currentStream.end();
               this.push(currentPromise);
