@@ -1,10 +1,11 @@
 /**
  * Module dependencies.
  */
-
 import Promise from "bluebird";
 import fs from "fs";
 import JSONStream from "JSONStream";
+import Stream from "stream";
+import through2 from "through2";
 
 /**
  * File system adapter.
@@ -92,15 +93,24 @@ export function streamQuery(client, query) {
   });
 }
 
-export function upload(users, shipId, partNumber) {
-  const data = users.map(user => JSON.stringify(user)).join("\n");
-  return new Promise((resolve, reject) => {
+export function upload(shipId, partNumber) {
+  const stream = new Stream.PassThrough();
+  const promise = new Promise((resolve, reject) => {
     const filename = `tests/extracts/${new Date().getTime()}-${partNumber}.json`;
-    fs.writeFile(filename, data, (err) => {
+    const writeStream = fs.createWriteStream(filename);
+    let size = 0;
+    writeStream.on("close", (err) => {
       if (err) {
         return reject(err);
       }
-      return resolve({ url: `http://fake.url/${filename}`, partNumber, size: users.length });
+      return resolve({ url: `http://fake.url/${filename}`, partNumber, size });
     });
+    stream
+      .pipe(through2((chunk, enc, callback) => {
+        size += 1;
+        callback(null, chunk);
+      }))
+      .pipe(writeStream);
   });
+  return { promise, stream };
 }

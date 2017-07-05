@@ -1,20 +1,18 @@
 /**
  * Module dependencies.
  */
-
 import _ from "lodash";
 import moment from "moment";
 import URI from "urijs";
-import BatchStream from "batch-stream";
 import ps from "promise-streams";
 
 // Map each record of the stream.
 import map from "through2-map";
+import through2 from "through2";
 
 import * as Adapters from "./adapters";
 
 const DEFAULT_BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "10000", 10);
-const NB_CONCURRENT_BATCH = 3;
 const FULL_IMPORT_DAYS = process.env.FULL_IMPORT_DAYS || "10000";
 
 /**
@@ -232,13 +230,14 @@ export default class SyncAgent {
       return user;
     });
 
-    const batch = new BatchStream({ size: this.batchSize });
-
-    let num = 0;
+    let num = 1;
+    let currentStream = null;
+    let currentPromise = null;
+    const { batchSize, adapter, ship } = this;
 
     let last_job_id = null;
     return new Promise((resolve, reject) => {
-      stream
+      ps.wait(stream
       .on("error", (err) => {
         this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: err.toString() });
         if (stream.close) stream.close();
@@ -246,25 +245,46 @@ export default class SyncAgent {
         reject(err);
       })
       .pipe(transform)
-      .pipe(batch)
-      .pipe(ps.map({ concurrent: NB_CONCURRENT_BATCH }, users => {
-        num += 1;
-        return this.adapter.out.upload(users, this.ship.id, num).then(({ url, partNumber, size }) => {
-          if (users.length > 0) {
+      .pipe(through2({ objectMode: true, highWaterMark: batchSize }, function rotate(user, enc, callback) {
+        try {
+          num += 1;
+          if (currentStream === null || (num - 1) % batchSize === 0) {
+            if (currentStream) {
+              currentStream.end();
+              this.push(currentPromise);
+            }
+            const newUpload = adapter.out.upload(ship.id, (num - 1));
+            currentStream = newUpload.stream;
+            currentPromise = newUpload.promise;
+          }
+          currentStream.write(`${JSON.stringify(user)}\n`);
+          callback();
+        } catch (e) {
+          throw e;
+        }
+      }, function finish(callback) {
+        currentStream.end();
+        this.push(currentPromise);
+        callback();
+      }))
+      .pipe(ps.map({ highWaterMark: 1 }, ({ url, partNumber, size }) => {
+        return (() => {
+          this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "upload", progress: partNumber, size });
+          if (size > 0) {
             return this.startImportJob(url, partNumber, size);
           }
           return false;
+        })()
+        .then(({ job }) => {
+          last_job_id = job.id;
+          this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, job });
+          return { job };
         })
-          .then(({ job, partNumber }) => {
-            last_job_id = job.id;
-            this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "upload", progress: partNumber, job });
-            return { job };
-          })
-          .catch(err => {
-            this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: err.message });
-          });
+        .catch(err => {
+          this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: err.message });
+        });
       }))
-      .wait()
+      )
       .then(() => {
         const duration = new Date() - started_sync_at;
 
