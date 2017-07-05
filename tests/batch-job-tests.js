@@ -67,7 +67,7 @@ describe("Batch SQL import jobs", () => {
       assert.equal(metricIncrement.firstCall.args[1], 3);
 
 
-      // Make sure files where extracted
+      // Make sure files were extracted
       const files = fs.readdirSync(extractsDir);
       assert.equal(files.length, 2);
       files.forEach((file) => {

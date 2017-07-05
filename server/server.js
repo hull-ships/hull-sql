@@ -17,7 +17,9 @@ export default function server(app: express, options: any):express {
 
   app.use(bodyParser.urlencoded({ extended: true }));
 
-  app.use("/kue", queueUiRouter({ hostSecret, queueAgent: queue }));
+  if (queue.adapter.setupUiRouter) {
+    app.use("/kue", queueUiRouter({ hostSecret, queueAgent: queue }));
+  }
 
   app.use((req, res, next) => {
     if (req.hull && req.hull.ship) {

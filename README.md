@@ -49,7 +49,13 @@ You might also want to configure your S3 bucket's lifecycle to expire files auto
 In the S3 section of your AWS console, go to your bucket's Management tab and add a Lifecycle rule to automatically expire Objects after 7 days.
 
 ### Logs
-  
-  Logs that are specific for SQL Connector :
-  
-  * `sync.start` - logged when started importing users from SQL database
+
+Logs that are specific for SQL Connector:
+
+* `incoming.job.*`
+  - jobName: `sync`
+  - stepName: `query` - showing progress for fetching users from database
+  - stepName: `upload` - showing progress for uploading chunks of data to S3
+  - stepName: `import` - showing progress for triggering imports on the platform
+
+* `incoming.job.query` includes the full query which is run on the external database to import data from

@@ -173,7 +173,7 @@ export default class SyncAgent {
     // Wrap the query.
     const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
 
-    this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "query", query: wrappedQuery });
+    this.hull.logger.info("incoming.job.query", { jobName: "sync", query: wrappedQuery });
 
     // Run the method for the specific adapter.
     return this.adapter.in.streamQuery(this.client, wrappedQuery).then(stream => {
@@ -209,7 +209,7 @@ export default class SyncAgent {
 
       if (processed % 1000 === 0) {
         const elapsed = new Date() - started_sync_at;
-        this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "transform", progress: processed, elapsed });
+        this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "query", progress: processed, elapsed });
         if (this.job) {
           this.job.progress(processed);
         }
@@ -257,7 +257,7 @@ export default class SyncAgent {
         })
           .then(({ job, partNumber }) => {
             last_job_id = job.id;
-            this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: `part-${partNumber}`, progress: partNumber, job });
+            this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "upload", progress: partNumber, job });
             return { job };
           })
           .catch(err => {
