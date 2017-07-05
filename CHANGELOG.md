@@ -1,3 +1,6 @@
+## 0.2.2
+- rebuild the stream processing part to avoid batching big arrays in memory
+
 ## 0.2.1
 - upgrade hull-node and switch to bull queue library
 
