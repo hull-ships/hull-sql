@@ -209,7 +209,7 @@ export default class SyncAgent {
 
       if (processed % 1000 === 0) {
         const elapsed = new Date() - started_sync_at;
-        this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "transform", processed, elapsed });
+        this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "transform", progress: processed, elapsed });
         if (this.job) {
           this.job.progress(processed);
           this.job.log("%d proceesed in  %d ms", processed, elapsed);
@@ -258,7 +258,7 @@ export default class SyncAgent {
         })
           .then(({ job, partNumber }) => {
             last_job_id = job.id;
-            this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: `part-${partNumber}`, processed: partNumber, job });
+            this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: `part-${partNumber}`, progress: partNumber, job });
             return { job };
           })
           .catch(err => {
@@ -270,7 +270,7 @@ export default class SyncAgent {
         const duration = new Date() - started_sync_at;
 
         this.metric.increment("ship.incoming.users", processed);
-        this.hull.logger.info("incoming.job.success", { jobName: "sync", duration, processed });
+        this.hull.logger.info("incoming.job.success", { jobName: "sync", duration, progress: processed });
 
         const settings = {
           last_sync_at: started_sync_at,
@@ -300,7 +300,7 @@ export default class SyncAgent {
       stats: { size }
     };
 
-    this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", processed: partNumber, options: _.omit(params, "url") });
+    this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, options: _.omit(params, "url") });
 
     return this.hull.post("/import/users", params)
       .then(job => {
