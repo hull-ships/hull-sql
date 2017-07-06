@@ -28,14 +28,25 @@ const cache = new Cache({
   ttl: 1
 });
 
-const queue = new Queue("bull", {
-  prefix: process.env.KUE_PREFIX || "hull-sql",
-  redis: process.env.REDIS_URL,
-  settings: {
-    lockDuration: process.env.OVERRIDE_LOCK_DURATION || 60000,
-    stalledInterval: process.env.OVERRIDE_STALLED_INTERVAL || 60000
-  }
-});
+let queue;
+
+if (process.env.QUEUE_ADAPTER === "sqs" && process.env.SQS_QUEUE_URL) {
+  queue = new Queue("sqs", {
+    region: process.env.AWS_REGION || "us-east-1",
+    accessKeyId: process.env.AWS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_KEY,
+    queueUrl: process.env.SQS_QUEUE_URL
+  });
+} else {
+  queue = new Queue("bull", {
+    prefix: process.env.KUE_PREFIX || "hull-sql",
+    redis: process.env.REDIS_URL,
+    settings: {
+      lockDuration: process.env.OVERRIDE_LOCK_DURATION || 60000,
+      stalledInterval: process.env.OVERRIDE_STALLED_INTERVAL || 60000
+    }
+  });
+}
 
 const connector = new Hull.Connector({
   hostSecret,

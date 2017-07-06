@@ -205,12 +205,18 @@ export default class SyncAgent {
       const user = {};
       processed += 1;
 
+      const jobId = this.job ? this.job.id : undefined;
+
       if (processed % 1000 === 0) {
         const elapsed = new Date() - started_sync_at;
-        this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "query", progress: processed, elapsed });
-        if (this.job) {
-          this.job.queue.client.extendLock(this.job.queue, this.job.id);
-          this.job.progress(processed);
+        this.hull.logger.info("incoming.job.progress", { jobId, jobName: "sync", stepName: "query", progress: processed, elapsed });
+        if (this.job && this.job.queue && this.job.queue.client) {
+          try {
+            this.job.queue.client.extendLock(this.job.queue, this.job.id);
+            this.job.progress(processed);
+          } catch (err) {
+            // unsupported adatpter operation
+          }
         }
       }
 
