@@ -230,7 +230,8 @@ export default class SyncAgent {
       return user;
     });
 
-    let num = 1;
+    let numBatches = 1;
+    let numUsers = 0;
     let currentStream = null;
     let currentPromise = null;
     const { batchSize, adapter, ship } = this;
@@ -247,17 +248,18 @@ export default class SyncAgent {
       .pipe(transform)
       .pipe(through2({ objectMode: true, highWaterMark: batchSize }, function rotate(user, enc, callback) {
         try {
-          if (currentStream === null || num % batchSize === 0) {
-            num += 1;
+          if (currentStream === null || numUsers % batchSize === 0) {
+            numBatches += 1;
             if (currentStream) {
               currentStream.end();
               this.push(currentPromise);
             }
-            const newUpload = adapter.out.upload(ship.id, (num - 1));
+            const newUpload = adapter.out.upload(ship.id, (numBatches - 1));
             currentStream = newUpload.stream;
             currentPromise = newUpload.promise;
           }
           currentStream.write(`${JSON.stringify(user)}\n`);
+          numUsers += 1;
           callback();
         } catch (e) {
           throw e;
