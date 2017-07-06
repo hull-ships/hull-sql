@@ -32,7 +32,8 @@ const queue = new Queue("bull", {
   prefix: process.env.KUE_PREFIX || "hull-sql",
   redis: process.env.REDIS_URL,
   settings: {
-    lockDuration: process.env.OVERRIDE_LOCK_DURATION || 60000
+    lockDuration: process.env.OVERRIDE_LOCK_DURATION || 60000,
+    stalledInterval: process.env.OVERRIDE_STALLED_INTERVAL || 60000
   }
 });
 
