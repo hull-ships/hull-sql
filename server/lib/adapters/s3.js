@@ -1,15 +1,12 @@
 /**
  * Configure the streaming to AWS.
  */
-
 import Stream from "stream";
 import Aws from "aws-sdk";
+import through2 from "through2";
 
-export function upload(users, shipId, partNumber) {
-  // Convert users array to stream
-  const stream = new Stream.Readable();
-  users.forEach(user => stream.push(`${JSON.stringify(user)}\n`));
-  stream.push(null);
+export function upload(shipId, partNumber) {
+  const stream = new Stream.PassThrough();
 
   const Body = new Stream.PassThrough();
   const Bucket = process.env.BUCKET_PATH;
@@ -20,8 +17,9 @@ export function upload(users, shipId, partNumber) {
     ContentType: "application/json",
   };
 
-  return new Promise((resolve, reject) => {
+  const promise = new Promise((resolve, reject) => {
     const s3 = new Aws.S3();
+    let size = 0;
 
     s3.upload(params, (err) => {
       if (err) {
@@ -30,10 +28,17 @@ export function upload(users, shipId, partNumber) {
         resolve({
           url: s3.getSignedUrl("getObject", { Bucket, Key, Expires: 86400 }),
           partNumber,
-          size: users.length,
+          size
         });
       }
     });
-    stream.pipe(Body);
+    stream
+      .pipe(through2((chunk, enc, callback) => {
+        size += 1;
+        callback(null, chunk);
+      }))
+      .pipe(Body);
   });
+
+  return { promise, stream };
 }

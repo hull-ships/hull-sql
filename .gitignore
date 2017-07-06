@@ -12,3 +12,4 @@ build
 tests/extracts
 
 .idea
+tests/schema/faker

@@ -74,7 +74,8 @@ describe("SyncAgent", () => {
     const syncAgent = new SyncAgent({
       client: {
         logger: {
-          error: () => {}
+          error: () => {},
+          info: () => {}
         }
       },
       ship: {

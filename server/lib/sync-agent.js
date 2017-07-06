@@ -1,20 +1,18 @@
 /**
  * Module dependencies.
  */
-
 import _ from "lodash";
 import moment from "moment";
 import URI from "urijs";
-import BatchStream from "batch-stream";
 import ps from "promise-streams";
 
 // Map each record of the stream.
 import map from "through2-map";
+import through2 from "through2";
 
 import * as Adapters from "./adapters";
 
 const DEFAULT_BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "10000", 10);
-const NB_CONCURRENT_BATCH = 3;
 const FULL_IMPORT_DAYS = process.env.FULL_IMPORT_DAYS || "10000";
 
 /**
@@ -142,7 +140,7 @@ export default class SyncAgent {
   }
 
   startImport(options = {}) {
-    this.hull.logger.info("sync.start", options);
+    this.hull.logger.info("incoming.job.start", { jobName: "sync", type: "user", options });
     const query = this.getQuery();
     const started_sync_at = new Date();
     if (!options.import_days) {
@@ -151,7 +149,7 @@ export default class SyncAgent {
     return this.streamQuery(query, options)
       .then(stream => this.sync(stream, started_sync_at))
       .catch(err => {
-        this.hull.logger.error("sync.error", { message: err.message });
+        this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: err.message });
         return Promise.reject(err);
       });
   }
@@ -173,13 +171,13 @@ export default class SyncAgent {
     // Wrap the query.
     const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
 
-    this.hull.logger.debug("sync.query", { query: wrappedQuery });
+    this.hull.logger.info("incoming.job.query", { jobName: "sync", query: wrappedQuery });
 
     // Run the method for the specific adapter.
     return this.adapter.in.streamQuery(this.client, wrappedQuery).then(stream => {
       return stream;
     }, err => {
-      this.hull.logger.error("sync.error", { message: err.toString() });
+      this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: err.toString() });
       err.status = 403;
       throw err;
     });
@@ -209,7 +207,7 @@ export default class SyncAgent {
 
       if (processed % 1000 === 0) {
         const elapsed = new Date() - started_sync_at;
-        this.hull.logger.info("sync.progress", { processed, elapsed });
+        this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "query", progress: processed, elapsed });
         if (this.job) {
           this.job.progress(processed);
         }
@@ -232,44 +230,68 @@ export default class SyncAgent {
       return user;
     });
 
-    const batch = new BatchStream({ size: this.batchSize });
-
-    let num = 0;
+    let numBatches = 1;
+    let numUsers = 0;
+    let currentStream = null;
+    let currentPromise = null;
+    const { batchSize, adapter, ship } = this;
 
     let last_job_id = null;
     return new Promise((resolve, reject) => {
-      stream
+      ps.wait(stream
       .on("error", (err) => {
-        this.hull.logger.error("sync.error", { message: err.toString() });
+        this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: err.toString() });
         if (stream.close) stream.close();
         this.adapter.in.closeConnection(this.client);
         reject(err);
       })
       .pipe(transform)
-      .pipe(batch)
-      .pipe(ps.map({ concurrent: NB_CONCURRENT_BATCH }, users => {
-        num += 1;
-        return this.adapter.out.upload(users, this.ship.id, num).then(({ url, partNumber, size }) => {
-          if (users.length > 0) {
+      .pipe(through2({ objectMode: true, highWaterMark: batchSize }, function rotate(user, enc, callback) {
+        try {
+          if (currentStream === null || numUsers % batchSize === 0) {
+            numBatches += 1;
+            if (currentStream) {
+              currentStream.end();
+              this.push(currentPromise);
+            }
+            const newUpload = adapter.out.upload(ship.id, (numBatches - 1));
+            currentStream = newUpload.stream;
+            currentPromise = newUpload.promise;
+          }
+          currentStream.write(`${JSON.stringify(user)}\n`);
+          numUsers += 1;
+          callback();
+        } catch (e) {
+          throw e;
+        }
+      }, function finish(callback) {
+        currentStream.end();
+        this.push(currentPromise);
+        callback();
+      }))
+      .pipe(ps.map({ highWaterMark: 1 }, ({ url, partNumber, size }) => {
+        return (() => {
+          this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "upload", progress: partNumber, size });
+          if (size > 0) {
             return this.startImportJob(url, partNumber, size);
           }
           return false;
+        })()
+        .then(({ job }) => {
+          last_job_id = job.id;
+          this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, job });
+          return { job };
         })
-          .then(({ job, partNumber }) => {
-            last_job_id = job.id;
-            this.hull.logger.info(`sync.job.part.${partNumber}`, { job });
-            return { job };
-          })
-          .catch(err => {
-            this.hull.logger.error("sync.error", err.message);
-          });
+        .catch(err => {
+          this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: err.message });
+        });
       }))
-      .wait()
+      )
       .then(() => {
         const duration = new Date() - started_sync_at;
 
         this.metric.increment("ship.incoming.users", processed);
-        this.hull.logger.info("sync.done", { duration, processed });
+        this.hull.logger.info("incoming.job.success", { jobName: "sync", duration, progress: processed });
 
         const settings = {
           last_sync_at: started_sync_at,
@@ -299,7 +321,7 @@ export default class SyncAgent {
       stats: { size }
     };
 
-    this.hull.logger.info("sync.import", _.omit(params, "url"));
+    this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, options: _.omit(params, "url") });
 
     return this.hull.post("/import/users", params)
       .then(job => {

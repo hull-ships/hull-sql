@@ -57,8 +57,8 @@ describe("Batch SQL import jobs", () => {
     agent.startImport().then(() => {
       // Make sure jobs created
       assert(createJob.calledTwice);
-      assert(createJob.firstCall.args[1].name.match(/part 1/));
-      assert(createJob.secondCall.args[1].name.match(/part 2/));
+      assert(createJob.parent.firstCall.args[1].name.match(/part 1/));
+      assert(createJob.parent.secondCall.args[1].name.match(/part 2/));
 
       assert(updateShip.calledOnce);
 
@@ -67,7 +67,7 @@ describe("Batch SQL import jobs", () => {
       assert.equal(metricIncrement.firstCall.args[1], 3);
 
 
-      // Make sure files where extracted
+      // Make sure files were extracted
       const files = fs.readdirSync(extractsDir);
       assert.equal(files.length, 2);
       files.forEach((file) => {

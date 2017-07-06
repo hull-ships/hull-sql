@@ -1,3 +1,7 @@
+## 0.2.3
+- rebuild the stream processing part to avoid batching big arrays in memory
+- adjusted logs to match the convention
+
 ## 0.2.2
 - update job progress
 
