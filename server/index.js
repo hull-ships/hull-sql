@@ -30,7 +30,10 @@ const cache = new Cache({
 
 const queue = new Queue("bull", {
   prefix: process.env.KUE_PREFIX || "hull-sql",
-  redis: process.env.REDIS_URL
+  redis: process.env.REDIS_URL,
+  settings: {
+    lockDuration: process.env.OVERRIDE_LOCK_DURATION || 60000
+  }
 });
 
 const connector = new Hull.Connector({
