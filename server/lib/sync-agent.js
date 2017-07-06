@@ -209,7 +209,7 @@ export default class SyncAgent {
         const elapsed = new Date() - started_sync_at;
         this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "query", progress: processed, elapsed });
         if (this.job) {
-          this.job.queue.client.extendLock(10000);
+          this.job.queue.client.extendLock(this.job.queue, this.job.id);
           this.job.progress(processed);
         }
       }
