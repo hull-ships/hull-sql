@@ -40,7 +40,7 @@ import "codemirror/mode/sql/sql.js";
 
       if (query === "") return swal("Empty query", "The current query is empty", "warning");
 
-      if (query !== original_query) return swal("Unsaved query", "The current query is not the query you saved. Please save your query first.", "warning");
+      if (query !== original_query) return swal("Unsaved query", `The current query '${query}' is not the query you saved '${original_query}'. Please save your query first.`, "warning");
 
       return swal({
         title: "Import the users from the current query? ",
