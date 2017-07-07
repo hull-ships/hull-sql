@@ -13,3 +13,5 @@ tests/extracts
 
 .idea
 tests/schema/faker
+
+.paclage-lock.json
