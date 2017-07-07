@@ -2,7 +2,7 @@
   <title>Hull SQL</title>
   <link rel="stylesheet" href="//dd04rofzygnm0.cloudfront.net/releases/master/865f04865d2448286626bac92c518a8f8ea8bafe/stylesheets/neue.css">
   <script type="text/javascript" charset="utf-8">
-    window.original_query = "<% query %>";
+    window.original_query = "<%- query %>";
   </script>
   <script src="/ship.js" type="text/javascript" charset="utf-8" async defer></script>
 </head>
@@ -40,7 +40,7 @@
                   <div class="alert alert-info">
                     <h4 class='mt-05 mb-0'>Preview &amp; Save queries</h4>
                     <p>Each time you change your query, you <strong>must</strong> run a successful preview by clicking the <strong>Preview</strong> below before you can <strong>Save it</strong> (with the Save button on the top right of this screen)</p>
-                    <small>In preview mode, your query will be run with a <code>LIMIT 100</code></small>
+                    <small>In preview mode, your query will be run with a <code>LIMIT 100</code> or <code>TOP(100)</code> in T-SQL</small>
                   </div>
                   <div class="mt-1 mb-1">
                     <button id="button_preview" class="mb-1 btn-block btn-pill btn-rounded btn-success btn to-disable"><i class="icon icon-eye_open"></i> Preview</button>
