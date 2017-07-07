@@ -87,6 +87,7 @@ describe("Server", () => {
 
   it("should return status OK for /admin.html endpoint", (done) => {
     http.get(`http://localhost:${port}/admin.html`, (res) => {
+      console.log("status code", res.statusCode);
       assert(res.statusCode === 200);
       done();
     }

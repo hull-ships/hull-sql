@@ -40,7 +40,8 @@
       "enum": [
         "redshift",
         "postgres",
-        "mysql"
+        "mysql",
+        "mssql"
       ],
       "default": "postgres",
       "required" : true

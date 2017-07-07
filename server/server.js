@@ -31,7 +31,7 @@ export default function server(app: express, options: any):express {
   });
 
   app.get("/admin.html", ({ agent }, res) => {
-    if (agent.isConnectionStringConfigured()) {
+    if (agent.areConnectionParametersConfigured()) {
       const query = agent.getQuery();
       res.render("connected.html", {
         query,
@@ -45,7 +45,7 @@ export default function server(app: express, options: any):express {
 
   app.post("/run", checkConfiguration(), ({ body, agent }, res) => {
     const query = body.query || agent.getQuery();
-
+    console.log(query);
     if (!query) {
       return res.status(403).json({ status: "query string empty" });
     }

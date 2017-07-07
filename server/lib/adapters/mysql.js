@@ -4,6 +4,7 @@
 import mysql from "mysql";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
+import parseConnectionConfig from "../utils/connstr-mysql";
 
 /**
  * mySQL adapter.
@@ -12,58 +13,42 @@ import SequelizeUtils from "sequelize/lib/utils";
 /**
  * Open a new connection.
  *
- * Params:
- *   @connection_string String*
+ * @param {Object} settings The ship settings.
  *
- * Return:
- *   @client Instance
+ * @return {mysql.IConnection} A mysql connection instance
  */
-
-export function openConnection(connection_string) {
+export function openConnection(settings) {
+  const connection_string = parseConnectionConfig(settings);
   return mysql.createConnection(connection_string);
 }
 
 /**
  * Close the connection.
  *
- * Params:
- *   @client Instance
+ * @param {mysql.IConnection} client The mysql client
  */
-
 export function closeConnection(client) {
   client.end();
 }
 
 /**
- * Wrap the user query
- * inside a mySQL request.
+ * Wrap the user query inside a My SQL request.
  *
- * Params:
- *   @query String*
- *   @last_updated_at String
- *
- * Return:
- *   @wrappedQuery String
+ * @param {*} sql The raw SQL query
+ * @param {*} replacements The replacement parameters
  */
-
 export function wrapQuery(sql, replacements) {
   return SequelizeUtils.formatNamedParameters(sql, replacements, "mysql");
 }
 
 /**
- * Run a wrapped query.
+ * Runs the query using the specified client and options.
+ * @param {mysql.IConnection} client The My SQL client.
+ * @param {string} query The query to execute.
+ * @param {Object} options The options.
  *
- * Params:
- *   @client Instance*
- *   @wrappedQuery String*
- *   @callback Function*
- *
- * Return:
- *   @callback Function
- *     - @error Object
- *     - @rows Array
+ * @returns {Promise} A promise object of the following format: { rows }
  */
-
 export function runQuery(client, query, options = {}) {
   return new Promise((resolve, reject) => {
     // Connect the connection.
@@ -93,19 +78,13 @@ export function runQuery(client, query, options = {}) {
 }
 
 /**
- * Stream a wrapped query.
+ * Creates a readable stream that contains the query result.
+ * @param {mysql.IConnection} client The My SQL client.
+ * @param {string} query The query to execute.
+ * @param {Object} options The options.
  *
- * Params:
- *   @client Instance*
- *   @wrappedQuery String*
- *   @callback Function*
- *
- * Return:
- *   @callback Function
- *     - @error Object
- *     - @stream Stream
+ * @returns {Promise} A promise object that wraps a stream.
  */
-
 export function streamQuery(client, query, options = {}) {
   return new Promise((resolve, reject) => {
     // Connect the connection.

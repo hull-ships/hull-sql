@@ -1,7 +1,7 @@
 // @flow
 export default function checkConfigurationFactory({ checkQueryString = false }: Object = {}): Function {
   return function checkConfigurationMiddleware({ hull, agent }, res, next) {
-    if (!agent.isConnectionStringConfigured()) {
+    if (!agent.areConnectionParametersConfigured()) {
       hull.client.logger.error("connection string not configured");
       return res.status(403).json({ status: "connection string not configured" });
     }
