@@ -1,5 +1,5 @@
 {
-  "name": "SQL Connector",
+  "name": "SQL Importer",
   "description": "Import data from your SQL databases",
   "picture": "picture.png",
   "version": "0.3.0",
@@ -110,19 +110,6 @@
       "type": "string",
       "title": "Password",
       "required" : true
-    },
-    {
-      "type": "string",
-      "format": "title",
-      "name": "db_info_staticip",
-      "title": "Static IP Addresses"
-    },
-    {
-      "name": "db_staticip_hero",
-      "type": "string",
-      "headerTemplate": "If the firewall of your database server requires to whitelist IP addresses, you can install the enterprise version of this connector. Here is how to: Go to the tab 'Advanced' and change the Ship URL to `https://hull-sql-enterprise.connectors.hullapp.net/` and save your changes. That's it!<br><br>The enterprise connector has the following static IP addresses:<br>- 34.228.67.206<br>- 34.195.105.157<br>- 52.1.26.74<br>- 34.230.113.192",
-      "format": "information",
-      "title":"How to..."
     },
     {
       "name": "query",

@@ -2,7 +2,7 @@
 import {
   expect
 } from "chai";
-import parseConnectionConfig from "../server/lib/utils/connstr-mssql";
+import * as mssql from "../server/lib/adapters/mssql";
 
 describe("Connection string util for MSSQL", () => {
   it("should build the connectionString", () => {
@@ -19,7 +19,7 @@ describe("Connection string util for MSSQL", () => {
       import_days: 10
     };
 
-    const tediousOpts = parseConnectionConfig(private_settings);
+    const tediousOpts = mssql.parseConnectionConfig(private_settings);
     expect(tediousOpts.userName).to.be.equal(private_settings.db_user);
     expect(tediousOpts.password).to.be.equal(private_settings.db_password);
     expect(tediousOpts.server).to.be.equal(private_settings.db_host);
@@ -41,7 +41,7 @@ describe("Connection string util for MSSQL", () => {
       import_days: 10
     };
 
-    const tediousOpts = parseConnectionConfig(private_settings);
+    const tediousOpts = mssql.parseConnectionConfig(private_settings);
     expect(tediousOpts.userName).to.be.equal(private_settings.db_user);
     expect(tediousOpts.password).to.be.equal(private_settings.db_password);
     expect(tediousOpts.server).to.be.equal(private_settings.db_host);

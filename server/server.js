@@ -45,7 +45,7 @@ export default function server(app: express, options: any):express {
 
   app.post("/run", checkConfiguration(), ({ body, agent }, res) => {
     const query = body.query || agent.getQuery();
-    console.log(query);
+
     if (!query) {
       return res.status(403).json({ status: "query string empty" });
     }
