@@ -2,6 +2,7 @@
 /* global original_query, swal */
 import CodeMirror from "codemirror";
 import $ from "jquery";
+import _ from "lodash";
 import "codemirror/lib/codemirror.css";
 import "sweetalert/dist/sweetalert.css";
 import "sweetalert";
@@ -101,7 +102,6 @@ import "codemirror/mode/sql/sql.js";
     }
 
     $("#button_preview").click(() => {
-
       empty();
       good_query = null;
 
@@ -121,9 +121,9 @@ import "codemirror/mode/sql/sql.js";
 
           try {
             if (data.entries && data.entries.length) {
-              for (const columnName in data.entries[0]) {
+              _.forEach(data.entries[0], (columnName) => {
                 $("#result thead tr").append(`<th>${columnName}<em>(${getColumnType(data.entries, columnName)})</em></th>`);
-              }
+              });
 
               data.entries.forEach((element) => {
                 const currentRow = [];
@@ -182,6 +182,8 @@ import "codemirror/mode/sql/sql.js";
           }
         }
       });
+
+      return false;
     });
   });
 }());
