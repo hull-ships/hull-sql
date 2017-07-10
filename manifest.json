@@ -22,9 +22,9 @@
     },
     {
       "name": "overwrite",
-      "title": "Always overwrite data in Hull with values from SQL",
+      "title": "Use SQL value in case of data conflict",
       "type": "boolean",
-      "default": "false"
+      "default": "true"
     },
     {
       "name": "import_days",
