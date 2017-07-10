@@ -30,7 +30,7 @@ import "codemirror/mode/sql/sql.js";
 
     function getStoredQuery() {
       $.ajax({
-        url: "/storedquery",
+        url: `/storedquery${window.location.search}`,
         type: "get",
         success(data) {
           stored_query = data.query;
