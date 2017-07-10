@@ -10,7 +10,8 @@ import "codemirror/mode/sql/sql.js";
 
 (function boot() {
   let good_query = null;
-  const { original_query, swal } = window;
+  let stored_query = "";
+  const { swal } = window;
 
   $(() => {
     const editor = CodeMirror.fromTextArea(document.getElementById("querying"), {
@@ -27,6 +28,21 @@ import "codemirror/mode/sql/sql.js";
 
     $(".to-disable").prop("disabled", false);
 
+    function getStoredQuery() {
+      $.ajax({
+        url: "/storedquery",
+        type: "get",
+        success(data) {
+          stored_query = data.query;
+        },
+        error(err) {
+          swal("Stored query", `Failed to load stored query: ${err.message}`, "error");
+        }
+      });
+    }
+
+    getStoredQuery();
+
     function empty() {
       $("#preview-query").empty().hide();
       $("#error-query").empty().hide();
@@ -41,7 +57,7 @@ import "codemirror/mode/sql/sql.js";
 
       if (query === "") return swal("Empty query", "The current query is empty", "warning");
 
-      if (query !== original_query) return swal("Unsaved query", `The current query '${query}' is not the query you saved '${original_query}'. Please save your query first.`, "warning");
+      if (query !== stored_query) return swal("Unsaved query", `The current query '${query}' is not the query you saved '${stored_query}'. Please save your query first.`, "warning");
 
       return swal({
         title: "Import the users from the current query? ",
@@ -141,13 +157,13 @@ import "codemirror/mode/sql/sql.js";
 
             good_query = query;
           } catch (err) {
-            good_query = original_query;
+            good_query = stored_query;
             $("#error-query")
               .empty()
               .show()
               .append(data.message);
           } finally {
-            if (good_query !== original_query) {
+            if (good_query !== stored_query) {
               window.parent.postMessage(JSON.stringify({
                 from: "embedded-ship",
                 action: "update",
@@ -169,7 +185,7 @@ import "codemirror/mode/sql/sql.js";
               .empty()
               .show()
               .append(err.message);
-            good_query = original_query;
+            good_query = stored_query;
             window.parent.postMessage(JSON.stringify({
               from: "embedded-ship",
               action: "update",

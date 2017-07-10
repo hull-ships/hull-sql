@@ -73,5 +73,10 @@ export default function server(app: express, options: any):express {
     res.json(response);
   });
 
+  app.get("/storedquery", checkConfiguration(), ({ agent }, res) => {
+    const query = agent.getQuery();
+    res.json({ query });
+  });
+
   return app;
 }
