@@ -161,7 +161,7 @@ export function runQuery(client, query, options) {
  * @returns {Promise} A promise object that wraps a stream.
  */
 export function streamQuery(client, query, options = {}) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const confoptions = _.merge(client.config.options, options);
     const conf = _.cloneDeep(client.config);
     conf.options = confoptions;
@@ -178,13 +178,11 @@ export function streamQuery(client, query, options = {}) {
       conn.on("connect", (err) => { // eslint-disable-line consistent-return
         if (err) {
           stream.emit("error", err);
-          return reject(err);
         }
 
         const request = new tedious.Request(query, (reqError) => { // eslint-disable-line consistent-return
           if (reqError) {
             stream.emit("error", reqError);
-            return reject(reqError);
           }
         });
 

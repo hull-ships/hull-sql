@@ -15,3 +15,5 @@ tests/extracts
 tests/schema/faker
 
 .package-lock.json
+
+.vscode

@@ -2,7 +2,7 @@
 import {
   expect
 } from "chai";
-import parseConnectionConfig from "../server/lib/utils/connstr-mysql";
+import parseConnectionConfig from "../server/lib/utils/parse-connection-config";
 
 describe("Connection string util for MySQL and PostgreSQL", () => {
   it("should build the connectionString", () => {

@@ -5,7 +5,7 @@ import Pg from "pg";
 import QueryStream from "pg-query-stream";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
-import parseConnectionConfig from "../utils/connstr-mysql";
+import parseConnectionConfig from "../utils/parse-connection-config";
 
 /**
  * PostgreSQL adapter.
