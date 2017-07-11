@@ -201,7 +201,7 @@ export default class SyncAgent {
     let processed = 0;
     let last_updated_at;
 
-    const transform = map.obj({ objectMode: true }, (record) => {
+    const transform = map({ objectMode: true }, (record) => {
       const user = {};
       processed += 1;
 

@@ -1,6 +1,5 @@
 ## 0.2.5
 - change the highwaterMark on rotating stream
-- use object mode for transformation stream mapping
 
 ## 0.2.4
 - extend lock times on bull queue internals
