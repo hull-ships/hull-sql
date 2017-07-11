@@ -201,7 +201,7 @@ export default class SyncAgent {
     let processed = 0;
     let last_updated_at;
 
-    const transform = map({ objectMode: true }, (record) => {
+    const transform = map.obj({ objectMode: true }, (record) => {
       const user = {};
       processed += 1;
 
@@ -253,7 +253,7 @@ export default class SyncAgent {
         reject(err);
       })
       .pipe(transform)
-      .pipe(through2({ objectMode: true, highWaterMark: batchSize }, function rotate(user, enc, callback) {
+      .pipe(through2({ objectMode: true, highWaterMark: 10 }, function rotate(user, enc, callback) {
         try {
           if (currentStream === null || numUsers % batchSize === 0) {
             numBatches += 1;
