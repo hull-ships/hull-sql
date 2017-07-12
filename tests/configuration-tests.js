@@ -69,7 +69,7 @@ describe("Configuration", () => {
 
     const req = http.request(requestOptions, (res) => {
       res.setEncoding("utf-8");
-      console.log("status code:", res.statusCode);
+      console.log("status code", res.statusCode);
       assert(res.statusCode === 403);
       let respContent = "";
 

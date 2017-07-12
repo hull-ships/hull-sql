@@ -2,6 +2,7 @@
 /* global original_query, swal */
 import CodeMirror from "codemirror";
 import $ from "jquery";
+import _ from "lodash";
 import "codemirror/lib/codemirror.css";
 import "sweetalert/dist/sweetalert.css";
 import "sweetalert";
@@ -9,7 +10,8 @@ import "codemirror/mode/sql/sql.js";
 
 (function boot() {
   let good_query = null;
-  const { original_query, swal } = window;
+  let stored_query = "";
+  const { swal } = window;
 
   $(() => {
     const editor = CodeMirror.fromTextArea(document.getElementById("querying"), {
@@ -26,6 +28,21 @@ import "codemirror/mode/sql/sql.js";
 
     $(".to-disable").prop("disabled", false);
 
+    function getStoredQuery() {
+      $.ajax({
+        url: `/storedquery${window.location.search}`,
+        type: "get",
+        success(data) {
+          stored_query = data.query;
+        },
+        error(err) {
+          swal("Stored query", `Failed to load stored query: ${err.message}`, "error");
+        }
+      });
+    }
+
+    getStoredQuery();
+
     function empty() {
       $("#preview-query").empty().hide();
       $("#error-query").empty().hide();
@@ -40,7 +57,7 @@ import "codemirror/mode/sql/sql.js";
 
       if (query === "") return swal("Empty query", "The current query is empty", "warning");
 
-      if (query !== original_query) return swal("Unsaved query", "The current query is not the query you saved. Please save your query first.", "warning");
+      if (query !== stored_query) return swal("Unsaved query", `The current query '${query}' is not the query you saved '${stored_query}'. Please save your query first.`, "warning");
 
       return swal({
         title: "Import the users from the current query? ",
@@ -101,7 +118,6 @@ import "codemirror/mode/sql/sql.js";
     }
 
     $("#button_preview").click(() => {
-
       empty();
       good_query = null;
 
@@ -121,9 +137,9 @@ import "codemirror/mode/sql/sql.js";
 
           try {
             if (data.entries && data.entries.length) {
-              for (const columnName in data.entries[0]) {
+              _.forEach(data.entries[0], (value, columnName) => {
                 $("#result thead tr").append(`<th>${columnName}<em>(${getColumnType(data.entries, columnName)})</em></th>`);
-              }
+              });
 
               data.entries.forEach((element) => {
                 const currentRow = [];
@@ -141,13 +157,13 @@ import "codemirror/mode/sql/sql.js";
 
             good_query = query;
           } catch (err) {
-            good_query = original_query;
+            good_query = stored_query;
             $("#error-query")
               .empty()
               .show()
               .append(data.message);
           } finally {
-            if (good_query !== original_query) {
+            if (good_query !== stored_query) {
               window.parent.postMessage(JSON.stringify({
                 from: "embedded-ship",
                 action: "update",
@@ -169,7 +185,7 @@ import "codemirror/mode/sql/sql.js";
               .empty()
               .show()
               .append(err.message);
-            good_query = original_query;
+            good_query = stored_query;
             window.parent.postMessage(JSON.stringify({
               from: "embedded-ship",
               action: "update",
@@ -182,6 +198,8 @@ import "codemirror/mode/sql/sql.js";
           }
         }
       });
+
+      return false;
     });
   });
 }());

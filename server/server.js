@@ -31,7 +31,7 @@ export default function server(app: express, options: any):express {
   });
 
   app.get("/admin.html", ({ agent }, res) => {
-    if (agent.isConnectionStringConfigured()) {
+    if (agent.areConnectionParametersConfigured()) {
       const query = agent.getQuery();
       res.render("connected.html", {
         query,
@@ -71,6 +71,11 @@ export default function server(app: express, options: any):express {
     }
 
     res.json(response);
+  });
+
+  app.get("/storedquery", checkConfiguration(), ({ agent }, res) => {
+    const query = agent.getQuery();
+    res.json({ query });
   });
 
   return app;

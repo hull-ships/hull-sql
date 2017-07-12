@@ -3,7 +3,6 @@
  */
 import _ from "lodash";
 import moment from "moment";
-import URI from "urijs";
 import ps from "promise-streams";
 
 // Map each record of the stream.
@@ -29,13 +28,9 @@ class ConfigurationError extends Error {
 export default class SyncAgent {
 
   /**
-   * Constructor.
-   *
-   * Params:
-   *   @ship Object*
-   *   @hull Object*
+   * Creates a new SyncAgent instance.
+   * @param {*} param0 The configuration for the client.
    */
-
   constructor({ ship, client, job, metric, batchSize = DEFAULT_BATCH_SIZE }) {
     // Expose the ship settings
     // and the Hull instance.
@@ -47,8 +42,9 @@ export default class SyncAgent {
 
     this.importDelay = _.random(0, process.env.IMPORT_DELAY || 120);
 
+    const private_settings = this.ship.private_settings;
     // Get the DB type.
-    const { db_type, output_type = "s3" } = this.ship.private_settings;
+    const { db_type, output_type = "s3" } = private_settings;
     this.adapter = { in: Adapters[db_type], out: Adapters[output_type] };
 
     // Make sure the DB type is known.
@@ -61,52 +57,52 @@ export default class SyncAgent {
       throw new ConfigurationError(`Invalid output type ${output_type}.`);
     }
 
-    const connectionString = this.connectionString();
-
-    this.client = this.adapter.in.openConnection(connectionString);
+    this.client = this.adapter.in.openConnection(private_settings);
     return this;
   }
 
+  /**
+   * Returns whether sync is enabled or not.
+   * @return {boolean} True if sync is enabled; otherwise false.
+   */
   isEnabled() {
     return this.ship.private_settings.enabled === true;
   }
 
-  isConnectionStringConfigured() {
-    return !!this.connectionString();
-  }
-
-  isQueryStringConfigured() {
-    return !!this.getQuery();
-  }
-
-  connectionString() {
+  /**
+   * Returns whether all required connection parameters have been supplied.
+   * @return {boolean} True if all parameters are specified; otherwise false.
+   */
+  areConnectionParametersConfigured() {
     const settings = this.ship.private_settings;
     const conn = ["type", "host", "port", "name", "user", "password"].reduce((c, key) => {
       let val = settings[`db_${key}`];
       if (key === "type" && val === "redshift") val = "postgres";
       if (c && val && val.length > 0) {
-        return { ...c, [key]: val };
+        return { ...c,
+          [key]: val
+        };
       }
       return false;
     }, {});
-    if (conn) {
-      const uri = URI()
-        .protocol(conn.type)
-        .username(conn.user)
-        .password(conn.password)
-        .host(conn.host)
-        .port(conn.port)
-        .path(conn.name);
 
-      if (settings.db_options) {
-        return uri.query(settings.db_options).toString();
-      }
-      return uri.toString();
-    }
+    if (conn) return true;
 
     return false;
   }
 
+  /**
+   * Returns whether the query string has been configured.
+   * @return {boolean} True if the query string is set; otherwise false.
+   */
+  isQueryStringConfigured() {
+    return !!this.getQuery();
+  }
+
+  /**
+   * Returns the SQL query from the ship settings.
+   * @return {string} The SQL query string as supplied by the user.
+   */
   getQuery() {
     return this.ship.private_settings.query;
   }
@@ -135,6 +131,7 @@ export default class SyncAgent {
     // Run the method for the specific adapter.
     return this.adapter.in.runQuery(this.client, wrappedQuery, options)
       .then(result => {
+        this.adapter.in.closeConnection(this.client);
         return { entries: result.rows };
       });
   }
@@ -272,7 +269,11 @@ export default class SyncAgent {
           throw e;
         }
       }, function finish(callback) {
-        currentStream.end();
+        if (currentStream && currentStream.end) {
+          // Readable does not implement end function,
+          // so we need to be careful here.
+          currentStream.end();
+        }
         this.push(currentPromise);
         callback();
       }))

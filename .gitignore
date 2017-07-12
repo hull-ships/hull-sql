@@ -13,3 +13,7 @@ tests/extracts
 
 .idea
 tests/schema/faker
+
+.package-lock.json
+
+.vscode
