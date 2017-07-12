@@ -1,3 +1,7 @@
+## 0.2.6
+- Add support for MS SQL
+- Fix issue with saved queries
+
 ## 0.2.5
 - change the highwaterMark on rotating stream
 
