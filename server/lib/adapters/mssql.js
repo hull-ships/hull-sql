@@ -94,10 +94,22 @@ export function runQuery(client, query, options) {
     const conf = _.cloneDeep(client.config);
     conf.options = confoptions;
 
-    const conn = new tedious.Connection(conf);
+    let conn = new tedious.Connection(conf);
 
     conn.on("connect", (err) => { // eslint-disable-line consistent-return
       if (err) {
+        if (err.message && err.message.contains("ECONNRESET")) {
+          // This is an error caused by the Azure Load Balancer that is not really an error,
+          // we can recover from it pretty easily by simply reconnecting.
+          // See https://github.com/tediousjs/tedious/issues/300
+          try {
+            conn.close();
+          } finally {
+            // if the connection has been already closed, the call above will result in an error
+            // but we can recover here:
+            conn = new tedious.Connection(conf);
+          }
+        }
         return reject(err);
       }
 

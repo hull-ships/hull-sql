@@ -137,7 +137,7 @@ import "codemirror/mode/sql/sql.js";
 
           try {
             if (data.entries && data.entries.length) {
-              _.forEach(data.entries[0], (columnName) => {
+              _.forEach(data.entries[0], (value, columnName) => {
                 $("#result thead tr").append(`<th>${columnName}<em>(${getColumnType(data.entries, columnName)})</em></th>`);
               });
 

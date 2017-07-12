@@ -131,6 +131,7 @@ export default class SyncAgent {
     // Run the method for the specific adapter.
     return this.adapter.in.runQuery(this.client, wrappedQuery, options)
       .then(result => {
+        this.adapter.in.closeConnection(this.client);
         return { entries: result.rows };
       });
   }
@@ -261,7 +262,11 @@ export default class SyncAgent {
           throw e;
         }
       }, function finish(callback) {
-        currentStream.end();
+        if (currentStream && currentStream.end) {
+          // Readable does not implement end function,
+          // so we need to be careful here.
+          currentStream.end();
+        }
         this.push(currentPromise);
         callback();
       }))
