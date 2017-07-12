@@ -250,7 +250,7 @@ export default class SyncAgent {
         reject(err);
       })
       .pipe(transform)
-      .pipe(through2({ objectMode: true, highWaterMark: batchSize }, function rotate(user, enc, callback) {
+      .pipe(through2({ objectMode: true, highWaterMark: 10 }, function rotate(user, enc, callback) {
         try {
           if (currentStream === null || numUsers % batchSize === 0) {
             numBatches += 1;
