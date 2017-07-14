@@ -7,7 +7,7 @@ import stream from "stream";
 import SyncAgent from "../server/lib/sync-agent.js";
 
 describe("SyncAgent", () => {
-  it.only("should pass import_start_date to adapter", () => {
+  it("should pass import_start_date to adapter", () => {
     const syncAgent = new SyncAgent({
       ship: {
         private_settings: {

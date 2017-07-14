@@ -151,6 +151,7 @@ export default class SyncAgent {
   }
 
   validateQuery(query) {
+    if (this.db_type === "filesystem") return { isValid: true };
     const replaceAll = (string, search, replacement) => string.split(search).join(replacement);
     const strippedQuery =
       query
