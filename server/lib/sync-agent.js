@@ -147,7 +147,7 @@ export default class SyncAgent {
   }
 
   postgresResultIsJson(rows) {
-    return _.some(rows, (row) => isJSON(row));
+    return _.some(rows, (row) => _.some(Object.keys(row), key => isJSON(key)));
   }
 
   validateQuery(query) {
