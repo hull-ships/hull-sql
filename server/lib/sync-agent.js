@@ -4,6 +4,7 @@
 import _ from "lodash";
 import moment from "moment";
 import ps from "promise-streams";
+import isJSON from "is-valid-json";
 
 // Map each record of the stream.
 import map from "through2-map";
@@ -45,6 +46,7 @@ export default class SyncAgent {
     const private_settings = this.ship.private_settings;
     // Get the DB type.
     const { db_type, output_type = "s3" } = private_settings;
+    this.db_type = db_type;
     this.adapter = { in: Adapters[db_type], out: Adapters[output_type] };
 
     // Make sure the DB type is known.
@@ -127,13 +129,56 @@ export default class SyncAgent {
       last_updated_at: options.last_updated_at || oneDayAgo.toISOString(),
       import_start_date: moment().subtract(this.ship.private_settings.import_days, "days").format()
     };
-    const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
-    // Run the method for the specific adapter.
-    return this.adapter.in.runQuery(this.client, wrappedQuery, options)
-      .then(result => {
-        this.adapter.in.closeConnection(this.client);
-        return { entries: result.rows };
-      });
+
+    const validationResult = this.validateQuery(query);
+    if (validationResult.isValid) {
+      const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
+      // Run the method for the specific adapter.
+      return this.adapter.in.runQuery(this.client, wrappedQuery, options)
+        .then(result => {
+          this.adapter.in.closeConnection(this.client);
+          if (this.db_type === "postgres" && this.postgresResultIsJson(result.rows)) {
+            return { error: "Result from postgres database is in json format" };
+          }
+          return { entries: result.rows };
+        });
+    }
+    return { error: validationResult.reason };
+  }
+
+  postgresResultIsJson(rows) {
+    return _.some(rows, (row) => isJSON(row));
+  }
+
+  validateQuery(query) {
+    const replaceAll = (string, search, replacement) => string.split(search).join(replacement);
+    const strippedQuery =
+      query
+        .replace("SELECT", "select")
+        .replace("FROM", "from")
+        .match(new RegExp("select (.*) from"));
+
+    if (strippedQuery === null) {
+      return { isValid: false, reason: "Invalid Query" };
+    }
+    const nameAttributes = replaceAll(replaceAll(strippedQuery[1].split(","), " ", ""), "\"", "");
+
+    const simpleAttributes = nameAttributes.map(field => {
+      if (field.includes("as")) {
+        return field.split(" ")[2];
+      }
+      return field;
+    });
+
+    if (!_.includes(simpleAttributes, "email") && !_.includes(simpleAttributes, "external_id")) {
+      return { isValid: false, reason: "Name attributes does not include at least one required parameters: email or external_id" };
+    }
+
+    if (_.some(simpleAttributes, (field) => field.includes(".") || field.includes("$"))) {
+      return { isValid: false, reason: "Query should not contain any special characters: `$`, `.`" };
+    }
+
+    return { isValid: true };
   }
 
   startImport(options = {}) {
