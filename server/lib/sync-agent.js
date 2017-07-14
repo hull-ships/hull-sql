@@ -143,7 +143,7 @@ export default class SyncAgent {
           return { entries: result.rows };
         });
     }
-    return { error: validationResult.reason };
+    return Promise.resolve({ error: validationResult.reason });
   }
 
   postgresResultIsJson(rows) {
@@ -159,18 +159,18 @@ export default class SyncAgent {
         .match(new RegExp("select (.*) from"));
 
     if (strippedQuery === null) {
-      return { isValid: false, reason: "Invalid Query" };
+      return { isValid: false, reason: "Query does not contain SELECT/select and FROM/from keywords" };
     }
-    const nameAttributes = replaceAll(replaceAll(strippedQuery[1].split(","), " ", ""), "\"", "");
+    const queryWithoutQuotes = replaceAll(strippedQuery[1], "\"", "").split(",");
 
-    const simpleAttributes = nameAttributes.map(field => {
+    const simpleAttributes = queryWithoutQuotes.map(field => {
       if (field.includes("as")) {
-        return field.split(" ")[2];
+        return field.match(new RegExp("(?:.*)as (.*)"))[1];
       }
       return field;
     });
 
-    if (!_.includes(simpleAttributes, "email") && !_.includes(simpleAttributes, "external_id")) {
+    if (!_.includes(simpleAttributes, "*") && !_.includes(simpleAttributes, "email") && !_.includes(simpleAttributes, "external_id")) {
       return { isValid: false, reason: "Name attributes does not include at least one required parameters: email or external_id" };
     }
 
