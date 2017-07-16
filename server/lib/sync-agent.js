@@ -4,7 +4,6 @@
 import _ from "lodash";
 import moment from "moment";
 import ps from "promise-streams";
-import isJSON from "is-valid-json";
 
 // Map each record of the stream.
 import map from "through2-map";
@@ -130,55 +129,44 @@ export default class SyncAgent {
       import_start_date: moment().subtract(this.ship.private_settings.import_days, "days").format()
     };
 
-    const validationResult = this.validateQuery(query);
-    if (validationResult.isValid) {
-      const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
+    const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
       // Run the method for the specific adapter.
-      return this.adapter.in.runQuery(this.client, wrappedQuery, options)
-        .then(result => {
-          this.adapter.in.closeConnection(this.client);
-          if (this.db_type === "postgres" && this.postgresResultIsJson(result.rows)) {
-            return { error: "Result from postgres database is in json format" };
-          }
-          return { entries: result.rows };
-        });
-    }
-    return Promise.resolve({ error: validationResult.reason });
+    return this.adapter.in.runQuery(this.client, wrappedQuery, options)
+      .then(result => {
+        this.adapter.in.closeConnection(this.client);
+
+        const validationResult = this.validateRows(result.rows);
+        if (!validationResult.isValid) {
+          return { entries: result.rows, errors: validationResult.errors };
+        }
+
+        if (this.db_type === "postgres" && this.postgresResultIsJson(result.fields)) {
+          return { entries: result.rows, errors: ["Column from postgres database is in json format"] };
+        }
+
+        return { entries: result.rows };
+      });
   }
 
-  postgresResultIsJson(rows) {
-    return _.some(rows, (row) => _.some(Object.keys(row), key => isJSON(key)));
+  postgresResultIsJson(columnNames) {
+    // 114 is special id for json type in postgres
+    return _.some(columnNames, (column) => column.dataTypeID === 114);
   }
 
-  validateQuery(query) {
+  validateRows(result) {
     if (this.db_type === "filesystem") return { isValid: true };
-    const replaceAll = (string, search, replacement) => string.split(search).join(replacement);
-    const strippedQuery =
-      query
-        .replace("SELECT", "select")
-        .replace("FROM", "from")
-        .match(new RegExp("select (.*) from"));
+    const errors = [];
+    const columnNames = Object.keys(result);
 
-    if (strippedQuery === null) {
-      return { isValid: false, reason: "Query does not contain SELECT/select and FROM/from keywords" };
-    }
-    const queryWithoutQuotes = replaceAll(strippedQuery[1], "\"", "").split(",");
-
-    const simpleAttributes = queryWithoutQuotes.map(field => {
-      if (field.includes("as")) {
-        return field.match(new RegExp("(?:.*)as (.*)"))[1];
-      }
-      return field;
-    });
-
-    if (!_.includes(simpleAttributes, "*") && !_.includes(simpleAttributes, "email") && !_.includes(simpleAttributes, "external_id")) {
-      return { isValid: false, reason: "Name attributes does not include at least one required parameters: email or external_id" };
+    if (!_.includes(columnNames, "email") && !_.includes(columnNames, "external_id")) {
+      errors.push("Column names should include at least one required parameters: email or external_id");
     }
 
-    if (_.some(simpleAttributes, (field) => field.includes(".") || field.includes("$"))) {
-      return { isValid: false, reason: "Query should not contain any special characters: `$`, `.`" };
+    if (_.some(columnNames, (field) => field.includes(".") || field.includes("$"))) {
+      errors.push("Column names should not contain special characters: `$`, `.`");
     }
 
+    if (errors.length > 0) return { isValid: false, errors };
     return { isValid: true };
   }
 
