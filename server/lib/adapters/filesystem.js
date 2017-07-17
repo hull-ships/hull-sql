@@ -6,6 +6,7 @@ import fs from "fs";
 import JSONStream from "JSONStream";
 import Stream from "stream";
 import through2 from "through2";
+import _ from "lodash";
 
 /**
  * File system adapter.
