@@ -87,9 +87,7 @@ export default class SyncAgent {
       return false;
     }, {});
 
-    if (conn) return true;
-
-    return false;
+    return !!conn;
   }
 
   /**
@@ -140,17 +138,13 @@ export default class SyncAgent {
           return { entries: result.rows, errors: validationResult.errors };
         }
 
-        if (this.db_type === "postgres" && this.postgresResultIsJson(result.fields)) {
-          return { entries: result.rows, errors: ["Column from postgres database is in json format"] };
+        const validationErrors = this.adapter.in.validateResult(result);
+        if (validationErrors.length > 0) {
+          return { entries: result.rows, errors: validationErrors };
         }
 
         return { entries: result.rows };
       });
-  }
-
-  postgresResultIsJson(columnNames) {
-    // 114 is special id for json type in postgres
-    return _.some(columnNames, (column) => column.dataTypeID === 114);
   }
 
   validateRows(result) {

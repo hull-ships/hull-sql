@@ -5,6 +5,7 @@ import Pg from "pg";
 import QueryStream from "pg-query-stream";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
+import _ from "lodash";
 import parseConnectionConfig from "../utils/parse-connection-config";
 
 /**
@@ -30,6 +31,19 @@ export function openConnection(settings) {
  */
 export function closeConnection(client) {
   client.end();
+}
+
+/**
+ * Validate Result specific for postgres database
+ * @param result
+ * @returns Array of errors
+ */
+
+export function validateResult(result) {
+  if (_.some(result.fields, (column) => column.dataTypeID === 114)) {
+    return ["Column from postgres database is in json format"];
+  }
+  return [];
 }
 
 /**

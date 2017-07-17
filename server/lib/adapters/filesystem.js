@@ -48,6 +48,15 @@ export function wrapQuery(query) {
   return query;
 }
 
+/**
+ * Validate Result specific for filesystem adapter
+ * @returns Array of errors
+ */
+
+export function validateResult() {
+  return [];
+}
+
 export function cancelQuery() {}
 
 /**
