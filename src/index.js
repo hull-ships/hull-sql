@@ -136,7 +136,17 @@ import "codemirror/mode/sql/sql.js";
           $("#loading-query").hide();
 
           try {
-            if (data.entries && data.entries.length) {
+            if (data.errors && data.errors.length > 0) {
+              $("#error-query")
+                .empty();
+
+              data.errors.forEach((error) => {
+                $("#error-query").append(`${error}<br />`);
+              });
+
+              $("#error-query")
+                .show();
+            } else if (data.entries && data.entries.length) {
               _.forEach(data.entries[0], (value, columnName) => {
                 $("#result thead tr").append(`<th>${columnName}<em>(${getColumnType(data.entries, columnName)})</em></th>`);
               });
@@ -148,18 +158,6 @@ import "codemirror/mode/sql/sql.js";
                 });
                 $("#result tbody").append(`<tr>${currentRow.join("")}<tr>`);
               });
-
-              if (data.errors && data.errors.length > 0) {
-                $("#error-query")
-                  .empty();
-
-                data.errors.forEach((error) => {
-                  $("#error-query").append(`${error}<br />`);
-                });
-
-                $("#error-query")
-                  .show();
-              }
             } else {
               $("#error-query")
                 .empty()
