@@ -6,6 +6,7 @@ import fs from "fs";
 import JSONStream from "JSONStream";
 import Stream from "stream";
 import through2 from "through2";
+const postgresAdapter = require("./postgres");
 
 /**
  * File system adapter.
@@ -53,7 +54,10 @@ export function wrapQuery(query) {
  * @returns Array of errors
  */
 
-export function validateResult() {
+export function validateResult(result) {
+  if (process.env.POSTGRES_DATABASE_TEST) {
+    return postgresAdapter.validateResult(result);
+  }
   return [];
 }
 
@@ -76,7 +80,8 @@ export function cancelQuery() {}
 export function runQuery(client, query = {}) {
   return new Promise((resolve) => {
     const file = fs.readFileSync(query, { encoding: "utf8" });
-    resolve({ rows: file });
+    const result = JSON.parse(file);
+    resolve(result);
   });
 }
 

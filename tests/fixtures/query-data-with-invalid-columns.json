@@ -1,0 +1,3 @@
+{ "rows": [
+  {"id": "2", "name.invalid": "Luke", "email": "email@email.com"}
+]}

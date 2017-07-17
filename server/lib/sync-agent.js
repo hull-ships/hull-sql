@@ -148,7 +148,6 @@ export default class SyncAgent {
   }
 
   validateRows(result) {
-    if (this.db_type === "filesystem") return { isValid: true };
     const errors = [];
     const columnNames = _.flatten(_.map(result, row => Object.keys(row)));
 
@@ -156,10 +155,16 @@ export default class SyncAgent {
       errors.push("Column names should include at least one required parameters: email or external_id");
     }
 
-    if (_.some(columnNames, (field) => field.includes(".") || field.includes("$"))) {
-      errors.push("Column names should not contain special characters: `$`, `.`");
-    }
+    const incorrectColumnNames = [];
+    _.forEach(columnNames, (column) => {
+      if (column.includes(".") || column.includes("$")) {
+        incorrectColumnNames.push(column);
+      }
+    });
 
+    if (incorrectColumnNames.length > 0) {
+      errors.push(`Following column names should not contain special characters ('$', '.') : ${incorrectColumnNames.join(", ")}`);
+    }
     if (errors.length > 0) return { isValid: false, errors };
     return { isValid: true };
   }

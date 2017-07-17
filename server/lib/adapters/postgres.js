@@ -40,8 +40,17 @@ export function closeConnection(client) {
  */
 
 export function validateResult(result) {
-  if (_.some(result.fields, (column) => column.dataTypeID === 114)) {
-    return ["Column from postgres database is in json format"];
+  const incorrectColumnNames = [];
+
+  _.forEach(result.fields, (column) => {
+    const dataType = column.dataTypeID;
+    if (dataType === 114 || dataType === 199 || dataType === 3802 || dataType === 3807) {
+      incorrectColumnNames.push(column.name);
+    }
+  });
+
+  if (incorrectColumnNames.length > 0) {
+    return [`Following columns from postgres database are in json format which is not supported : ${incorrectColumnNames.join(", ")}`];
   }
   return [];
 }
