@@ -150,7 +150,7 @@ export default class SyncAgent {
   validateRows(result) {
     if (this.db_type === "filesystem") return { isValid: true };
     const errors = [];
-    const columnNames = Object.keys(result);
+    const columnNames = _.flatten(_.map(result, row => Object.keys(row)));
 
     if (!_.includes(columnNames, "email") && !_.includes(columnNames, "external_id")) {
       errors.push("Column names should include at least one required parameters: email or external_id");

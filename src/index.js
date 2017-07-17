@@ -148,6 +148,18 @@ import "codemirror/mode/sql/sql.js";
                 });
                 $("#result tbody").append(`<tr>${currentRow.join("")}<tr>`);
               });
+
+              if (data.errors && data.errors.length > 0) {
+                $("#error-query")
+                  .empty();
+
+                data.errors.forEach((error) => {
+                  $("#error-query").append(`${error}<br />`);
+                });
+
+                $("#error-query")
+                  .show();
+              }
             } else {
               $("#error-query")
                 .empty()
