@@ -6,7 +6,6 @@ import fs from "fs";
 import JSONStream from "JSONStream";
 import Stream from "stream";
 import through2 from "through2";
-const postgresAdapter = require("./postgres");
 
 /**
  * File system adapter.
@@ -56,7 +55,19 @@ export function wrapQuery(query) {
 
 export function validateResult(result) {
   if (process.env.POSTGRES_DATABASE_TEST) {
-    return postgresAdapter.validateResult(result);
+    const incorrectColumnNames = [];
+
+    _.forEach(result.fields, (column) => {
+      const dataType = column.dataTypeID;
+      if (dataType === 114 || dataType === 199 || dataType === 3802 || dataType === 3807) {
+        incorrectColumnNames.push(column.name);
+      }
+    });
+
+    if (incorrectColumnNames.length > 0) {
+      return [`Following columns from postgres database are in json format which is not supported : ${incorrectColumnNames.join(", ")}`];
+    }
+    return [];
   }
   return [];
 }
