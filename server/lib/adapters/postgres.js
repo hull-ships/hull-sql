@@ -5,6 +5,7 @@ import Pg from "pg";
 import QueryStream from "pg-query-stream";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
+import _ from "lodash";
 import parseConnectionConfig from "../utils/parse-connection-config";
 
 /**
@@ -30,6 +31,28 @@ export function openConnection(settings) {
  */
 export function closeConnection(client) {
   client.end();
+}
+
+/**
+ * Validate Result specific for postgres database
+ * @param result
+ * @returns Array of errors
+ */
+
+export function validateResult(result) {
+  const incorrectColumnNames = [];
+
+  _.forEach(result.fields, (column) => {
+    const dataType = column.dataTypeID;
+    if (dataType === 114 || dataType === 199 || dataType === 3802 || dataType === 3807) {
+      incorrectColumnNames.push(column.name);
+    }
+  });
+
+  if (incorrectColumnNames.length > 0) {
+    return [`Following columns from postgres database are in json format which is not supported : ${incorrectColumnNames.join(", ")}`];
+  }
+  return [];
 }
 
 /**

@@ -16,6 +16,7 @@ describe("runQuery job", () => {
     },
   };
   const query = "tests/fixtures/query-data.json";
+  const queryResult = "tests/fixtures/query-data-result.json";
 
   const job = {};
 
@@ -24,9 +25,9 @@ describe("runQuery job", () => {
     const agent = new SyncAgent({ ship, client, job });
 
     agent.runQuery(query).then(result => {
-      const data = fs.readFileSync(query, { encoding: "utf8" });
+      const data = fs.readFileSync(queryResult, { encoding: "utf8" });
 
-      assert.equal(result.entries.toString(), data);
+      assert(data.includes(JSON.stringify(result.entries)));
     }).then(done);
   });
 });

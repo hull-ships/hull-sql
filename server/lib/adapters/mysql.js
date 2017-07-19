@@ -32,6 +32,15 @@ export function closeConnection(client) {
 }
 
 /**
+ * Validate Result specific for mysql database
+ * @returns Array of errors
+ */
+
+export function validateResult() {
+  return [];
+}
+
+/**
  * Wrap the user query inside a My SQL request.
  *
  * @param {*} sql The raw SQL query

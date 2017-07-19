@@ -6,6 +6,7 @@ import fs from "fs";
 import JSONStream from "JSONStream";
 import Stream from "stream";
 import through2 from "through2";
+import _ from "lodash";
 
 /**
  * File system adapter.
@@ -48,6 +49,30 @@ export function wrapQuery(query) {
   return query;
 }
 
+/**
+ * Validate Result specific for filesystem adapter
+ * @returns Array of errors
+ */
+
+export function validateResult(result) {
+  if (process.env.POSTGRES_DATABASE_TEST) {
+    const incorrectColumnNames = [];
+
+    _.forEach(result.fields, (column) => {
+      const dataType = column.dataTypeID;
+      if (dataType === 114 || dataType === 199 || dataType === 3802 || dataType === 3807) {
+        incorrectColumnNames.push(column.name);
+      }
+    });
+
+    if (incorrectColumnNames.length > 0) {
+      return [`Following columns from postgres database are in json format which is not supported : ${incorrectColumnNames.join(", ")}`];
+    }
+    return [];
+  }
+  return [];
+}
+
 export function cancelQuery() {}
 
 /**
@@ -67,7 +92,8 @@ export function cancelQuery() {}
 export function runQuery(client, query = {}) {
   return new Promise((resolve) => {
     const file = fs.readFileSync(query, { encoding: "utf8" });
-    resolve({ rows: file });
+    const result = JSON.parse(file);
+    resolve(result);
   });
 }
 
