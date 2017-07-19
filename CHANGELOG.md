@@ -1,3 +1,7 @@
+## 0.2.7
+- adds postgres queries validation to check json columns
+- adds rows calidation to check if required columns are present and if non of them contain invalid charactes
+
 ## 0.2.6
 - Add support for MS SQL
 - Fix issue with saved queries
