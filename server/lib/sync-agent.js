@@ -45,6 +45,7 @@ export default class SyncAgent {
     const private_settings = this.ship.private_settings;
     // Get the DB type.
     const { db_type, output_type = "s3" } = private_settings;
+    this.db_type = db_type;
     this.adapter = { in: Adapters[db_type], out: Adapters[output_type] };
 
     // Make sure the DB type is known.
@@ -86,9 +87,7 @@ export default class SyncAgent {
       return false;
     }, {});
 
-    if (conn) return true;
-
-    return false;
+    return !!conn;
   }
 
   /**
@@ -127,13 +126,47 @@ export default class SyncAgent {
       last_updated_at: options.last_updated_at || oneDayAgo.toISOString(),
       import_start_date: moment().subtract(this.ship.private_settings.import_days, "days").format()
     };
+
     const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
-    // Run the method for the specific adapter.
+      // Run the method for the specific adapter.
     return this.adapter.in.runQuery(this.client, wrappedQuery, options)
       .then(result => {
         this.adapter.in.closeConnection(this.client);
+
+        const validationResult = this.validateRows(result.rows);
+        if (!validationResult.isValid) {
+          return { entries: result.rows, errors: validationResult.errors };
+        }
+
+        const validationErrors = this.adapter.in.validateResult(result);
+        if (validationErrors.length > 0) {
+          return { entries: result.rows, errors: validationErrors };
+        }
+
         return { entries: result.rows };
       });
+  }
+
+  validateRows(result) {
+    const errors = [];
+    const columnNames = _.flatten(_.map(result, row => Object.keys(row)));
+
+    if (!_.includes(columnNames, "email") && !_.includes(columnNames, "external_id")) {
+      errors.push("Column names should include at least one required parameters: email or external_id");
+    }
+
+    const incorrectColumnNames = [];
+    _.forEach(columnNames, (column) => {
+      if (column.includes(".") || column.includes("$")) {
+        incorrectColumnNames.push(column);
+      }
+    });
+
+    if (incorrectColumnNames.length > 0) {
+      errors.push(`Following column names should not contain special characters ('$', '.') : ${incorrectColumnNames.join(", ")}`);
+    }
+    if (errors.length > 0) return { isValid: false, errors };
+    return { isValid: true };
   }
 
   startImport(options = {}) {

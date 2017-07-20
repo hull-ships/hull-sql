@@ -21,7 +21,7 @@ describe("SyncAgent", () => {
     });
 
     const wrapQueryStub = sinon.spy(syncAgent.adapter.in, "wrapQuery");
-    syncAgent.runQuery("test");
+    syncAgent.runQuery("SELECT email, external_id as id FROM users;");
 
     expect(wrapQueryStub.args[0][1].import_start_date).to.be.equal(moment().subtract(10, "days").format());
   });

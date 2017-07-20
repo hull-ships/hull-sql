@@ -71,6 +71,15 @@ export function closeConnection(client) {
 }
 
 /**
+ * Validate Result specific for mssql database
+ * @returns Array of errors
+ */
+
+export function validateResult() {
+  return [];
+}
+
+/**
  * Wrap the user query inside a MS SQL request.
  *
  * @param {*} sql The raw SQL query
