@@ -2,11 +2,13 @@
  * Configure the streaming to AWS.
  */
 import Stream from "stream";
+import zlib from "zlib";
 import Aws from "aws-sdk";
 import through2 from "through2";
 
 export function upload(shipId, partNumber) {
   const stream = new Stream.PassThrough();
+  const gzip = zlib.createGzip();
 
   const Body = new Stream.PassThrough();
   const Bucket = process.env.BUCKET_PATH;
@@ -15,6 +17,7 @@ export function upload(shipId, partNumber) {
     Bucket, Key, Body,
     ACL: "private",
     ContentType: "application/json",
+    ContentEncoding: "gzip"
   };
 
   const promise = new Promise((resolve, reject) => {
@@ -33,6 +36,7 @@ export function upload(shipId, partNumber) {
       }
     });
     stream
+      .pipe(gzip)
       .pipe(through2((chunk, enc, callback) => {
         size += 1;
         callback(null, chunk);
