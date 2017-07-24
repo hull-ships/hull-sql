@@ -147,9 +147,13 @@ export default class SyncAgent {
       });
   }
 
-  validateRows(result) {
+  validateRows(rows) {
+    if (rows.length === 0) {
+      return { isValid: true };
+    }
+
     const errors = [];
-    const columnNames = _.flatten(_.map(result, row => Object.keys(row)));
+    const columnNames = _.flatten(_.map(rows, row => Object.keys(row)));
 
     if (!_.includes(columnNames, "email") && !_.includes(columnNames, "external_id")) {
       errors.push("Column names should include at least one required parameters: email or external_id");
