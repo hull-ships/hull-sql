@@ -5,6 +5,7 @@ import mysql from "mysql";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
 import parseConnectionConfig from "../utils/parse-connection-config";
+import validateQuery from "./validate-query";
 
 /**
  * mySQL adapter.
@@ -36,8 +37,8 @@ export function closeConnection(client) {
  * @returns Array of errors
  */
 
-export function validateResult() {
-  return [];
+export function validateResult(result) {
+  return validateQuery(result.fields.map(column => column.name));
 }
 
 /**
@@ -74,13 +75,13 @@ export function runQuery(client, query, options = {}) {
       }
 
       // Run the query.
-      return client.query(params, (queryError, rows) => {
+      return client.query(params, (queryError, rows, fieldPackets) => {
         client.end();
         if (queryError) {
           queryError.status = 400;
           return reject(queryError);
         }
-        return resolve({ rows });
+        return resolve({ rows, fields: fieldPackets });
       });
     });
   });

@@ -7,6 +7,7 @@ import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
 import _ from "lodash";
 import parseConnectionConfig from "../utils/parse-connection-config";
+import validateQuery from "./validate-query";
 
 /**
  * PostgreSQL adapter.
@@ -49,10 +50,12 @@ export function validateResult(result) {
     }
   });
 
+  let { errors } = validateQuery(result.fields.map(column => column.name));
+
   if (incorrectColumnNames.length > 0) {
-    return [`Following columns from postgres database are in json format which is not supported : ${incorrectColumnNames.join(", ")}`];
+    errors = errors.concat([`Following columns from postgres database are in json format which is not supported : ${incorrectColumnNames.join(", ")}`]);
   }
-  return [];
+  return { isValid: errors.length > 0, errors };
 }
 
 /**

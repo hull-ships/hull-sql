@@ -133,14 +133,14 @@ export default class SyncAgent {
       .then(result => {
         this.adapter.in.closeConnection(this.client);
 
-        const validationResult = this.validateRows(result.rows);
-        if (!validationResult.isValid) {
-          return { entries: result.rows, errors: validationResult.errors };
-        }
+        // const validationResult = this.validateRows(result.rows);
+        // if (!validationResult.isValid) {
+        //   return { entries: result.rows, errors: validationResult.errors };
+        // }
 
-        const validationErrors = this.adapter.in.validateResult(result);
-        if (validationErrors.length > 0) {
-          return { entries: result.rows, errors: validationErrors };
+        const { isValid, errors } = this.adapter.in.validateResult(result);
+        if (isValid) {
+          return { entries: result.rows, errors };
         }
 
         return { entries: result.rows };
