@@ -1,3 +1,6 @@
+## 0.2.8
+- add gzip compression before sending to s3
+
 ## 0.2.7
 - adds postgres queries validation to check json columns
 - adds rows calidation to check if required columns are present and if non of them contain invalid charactes
