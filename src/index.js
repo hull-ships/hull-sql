@@ -132,8 +132,8 @@ import "codemirror/mode/sql/sql.js";
         type: "post",
         data: { query },
         success(data) {
-          $(".to-disable").prop("disabled", false);
           $("#loading-query").hide();
+          $(".to-disable").prop("disabled", false);
 
           try {
             if (data.errors && data.errors.length > 0) {
@@ -146,6 +146,8 @@ import "codemirror/mode/sql/sql.js";
 
               $("#error-query")
                 .show();
+
+              good_query = null;
             } else if (data.entries && data.entries.length) {
               _.forEach(data.entries[0], (value, columnName) => {
                 $("#result thead tr").append(`<th>${columnName}<em>(${getColumnType(data.entries, columnName)})</em></th>`);
@@ -158,14 +160,16 @@ import "codemirror/mode/sql/sql.js";
                 });
                 $("#result tbody").append(`<tr>${currentRow.join("")}<tr>`);
               });
+
+              good_query = query;
             } else {
               $("#error-query")
                 .empty()
                 .show()
                 .append("No results for this query.");
-            }
 
-            good_query = query;
+              good_query = query;
+            }
           } catch (err) {
             good_query = stored_query;
             $("#error-query")
@@ -173,7 +177,7 @@ import "codemirror/mode/sql/sql.js";
               .show()
               .append(data.message);
           } finally {
-            if (good_query !== stored_query) {
+            if (good_query !== null && good_query !== stored_query) {
               window.parent.postMessage(JSON.stringify({
                 from: "embedded-ship",
                 action: "update",

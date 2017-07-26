@@ -139,7 +139,7 @@ export default class SyncAgent {
         // }
 
         const { errors } = this.adapter.in.validateResult(result);
-        if (errors.length > 0) {
+        if (errors && errors.length > 0) {
           return { entries: result.rows, errors };
         }
 

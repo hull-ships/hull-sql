@@ -7,6 +7,7 @@ import JSONStream from "JSONStream";
 import Stream from "stream";
 import through2 from "through2";
 import _ from "lodash";
+import validateResultColumns from "./validate-result-columns";
 
 /**
  * File system adapter.
@@ -22,7 +23,8 @@ import _ from "lodash";
  *   @client Instance
  */
 
-export function openConnection() {}
+export function openConnection() {
+}
 
 /**
  * Close the connection.
@@ -31,7 +33,8 @@ export function openConnection() {}
  *   @client Instance
  */
 
-export function closeConnection() {}
+export function closeConnection() {
+}
 
 /**
  * Wrap the user query
@@ -55,25 +58,28 @@ export function wrapQuery(query) {
  */
 
 export function validateResult(result) {
-  if (process.env.POSTGRES_DATABASE_TEST) {
-    const incorrectColumnNames = [];
-
-    _.forEach(result.fields, (column) => {
-      const dataType = column.dataTypeID;
-      if (dataType === 114 || dataType === 199 || dataType === 3802 || dataType === 3807) {
-        incorrectColumnNames.push(column.name);
-      }
-    });
-
-    if (incorrectColumnNames.length > 0) {
-      return [`Following columns from postgres database are in json format which is not supported : ${incorrectColumnNames.join(", ")}`];
-    }
-    return [];
+  if (process.env.POSTGRES_DATABASE_TEST !== "true") {
+    return validateResultColumns(result.columns.map(column => column.name));
   }
-  return [];
+  const incorrectColumnNames = [];
+
+  _.forEach(result.fields, (column) => {
+    const dataType = column.dataTypeID;
+    if (dataType === 114 || dataType === 199 || dataType === 3802 || dataType === 3807) {
+      incorrectColumnNames.push(column.name);
+    }
+  });
+
+  let { errors } = validateResultColumns(result.fields.map(column => column.name));
+
+  if (incorrectColumnNames.length > 0) {
+    errors = errors.concat([`Following columns from postgres database are in json format which is not supported : ${incorrectColumnNames.join(", ")}`]);
+  }
+  return { errors };
 }
 
-export function cancelQuery() {}
+export function cancelQuery() {
+}
 
 /**
  * Run a wrapped query.
@@ -93,6 +99,7 @@ export function runQuery(client, query = {}) {
   return new Promise((resolve) => {
     const file = fs.readFileSync(query, { encoding: "utf8" });
     const result = JSON.parse(file);
+    console.log(result.fields);
     resolve(result);
   });
 }

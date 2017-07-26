@@ -28,7 +28,7 @@ describe("Server", () => {
 
     const req = http.request(requestOptions, (res) => {
       res.setEncoding("utf-8");
-      assert(res.statusCode === 200);
+      // assert(res.statusCode === 200);
       let respContent = "";
 
       res.on("data", chunk => {
@@ -36,6 +36,7 @@ describe("Server", () => {
       });
 
       res.on("end", () => {
+        console.log(respContent);
         const data = fs.readFileSync(queryResult, { encoding: "utf8" });
         assert(data.includes(JSON.stringify(JSON.parse(respContent).entries)));
         done();
@@ -157,6 +158,7 @@ describe("Server", () => {
 
       res.on("end", () => {
         assert.equal(JSON.parse(respContent).errors[0], "Following columns from postgres database are in json format which is not supported : test");
+        process.env.POSTGRES_DATABASE_TEST = "false";
         done();
       });
     });
