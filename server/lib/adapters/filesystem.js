@@ -23,8 +23,7 @@ import validateResultColumns from "./validate-result-columns";
  *   @client Instance
  */
 
-export function openConnection() {
-}
+export function openConnection() {}
 
 /**
  * Close the connection.
@@ -33,8 +32,7 @@ export function openConnection() {
  *   @client Instance
  */
 
-export function closeConnection() {
-}
+export function closeConnection() {}
 
 /**
  * Wrap the user query
@@ -78,8 +76,7 @@ export function validateResult(result) {
   return { errors };
 }
 
-export function cancelQuery() {
-}
+export function cancelQuery() {}
 
 /**
  * Run a wrapped query.
@@ -99,7 +96,6 @@ export function runQuery(client, query = {}) {
   return new Promise((resolve) => {
     const file = fs.readFileSync(query, { encoding: "utf8" });
     const result = JSON.parse(file);
-    console.log(result.fields);
     resolve(result);
   });
 }

@@ -132,8 +132,8 @@ import "codemirror/mode/sql/sql.js";
         type: "post",
         data: { query },
         success(data) {
-          $("#loading-query").hide();
           $(".to-disable").prop("disabled", false);
+          $("#loading-query").hide();
 
           try {
             if (data.errors && data.errors.length > 0) {
