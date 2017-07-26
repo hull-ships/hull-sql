@@ -1,3 +1,6 @@
+## 0.2.9
+- hotfix make sure the postgres client is closed in all scenarios
+
 ## 0.2.8
 - add gzip compression before sending to s3
 
