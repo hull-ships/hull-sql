@@ -111,6 +111,9 @@ export function runQuery(client, query, options = {}) {
     // Connect the connection.
     client.connect((connectionError) => {
       if (connectionError) {
+        // Ensure that we release the connection under
+        // all circumstances
+        client.end();
         connectionError.status = 401;
         return reject(connectionError);
       }
@@ -147,6 +150,8 @@ export function streamQuery(client, query) {
         return reject(connectionError);
       }
       const stream = client.query(new QueryStream(query));
+      // Ensure that we release the connection under all circumstances.
+      stream.on("end", () => { client.end(); });
       resolve(stream);
       return stream;
     });
