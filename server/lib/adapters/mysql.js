@@ -5,7 +5,7 @@ import mysql from "mysql";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
 import parseConnectionConfig from "../utils/parse-connection-config";
-import validateQuery from "./validate-query";
+import validateResultColumns from "./validate-result-columns";
 
 /**
  * mySQL adapter.
@@ -38,7 +38,7 @@ export function closeConnection(client) {
  */
 
 export function validateResult(result) {
-  return validateQuery(result.fields.map(column => column.name));
+  return validateResultColumns(result.columns.map(column => column.name));
 }
 
 /**
@@ -81,7 +81,7 @@ export function runQuery(client, query, options = {}) {
           queryError.status = 400;
           return reject(queryError);
         }
-        return resolve({ rows, fields: fieldPackets });
+        return resolve({ rows, columns: fieldPackets });
       });
     });
   });

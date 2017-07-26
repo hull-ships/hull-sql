@@ -17,5 +17,5 @@ export default function validate(columnNames) {
   if (incorrectColumnNames.length > 0) {
     errors.push(`Following column names should not contain special characters ('$', '.') : ${incorrectColumnNames.join(", ")}`);
   }
-  return { isValid: errors.length > 0, errors };
+  return { errors };
 }
