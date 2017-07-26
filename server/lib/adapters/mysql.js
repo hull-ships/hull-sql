@@ -76,7 +76,6 @@ export function runQuery(client, query, options = {}) {
 
       // Run the query.
       return client.query(params, (queryError, rows, fieldPackets) => {
-        client.end();
         if (queryError) {
           queryError.status = 400;
           return reject(queryError);
