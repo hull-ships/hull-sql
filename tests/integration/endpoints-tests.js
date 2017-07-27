@@ -3,7 +3,7 @@
 import assert from "assert";
 import http from "http";
 import fs from "fs";
-import bootstrap from "./bootstrap";
+import bootstrap from "../unit/bootstrap";
 
 describe("Server", () => {
   it("should return status OK on /run endpoint", (done) => {
@@ -76,7 +76,7 @@ describe("Server", () => {
       });
 
       res.on("end", () => {
-        assert.equal(JSON.parse(respContent).errors[0], "Column names should include at least one required parameters: email or external_id");
+        assert.equal(JSON.parse(respContent).errors[0], "Column names should include email and/or external_id");
         done();
       });
     });

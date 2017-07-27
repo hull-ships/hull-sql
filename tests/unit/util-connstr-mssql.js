@@ -2,7 +2,7 @@
 import {
   expect
 } from "chai";
-import * as mssql from "../server/lib/adapters/mssql";
+import * as mssql from "../../server/lib/adapters/mssql";
 
 describe("Connection string util for MSSQL", () => {
   it("should build the connectionString", () => {

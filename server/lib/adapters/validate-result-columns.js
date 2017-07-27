@@ -4,7 +4,7 @@ export default function validate(columnNames) {
   const errors = [];
 
   if (!_.includes(columnNames, "email") && !_.includes(columnNames, "external_id")) {
-    errors.push("Column names should include at least one required parameters: email or external_id");
+    errors.push("Column names should include email and/or external_id");
   }
 
   const incorrectColumnNames = [];

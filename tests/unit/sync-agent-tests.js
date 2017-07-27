@@ -4,7 +4,7 @@ import sinon from "sinon";
 import moment from "moment";
 import stream from "stream";
 
-import SyncAgent from "../server/lib/sync-agent.js";
+import SyncAgent from "../../server/lib/sync-agent.js";
 
 describe("SyncAgent", () => {
   it("should pass import_start_date to adapter", () => {

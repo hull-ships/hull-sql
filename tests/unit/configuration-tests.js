@@ -6,7 +6,7 @@ import express from "express";
 import http from "http";
 import Hull from "hull";
 import { Cache, Queue } from "hull/lib/infra";
-import Server from "../server/server";
+import Server from "../../server/server";
 
 /* Test Configuration */
 

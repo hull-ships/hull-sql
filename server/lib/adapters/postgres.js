@@ -50,10 +50,10 @@ export function validateResult(result) {
     }
   });
 
-  let { errors } = validateResultColumns(result.fields.map(column => column.name));
+  const { errors } = validateResultColumns(result.fields.map(column => column.name));
 
   if (incorrectColumnNames.length > 0) {
-    errors = errors.concat([`Following columns from postgres database are in json format which is not supported : ${incorrectColumnNames.join(", ")}`]);
+    errors.push([`Following columns from postgres database are in json format which is not supported : ${incorrectColumnNames.join(", ")}`]);
   }
   return { errors };
 }

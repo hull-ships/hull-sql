@@ -3,7 +3,7 @@ import { expect, should } from "chai";
 import sinon from "sinon";
 import moment from "moment";
 
-import * as postgresAdapter from "../server/lib/adapters/postgres";
+import * as postgresAdapter from "../../server/lib/adapters/postgres";
 
 describe("Postgres Adapter", () => {
 

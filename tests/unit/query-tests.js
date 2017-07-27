@@ -3,7 +3,7 @@
 const assert = require("assert");
 
 import fs from "fs";
-import SyncAgent from "../server/lib/sync-agent";
+import SyncAgent from "../../server/lib/sync-agent";
 import ClientMock from "./client-mock";
 
 describe("runQuery job", () => {

@@ -1,7 +1,7 @@
 import Hull from "hull";
 import { Cache, Queue } from "hull/lib/infra";
 import express from "express";
-import Server from "../server/server";
+import Server from "../../server/server";
 
 
 export default function bootstrap(query, port) {
