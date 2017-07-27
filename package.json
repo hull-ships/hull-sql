@@ -31,8 +31,8 @@
     "ngrok": "ngrok http 8082 --region eu --subdomain sql",
     "test": "npm run test:lint && npm run test:flow && npm run test:unit && npm run test:integration",
     "test:lint": "eslint server",
-    "test:integration": "NODE_ENV=test mocha --require babel-register -R spec ./tests/integration",
-    "test:unit": "NODE_ENV=test mocha --require babel-register -R spec ./tests/unit",
+    "test:integration": "NODE_ENV=test mocha --require babel-register -R spec ./test/integration",
+    "test:unit": "NODE_ENV=test mocha --require babel-register -R spec ./test/unit",
     "test:flow": "flow check",
     "update": "updtr",
     "postinstall": "npm run build"

@@ -7,8 +7,8 @@ import bootstrap from "./support/bootstrap";
 
 describe("Server", () => {
   it("should return status OK on /run endpoint", (done) => {
-    const query = "tests/fixtures/query-data.json";
-    const queryResult = "tests/fixtures/query-data-result.json";
+    const query = "test/fixtures/query-data.json";
+    const queryResult = "test/fixtures/query-data-result.json";
     const port = 8070;
     const postData = JSON.stringify({
       query
@@ -48,7 +48,7 @@ describe("Server", () => {
 
   it("should return errors if result does not contain required column names", (done) => {
     const port = 8077;
-    const query = "tests/fixtures/query-data-without-required-columns.json";
+    const query = "test/fixtures/query-data-without-required-columns.json";
     bootstrap(query, port);
 
     const postData = JSON.stringify({
@@ -87,7 +87,7 @@ describe("Server", () => {
 
   it("should return errors if result contain invalid column names", (done) => {
     const port = 8072;
-    const query = "tests/fixtures/query-data-with-invalid-columns.json";
+    const query = "test/fixtures/query-data-with-invalid-columns.json";
     bootstrap(query, port);
 
     const postData = JSON.stringify({
@@ -128,7 +128,7 @@ describe("Server", () => {
   it("should return errors if postgres result contain json column", (done) => {
     process.env.POSTGRES_DATABASE_TEST = "true";
     const port = 8079;
-    const query = "tests/fixtures/postgres-query-data.json";
+    const query = "test/fixtures/postgres-query-data.json";
     bootstrap(query, port);
 
     const postData = JSON.stringify({

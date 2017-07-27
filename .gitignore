@@ -9,10 +9,10 @@ newrelic_agent.log
 logs
 dist
 build
-tests/extracts
+test/extracts
 
 .idea
-tests/schema/faker
+test/schema/faker
 
 .package-lock.json
 

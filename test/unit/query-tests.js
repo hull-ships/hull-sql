@@ -15,8 +15,8 @@ describe("runQuery job", () => {
       output_type: "filesystem"
     },
   };
-  const query = "tests/fixtures/query-data.json";
-  const queryResult = "tests/fixtures/query-data-result.json";
+  const query = "test/fixtures/query-data.json";
+  const queryResult = "test/fixtures/query-data-result.json";
 
   const job = {};
 
