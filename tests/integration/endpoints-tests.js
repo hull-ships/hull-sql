@@ -3,7 +3,7 @@
 import assert from "assert";
 import http from "http";
 import fs from "fs";
-import bootstrap from "../unit/bootstrap";
+import bootstrap from "./support/bootstrap";
 
 describe("Server", () => {
   it("should return status OK on /run endpoint", (done) => {
