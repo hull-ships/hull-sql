@@ -25,6 +25,8 @@ spec:
                 name: application-config
             - configMapRef:
                 name: aws-config
+            - configMapRef:
+                name: hull-sql-config
           env:
             - name: PORT
               value: "8082"
