@@ -26,7 +26,7 @@
     "build:client": "NODE_ENV=production ./node_modules/.bin/webpack --config ./webpack.config.js --progress --profile --colors",
     "build:server": "babel server -d build",
     "clean": "rimraf build",
-    "start": "nf start",
+    "start": "node -r newrelic build",
     "start:dev": "NODE_ENV=development COMBINED=true babel-watch -L server",
     "ngrok": "ngrok http 8082 --region eu --subdomain sql",
     "test": "npm run test:lint && npm run test:flow && npm run test:units",
