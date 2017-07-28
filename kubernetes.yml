@@ -1,0 +1,64 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: hull-sql
+  labels:
+    name: hull-sql
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: hull-sql
+    spec:
+      imagePullSecrets:
+        - name: docker-regsitry-credentials
+      containers:
+        - name: hull-sql
+          image: hull/hull-sql:alpha
+          imagePullPolicy: IfNotPresent
+            #$CIRCLE_SHA1
+          ports:
+            - containerPort: 8082
+          envFrom:
+            - configMapRef:
+                name: application-config
+            - configMapRef:
+                name: aws-config
+          env:
+            - name: PORT
+              value: "8082"
+            - name: COMBINED
+              value: "true"
+            - name: QUEUE_ADAPTER
+              value: "sqs"
+            - name: SQS_QUEUE_URL
+              value: "https://sqs.us-east-1.amazonaws.com/264311088298/hull-sql-enterprise.fifo"
+            - name: BUCKET_PATH
+              value: "hull-sql"
+            - name: AWS_KEY_ID
+              value: "AKIAIFOOHVX5GNFAGH7A"
+            - name: AWS_REGION
+              value: "us-east-1"
+            - name: AWS_SECRET_KEY
+              value: "DEuHWXE3R6uABAw2qB6zsJIK8jazEXBM89juRD6A"
+            - name: OVERRIDE_LOCK_DURATION
+              value: "120000"
+            - name: SENTRY_URL
+              value: "https://f903a7862870472ab3515356e4f0190a:bf843430053c48beb5b7f12e53ef032b@sentry.io/171664"
+            - name: NEW_RELIC_APP_NAME
+              value: "hull-sql.connectors.hullapp.net"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hull-sql
+  labels:
+    name: hull-sql
+spec:
+  ports:
+    - port: 8082
+      targetPort: 8082
+      protocol: TCP
+  selector:
+    name: hull-sql
