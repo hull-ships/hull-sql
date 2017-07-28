@@ -38,8 +38,6 @@ spec:
               value: "hull-sql"
             - name: OVERRIDE_LOCK_DURATION
               value: "120000"
-            - name: SENTRY_URL
-              value: "https://f903a7862870472ab3515356e4f0190a:bf843430053c48beb5b7f12e53ef032b@sentry.io/171664"
             - name: NEW_RELIC_APP_NAME
               value: "hull-sql.connectors.hullapp.net"
 ---
