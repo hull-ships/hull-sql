@@ -6,18 +6,18 @@ import _ from "lodash";
 import fs from "fs";
 import path from "path";
 import sinon from "sinon";
-import SyncAgent from "../server/lib/sync-agent";
+import SyncAgent from "../../server/lib/sync-agent";
 import ClientMock from "./client-mock";
 
 describe("Batch SQL import jobs", () => {
-  const extractsDir = "tests/extracts";
+  const extractsDir = "test/extracts";
   const shipId = "ship-id-1234";
   const ship = {
     id: shipId,
     private_settings: {
       db_type: "filesystem",
       output_type: "filesystem",
-      query: "tests/fixtures/batch-data.json",
+      query: "test/fixtures/batch-data.json",
       db_host: "localhost",
       db_port: "5433",
       db_name: "hullsql",

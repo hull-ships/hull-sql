@@ -1,12 +1,10 @@
 /* global describe, it */
-import { expect, should } from "chai";
-import sinon from "sinon";
+import { expect } from "chai";
 import moment from "moment";
 
-import * as postgresAdapter from "../server/lib/adapters/postgres";
+import * as postgresAdapter from "../../server/lib/adapters/postgres";
 
 describe("Postgres Adapter", () => {
-
   it("should replace import_start_date in query", () => {
     const wrappedQuery = postgresAdapter.wrapQuery("SELECT :import_start_date", {
       import_start_date: moment().format()

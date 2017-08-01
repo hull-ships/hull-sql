@@ -133,44 +133,13 @@ export default class SyncAgent {
       .then(result => {
         this.adapter.in.closeConnection(this.client);
 
-        const validationResult = this.validateRows(result.rows);
-        if (!validationResult.isValid) {
-          return { entries: result.rows, errors: validationResult.errors };
-        }
-
-        const validationErrors = this.adapter.in.validateResult(result);
-        if (validationErrors.length > 0) {
-          return { entries: result.rows, errors: validationErrors };
+        const { errors } = this.adapter.in.validateResult(result);
+        if (errors && errors.length > 0) {
+          return { entries: result.rows, errors };
         }
 
         return { entries: result.rows };
       });
-  }
-
-  validateRows(rows) {
-    if (rows.length === 0) {
-      return { isValid: true };
-    }
-
-    const errors = [];
-    const columnNames = _.flatten(_.map(rows, row => Object.keys(row)));
-
-    if (!_.includes(columnNames, "email") && !_.includes(columnNames, "external_id")) {
-      errors.push("Column names should include at least one required parameters: email or external_id");
-    }
-
-    const incorrectColumnNames = [];
-    _.forEach(columnNames, (column) => {
-      if (column.includes(".") || column.includes("$")) {
-        incorrectColumnNames.push(column);
-      }
-    });
-
-    if (incorrectColumnNames.length > 0) {
-      errors.push(`Following column names should not contain special characters ('$', '.') : ${incorrectColumnNames.join(", ")}`);
-    }
-    if (errors.length > 0) return { isValid: false, errors };
-    return { isValid: true };
   }
 
   startImport(options = {}) {

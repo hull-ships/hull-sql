@@ -7,6 +7,7 @@ import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
 import _ from "lodash";
 import parseConnectionConfig from "../utils/parse-connection-config";
+import validateResultColumns from "./validate-result-columns";
 
 /**
  * PostgreSQL adapter.
@@ -49,10 +50,12 @@ export function validateResult(result) {
     }
   });
 
+  const { errors } = validateResultColumns(result.fields.map(column => column.name));
+
   if (incorrectColumnNames.length > 0) {
-    return [`Following columns from postgres database are in json format which is not supported : ${incorrectColumnNames.join(", ")}`];
+    errors.push([`Following columns from postgres database are in json format which is not supported : ${incorrectColumnNames.join(", ")}`]);
   }
-  return [];
+  return { errors };
 }
 
 /**
@@ -91,7 +94,7 @@ function cancelQuery(client) {
  * @param {string} query The query to execute.
  * @param {Object} options The options.
  *
- * @returns {Promise} A promise object of the following format: { rows }
+ * @returns {Promise} A promise object of the following format: { rows, fields }
  */
 export function runQuery(client, query, options = {}) {
   return new Promise((resolve, reject) => {
@@ -118,7 +121,6 @@ export function runQuery(client, query, options = {}) {
       // Run the query.
       currentQuery = client.query(query, (queryError, result) => {
         if (timer) clearTimeout(timer);
-        client.end();
         if (queryError) {
           queryError.status = 400;
           return reject(queryError);

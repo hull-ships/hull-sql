@@ -1,4 +1,3 @@
-
 /**
  * Module dependencies.
  */
@@ -7,6 +6,7 @@ import Promise from "bluebird";
 import _ from "lodash";
 import Readable from "readable-stream";
 import SequelizeUtils from "sequelize/lib/utils";
+import validateResultColumns from "./validate-result-columns";
 
 /**
  * MS SQL adapter.
@@ -17,7 +17,8 @@ export function parseConnectionConfig(settings) {
   const conn = ["type", "host", "port", "name", "user", "password"].reduce((c, key) => {
     const val = settings[`db_${key}`];
     if (c && val && val.length > 0) {
-      return { ...c,
+      return {
+        ...c,
         [key]: val
       };
     }
@@ -75,8 +76,8 @@ export function closeConnection(client) {
  * @returns Array of errors
  */
 
-export function validateResult() {
-  return [];
+export function validateResult(result) {
+  return validateResultColumns(result.columns.map(column => column.colName));
 }
 
 /**
@@ -107,7 +108,7 @@ export function runQuery(client, query, options) {
 
     conn.on("connect", (err) => { // eslint-disable-line consistent-return
       if (err) {
-        if (err.message && err.message.contains("ECONNRESET")) {
+        if (err.message && err.message.includes("ECONNRESET")) {
           // This is an error caused by the Azure Load Balancer that is not really an error,
           // we can recover from it pretty easily by simply reconnecting.
           // See https://github.com/tediousjs/tedious/issues/300
@@ -131,7 +132,9 @@ export function runQuery(client, query, options) {
       });
 
       const rows = [];
+      let columnNames = [];
       let resultReturned = false;
+      let columnsReturned = false;
 
       request.on("row", (columns) => {
         const row = {};
@@ -142,30 +145,35 @@ export function runQuery(client, query, options) {
       });
 
       request.on("done", (rowCount) => { // eslint-disable-line consistent-return
-        if (_.isNumber(rowCount) && !resultReturned) {
+        if (_.isNumber(rowCount) && !resultReturned && columnsReturned) {
           resultReturned = true;
           return resolve({
-            rows
+            rows, columns: columnNames
           });
         }
       });
 
       request.on("doneInProc", (rowCount) => { // eslint-disable-line consistent-return
-        if (_.isNumber(rowCount) && !resultReturned) {
+        if (_.isNumber(rowCount) && !resultReturned && columnsReturned) {
           resultReturned = true;
           return resolve({
-            rows
+            rows, columns: columnNames
           });
         }
       });
 
       request.on("doneProc", (rowCount) => { // eslint-disable-line consistent-return
-        if (_.isNumber(rowCount) && !resultReturned) {
+        if (_.isNumber(rowCount) && !resultReturned && columnsReturned) {
           resultReturned = true;
           return resolve({
-            rows
+            rows, columns: columnNames
           });
         }
+      });
+
+      request.on("columnMetadata", (columns) => {
+        columnNames = columns;
+        columnsReturned = true;
       });
 
       conn.execSql(request);

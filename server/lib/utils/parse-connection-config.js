@@ -29,5 +29,4 @@ export function parseConnectionConfig(settings) {
   return false;
 }
 
-
 export default parseConnectionConfig;

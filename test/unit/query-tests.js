@@ -3,7 +3,7 @@
 const assert = require("assert");
 
 import fs from "fs";
-import SyncAgent from "../server/lib/sync-agent";
+import SyncAgent from "../../server/lib/sync-agent";
 import ClientMock from "./client-mock";
 
 describe("runQuery job", () => {
@@ -15,8 +15,8 @@ describe("runQuery job", () => {
       output_type: "filesystem"
     },
   };
-  const query = "tests/fixtures/query-data.json";
-  const queryResult = "tests/fixtures/query-data-result.json";
+  const query = "test/fixtures/query-data.json";
+  const queryResult = "test/fixtures/query-data-result.json";
 
   const job = {};
 
