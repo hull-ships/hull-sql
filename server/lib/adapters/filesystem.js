@@ -6,8 +6,8 @@ import fs from "fs";
 import JSONStream from "JSONStream";
 import Stream from "stream";
 import through2 from "through2";
-import validateResultColumns from "../../server/lib/adapters/validate-result-columns";
-const postgresAdapter = require("../../server/lib/adapters/postgres");
+import validateResultColumns from "./validate-result-columns";
+const postgresAdapter = require("./postgres");
 
 /**
  * File system adapter.
