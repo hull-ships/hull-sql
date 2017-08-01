@@ -1,6 +1,5 @@
 import * as postgres from "./postgres";
 import * as mysql from "./mysql";
-import * as filesystem from "../../../test/support/filesystem";
 import * as s3 from "./s3";
 import * as mssql from "./mssql";
 
