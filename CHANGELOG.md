@@ -1,3 +1,6 @@
+## 0.2.10
+- empty results validation
+
 ## 0.2.9
 - hotfix make sure the postgres client is closed in all scenarios
 
@@ -31,7 +34,7 @@
 ## 0.2.0
 - Add support for mysql
 
-## 0.1.6 
+## 0.1.6
 - Add option to enter custom option in connection string
 
 ## 0.1.5
