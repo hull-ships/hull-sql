@@ -8,6 +8,5 @@ const redshift = postgres;
 export { mysql };
 export { redshift };
 export { postgres };
-export { filesystem };
 export { s3 };
 export { mssql };
