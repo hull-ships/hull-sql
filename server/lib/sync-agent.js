@@ -152,7 +152,7 @@ export default class SyncAgent {
     return this.streamQuery(query, options)
       .then(stream => this.sync(stream, started_sync_at))
       .catch(err => {
-        this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: err.message });
+        this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.get(err, "message", err) });
         return Promise.reject(err);
       });
   }
@@ -180,7 +180,7 @@ export default class SyncAgent {
     return this.adapter.in.streamQuery(this.client, wrappedQuery).then(stream => {
       return stream;
     }, err => {
-      this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: err.toString() });
+      this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.invoke(err, "toString") || err });
       err.status = 403;
       throw err;
     });
@@ -250,7 +250,7 @@ export default class SyncAgent {
     return new Promise((resolve, reject) => {
       ps.wait(stream
       .on("error", (err) => {
-        this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: err.toString() });
+        this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.invoke(err, "toString") || err });
         if (stream.close) stream.close();
         this.adapter.in.closeConnection(this.client);
         reject(err);
@@ -297,7 +297,7 @@ export default class SyncAgent {
           return { job };
         })
         .catch(err => {
-          this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: err.message });
+          this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.get(err, "message", err) });
         });
       }))
       )
