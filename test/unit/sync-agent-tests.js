@@ -73,6 +73,7 @@ describe("SyncAgent", () => {
         }
       }
     });
+
     const mockStream = new stream.Readable();
     mockStream.close = () => {};
 
