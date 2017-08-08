@@ -1,6 +1,7 @@
 /* global describe, it */
 import { expect } from "chai";
 import sinon from "sinon";
+import assert from "assert";
 import moment from "moment";
 import stream from "stream";
 
@@ -32,7 +33,8 @@ describe("SyncAgent", () => {
         logger: {
           error: () => {},
           info: () => {}
-        }
+        },
+        post: () => Promise.resolve({})
       },
       ship: {
         private_settings: {
@@ -64,7 +66,8 @@ describe("SyncAgent", () => {
         logger: {
           error: () => {},
           info: () => {}
-        }
+        },
+        post: () => Promise.resolve({})
       },
       ship: {
         private_settings: {
@@ -86,5 +89,65 @@ describe("SyncAgent", () => {
 
     mockStream.emit("error", undefined);
     expect(closeStreamStub.callCount).to.be.equal(1);
+  });
+
+  it("should send notification about database type error", (done) => {
+    const config = {
+      client: {
+        logger: {
+          error: () => {},
+          info: () => {}
+        },
+        post: sinon.spy(() => Promise.resolve({}))
+      },
+      ship: {
+        id: "1234",
+        private_settings: {
+          db_type: "no_db",
+          import_days: 10
+        }
+      }
+    };
+
+    try {
+      new SyncAgent(config);
+    } catch (err) {}
+
+    setTimeout(() => {
+      assert.equal(config.client.post.firstCall.args[0], "1234/notifications");
+      assert.equal(config.client.post.firstCall.args[1].status, "error");
+      assert.equal(config.client.post.firstCall.args[1].message, "Invalid database type no_db.");
+      done();
+    }, 1500);
+  });
+
+  it("should send notification about errors", (done) => {
+    const config = {
+      client: {
+        logger: {
+          error: () => {},
+          info: () => {}
+        },
+        post: sinon.spy(() => Promise.resolve({}))
+      },
+      ship: {
+        id: "1234",
+        private_settings: {
+          db_type: "no_db",
+          import_days: 10
+        }
+      }
+    };
+
+    try {
+      new SyncAgent(config);
+    } catch (err) {}
+
+    setTimeout(() => {
+      assert.equal(config.client.post.firstCall.args[0], "1234/notifications");
+      assert.equal(config.client.post.firstCall.args[1].status, "error");
+      assert.equal(config.client.post.firstCall.args[1].message, "Invalid database type no_db.");
+      done();
+    }, 1500);
   });
 });

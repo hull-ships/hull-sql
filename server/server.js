@@ -55,7 +55,7 @@ export default function server(app: express, options: any):express {
       .runQuery(query, { timeout: 20000 })
       .then(data => res.json(data))
       .catch(({ status, message }) => {
-        hull.client.post(`connector/${_.get(this.ship, "id")}/notifications`, { status: "error", message: { status, message } });
+        hull.client.post(`${_.get(this.ship, "id")}/notifications`, { status: "error", message: { status, message } });
         return res.status(status || 500).send({ message });
       });
   });

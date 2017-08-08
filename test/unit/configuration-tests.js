@@ -3,6 +3,7 @@
 const assert = require("assert");
 
 import express from "express";
+import sinon from "sinon";
 import http from "http";
 import Hull from "hull";
 import { Cache, Queue } from "hull/lib/infra";
@@ -27,26 +28,32 @@ const query = "";
 
 connector.setupApp(app);
 
-app.use((req, res, next) => {
-  req.hull.ship = {
+const hull = {
+  ship: {
+    id: "1234",
     private_settings: {
       db_type: "filesystem",
       output_type: "filesystem",
       query,
-      db_host: "localhost",
       db_port: "5433",
       db_name: "hullsql",
       db_user: "hullsql",
       db_password: "hullsql"
     }
-  };
-  req.hull.client = {
+  },
+  client: {
     logger: {
       error: () => {}
-    }
-  };
+    },
+    post: sinon.spy(() => Promise.resolve({}))
+  }
+};
+
+app.use((req, res, next) => {
+  req.hull = hull;
   next();
 });
+
 Server(app, options);
 connector.startApp(app);
 
@@ -77,8 +84,13 @@ describe("Configuration", () => {
       });
 
       res.on("end", () => {
-        console.log(respContent);
-        done();
+        setTimeout(() => {
+          assert.equal(hull.client.post.firstCall.args[0], "1234/notifications");
+          assert.equal(hull.client.post.firstCall.args[1].status, "warning");
+          assert.equal(hull.client.post.firstCall.args[1].message, "connection string not configured");
+          assert.equal(respContent, "{\"status\":\"connection string not configured\"}");
+          done();
+        }, 1000);
       });
     });
 
