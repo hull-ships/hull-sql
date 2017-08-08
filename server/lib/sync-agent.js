@@ -69,6 +69,7 @@ export default class SyncAgent {
         status: "error",
         message: _.get(err, "message", "Couldn't open connection to database")
       });
+      throw err;
     }
     return this;
   }
