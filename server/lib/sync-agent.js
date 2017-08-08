@@ -52,13 +52,24 @@ export default class SyncAgent {
     // If not, throw an error.
     // Otherwise, use the correct adapter.
     if (!this.adapter.in) {
-      throw new ConfigurationError(`Invalid database type ${db_type}.`);
+      const message = `Invalid database type ${db_type}.`;
+      this.hull.post(`connector/${_.get(this.ship, "id")}/notifications`, { status: "error", message });
+      throw new ConfigurationError(message);
     }
     if (!this.adapter.out) {
-      throw new ConfigurationError(`Invalid output type ${output_type}.`);
+      const message = `Invalid output type ${output_type}.`;
+      this.hull.post(`connector/${_.get(this.ship, "id")}/notifications`, { status: "error", message });
+      throw new ConfigurationError(message);
     }
 
-    this.client = this.adapter.in.openConnection(private_settings);
+    try {
+      this.client = this.adapter.in.openConnection(private_settings);
+    } catch (err) {
+      this.hull.post(`connector/${_.get(this.ship, "id")}/notifications`, {
+        status: "error",
+        message: _.get(err, "message", "Couldn't open connection to database")
+      });
+    }
     return this;
   }
 
@@ -135,6 +146,7 @@ export default class SyncAgent {
 
         const { errors } = this.adapter.in.validateResult(result);
         if (errors && errors.length > 0) {
+          this.hull.post(`connector/${_.get(this.ship, "id")}/notifications`, { status: "error", message: errors });
           return { entries: result.rows, errors };
         }
 
@@ -153,6 +165,7 @@ export default class SyncAgent {
       .then(stream => this.sync(stream, started_sync_at))
       .catch(err => {
         this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.get(err, "message", err) });
+        this.hull.post(`connector/${_.get(this.ship, "id")}/notifications`, { status: "error", message: err });
         return Promise.reject(err);
       });
   }
@@ -180,6 +193,7 @@ export default class SyncAgent {
     return this.adapter.in.streamQuery(this.client, wrappedQuery).then(stream => {
       return stream;
     }, err => {
+      this.hull.post(`connector/${_.get(this.ship, "id")}/notifications`, { status: "error", message: err });
       this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.invoke(err, "toString") || err });
       err.status = 403;
       throw err;
@@ -218,7 +232,8 @@ export default class SyncAgent {
             this.job.queue.client.extendLock(this.job.queue, this.job.id);
             this.job.progress(processed);
           } catch (err) {
-            // unsupported adatpter operation
+            // unsupported adapter operation
+            this.hull.post(`connector/${_.get(this.ship, "id")}/notifications`, { status: "error", message: err });
           }
         }
       }
@@ -250,6 +265,7 @@ export default class SyncAgent {
     return new Promise((resolve, reject) => {
       ps.wait(stream
       .on("error", (err) => {
+        this.hull.post(`connector/${_.get(this.ship, "id")}/notifications`, { status: "error", message: err });
         this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.invoke(err, "toString") || err });
         if (stream.close) stream.close();
         this.adapter.in.closeConnection(this.client);
@@ -297,6 +313,7 @@ export default class SyncAgent {
           return { job };
         })
         .catch(err => {
+          this.hull.post(`connector/${_.get(this.ship, "id")}/notifications`, { status: "error", message: err });
           this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.get(err, "message", err) });
         });
       }))
@@ -318,7 +335,10 @@ export default class SyncAgent {
         return this.hull.utils.settings.update(settings)
           .then(resolve);
       })
-      .catch(reject);
+      .catch(err => {
+        this.hull.post(`connector/${_.get(this.ship, "id")}/notifications`, { status: "error", message: err });
+        reject(err);
+      });
     });
   }
 

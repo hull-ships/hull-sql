@@ -3,6 +3,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import queueUiRouter from "hull/lib/infra/queue/ui-router";
+import _ from "lodash";
 
 import devModeMiddleware from "./lib/dev-mode";
 import SyncAgent from "./lib/sync-agent";
@@ -43,7 +44,7 @@ export default function server(app: express, options: any):express {
     }
   });
 
-  app.post("/run", checkConfiguration(), ({ body, agent }, res) => {
+  app.post("/run", checkConfiguration(), ({ body, agent, hull }, res) => {
     const query = body.query || agent.getQuery();
 
     if (!query) {
@@ -53,9 +54,10 @@ export default function server(app: express, options: any):express {
     return agent
       .runQuery(query, { timeout: 20000 })
       .then(data => res.json(data))
-      .catch(({ status, message }) =>
-        res.status(status || 500).send({ message })
-      );
+      .catch(({ status, message }) => {
+        hull.client.post(`connector/${_.get(this.ship, "id")}/notifications`, { status: "error", message: { status, message } });
+        return res.status(status || 500).send({ message });
+      });
   });
 
   app.post("/import", checkConfiguration({ checkQueryString: true }), (req, res) => {
