@@ -157,7 +157,7 @@ export default class SyncAgent {
 
   startImport(options = {}) {
     this.hull.logger.info("incoming.job.start", { jobName: "sync", type: "user", options });
-    const query = "select * from tes"; // this.getQuery();
+    const query = this.getQuery();
     const started_sync_at = new Date();
     if (!options.import_days) {
       options.import_days = FULL_IMPORT_DAYS;
