@@ -99,8 +99,11 @@ export function wrapQuery(sql, replacements) {
  * @returns {Promise} A promise object of the following format: { rows }
  */
 export function runQuery(client, query, options) {
+  const limit = options.limit || 100;
+  const opts = _.omit(options, "limit");
+
   return new Promise((resolve, reject) => {
-    const confoptions = _.merge(client.config.options, options);
+    const confoptions = _.merge(client.config.options, opts);
     const conf = _.cloneDeep(client.config);
     conf.options = confoptions;
 
@@ -123,7 +126,7 @@ export function runQuery(client, query, options) {
         return reject(err);
       }
 
-      const qparam = `WITH __qry__ AS (${query}) SELECT TOP(100) * FROM __qry__`;
+      const qparam = `WITH __qry__ AS (${query}) SELECT TOP(${limit}) * FROM __qry__`;
 
       const request = new tedious.Request(qparam, (reqError) => { // eslint-disable-line consistent-return
         if (reqError) {

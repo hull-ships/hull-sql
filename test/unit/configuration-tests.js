@@ -3,7 +3,6 @@
 const assert = require("assert");
 
 import express from "express";
-import sinon from "sinon";
 import http from "http";
 import Hull from "hull";
 import { Cache, Queue } from "hull/lib/infra";
@@ -44,8 +43,7 @@ const hull = {
   client: {
     logger: {
       error: () => {}
-    },
-    post: sinon.spy(() => Promise.resolve({}))
+    }
   }
 };
 
@@ -85,9 +83,6 @@ describe("Configuration", () => {
 
       res.on("end", () => {
         setTimeout(() => {
-          assert.equal(hull.client.post.firstCall.args[0], "1234/notifications");
-          assert.equal(hull.client.post.firstCall.args[1].status, "warning");
-          assert.equal(hull.client.post.firstCall.args[1].message, "connection string not configured");
           assert.equal(respContent, "{\"status\":\"connection string not configured\"}");
           done();
         }, 1000);

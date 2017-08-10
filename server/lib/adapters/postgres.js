@@ -99,7 +99,7 @@ function cancelQuery(client) {
 export function runQuery(client, query, options = {}) {
   return new Promise((resolve, reject) => {
     // Limit the result.
-    query = `${query} LIMIT 100`;
+    query = `${query} LIMIT ${options.limit || 100}`;
 
     let timer;
     let currentQuery;

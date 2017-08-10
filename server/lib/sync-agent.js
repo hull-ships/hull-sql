@@ -52,14 +52,10 @@ export default class SyncAgent {
     // If not, throw an error.
     // Otherwise, use the correct adapter.
     if (!this.adapter.in) {
-      const message = `Invalid database type ${db_type}.`;
-      this.hull.post(`${_.get(this.ship, "id")}/notifications`, { status: "error", message });
-      throw new ConfigurationError(message);
+      throw new ConfigurationError(`Invalid database type ${db_type}.`);
     }
     if (!this.adapter.out) {
-      const message = `Invalid output type ${output_type}.`;
-      this.hull.post(`${_.get(this.ship, "id")}/notifications`, { status: "error", message });
-      throw new ConfigurationError(message);
+      throw new ConfigurationError(`Invalid output type ${output_type}.`);
     }
 
     try {
@@ -67,7 +63,7 @@ export default class SyncAgent {
     } catch (err) {
       this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
         status: "error",
-        message: _.get(err, "message", "Couldn't open connection to database")
+        message: `Server Error: ${_.get(err, "message", "Couldn't open connection to database")}`
       });
       throw err;
     }
@@ -147,8 +143,12 @@ export default class SyncAgent {
 
         const { errors } = this.adapter.in.validateResult(result);
         if (errors && errors.length > 0) {
-          this.hull.post(`${_.get(this.ship, "id")}/notifications`, { status: "error", message: errors.join("\n") });
+          this.hull.post(`${_.get(this.ship, "id")}/notifications`, { status: "error", message: `Invalid Structure: ${errors.join(", ")}` });
           return { entries: result.rows, errors };
+        }
+
+        if (result.rows && !result.rows.length) {
+          this.hull.post(`${_.get(this.ship, "id")}/notifications`, { status: "warning", message: "Warning: Query returned no results" });
         }
 
         return { entries: result.rows };
@@ -157,7 +157,7 @@ export default class SyncAgent {
 
   startImport(options = {}) {
     this.hull.logger.info("incoming.job.start", { jobName: "sync", type: "user", options });
-    const query = this.getQuery();
+    const query = "select * from tes"; // this.getQuery();
     const started_sync_at = new Date();
     if (!options.import_days) {
       options.import_days = FULL_IMPORT_DAYS;
@@ -165,11 +165,15 @@ export default class SyncAgent {
     return this.streamQuery(query, options)
       .then(stream => this.sync(stream, started_sync_at))
       .catch(err => {
+        const { message, status } = err;
+        if (status === 400 || (err && err.routine && (err.routine.match("scanner_yyerror") || err.routine.match("parserOpenTable")))
+          || (err && (err.code === "EREQUEST" || err.code === "ER_PARSE_ERROR"))) {
+          this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
+            status: "error",
+            message: `Invalid Syntax: ${message || "Error while running query"}`
+          });
+        }
         this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.get(err, "message", err) });
-        this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
-          status: "error",
-          message: _.get(err, "message", "Error while syncing data with database")
-        });
         return Promise.reject(err);
       });
   }
@@ -199,7 +203,7 @@ export default class SyncAgent {
     }, err => {
       this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
         status: "error",
-        message: _.get(err, "message", "Error while streaming query from database")
+        message: _.get(err, "message", "Server Error: Error while streaming query from database")
       });
       this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.invoke(err, "toString") || err });
       err.status = 403;
@@ -240,7 +244,6 @@ export default class SyncAgent {
             this.job.progress(processed);
           } catch (err) {
             // unsupported adapter operation
-            this.hull.post(`${_.get(this.ship, "id")}/notifications`, { status: "error", message: _.get(err, "message", "Unsupported adapter operation") });
           }
         }
       }
@@ -274,7 +277,7 @@ export default class SyncAgent {
       .on("error", (err) => {
         this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
           status: "error",
-          message: _.get(err, "message", "Error while streaming data from database")
+          message: _.get(err, "message", "Server Error: Error while streaming data from database")
         });
         this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.invoke(err, "toString") || err });
         if (stream.close) stream.close();
@@ -321,13 +324,6 @@ export default class SyncAgent {
           last_job_id = job.id;
           this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, job });
           return { job };
-        })
-        .catch(err => {
-          this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
-            status: "error",
-            message: _.get(err, "message", "Error while processing data")
-          });
-          this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.get(err, "message", err) });
         });
       }))
       )
@@ -351,8 +347,9 @@ export default class SyncAgent {
       .catch(err => {
         this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
           status: "error",
-          message: _.get(err, "message", "Encountered error during sync operation")
+          message: _.get(err, "message", "Server Error: Encountered error during sync operation")
         });
+        this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.get(err, "message", err) });
         reject(err);
       });
     });

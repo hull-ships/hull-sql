@@ -5,6 +5,7 @@ import bodyParser from "body-parser";
 import queueUiRouter from "hull/lib/infra/queue/ui-router";
 import _ from "lodash";
 
+import statusCheck from "./lib/status-check";
 import devModeMiddleware from "./lib/dev-mode";
 import SyncAgent from "./lib/sync-agent";
 import checkConfiguration from "./lib/check-conf-middleware";
@@ -52,13 +53,16 @@ export default function server(app: express, options: any):express {
     }
 
     return agent
-      .runQuery(query, { timeout: 20000 })
+      .runQuery(query, { timeout: 20000, limit: 100 })
       .then(data => res.json(data))
-      .catch(({ status, message }) => {
-        hull.client.post(`${_.get(this.ship, "id")}/notifications`, {
-          status: "error",
-          message: message || "Error while running query"
-        });
+      .catch((error) => {
+        const { status, message } = error;
+        if (status === 400 || (message && message.toLowerCase().match("invalid")) || (error && error.code === "EREQUEST")) {
+          hull.client.post(`${_.get(hull, "ship.id")}/notifications`, {
+            status: "error",
+            message: `Invalid Syntax: ${message || "Error while running query"}`
+          });
+        }
         return res.status(status || 500).send({ message });
       });
   });
@@ -82,6 +86,8 @@ export default function server(app: express, options: any):express {
     const query = agent.getQuery();
     res.json({ query });
   });
+
+  app.get("/status", statusCheck);
 
   return app;
 }

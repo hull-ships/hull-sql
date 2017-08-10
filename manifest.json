@@ -145,6 +145,9 @@
       "url": "/sync",
       "type": "cron",
       "value": "0 */3 * * *"
+    },
+    {
+      "url": "/status"
     }
   ]
 }
