@@ -32,7 +32,7 @@ export default function (req: Request, res: Response) {
       }
 
       if (result.errors) {
-        messages.push(result.errors);
+        messages.push(`Results have invalid format. ${result.errors.join("\n")}`);
       }
     }).catch(err => {
       messages.push(`Error when trying to connect with database. ${_.get(err, "message", "")}`);

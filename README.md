@@ -59,3 +59,14 @@ Logs that are specific for SQL Connector:
   - stepName: `import` - showing progress for triggering imports on the platform
 
 * `incoming.job.query` includes the full query which is run on the external database to import data from
+
+### Status
+
+  Messages that may come from status endpoint: 
+  
+  * `Connection string is not configured.` - when some of database settings are not configured in connector's private settings
+  * `Error when trying to connect with database. {err}` - when trying to establish connection and perform simple query 
+  * `Query string is not configured` - when `query` is not configured in connector's private settings
+  * `Database does not return any rows for saved query` - when database returned no results for saved query.
+  * `Results have invalid format {messages}` - when results from database have invalid format. messages - list that contains specified 
+  * `Interval syncing is enabled but interval time is less or equal zero` - when cron syncing is enabled but time provided by user is less than zero.
