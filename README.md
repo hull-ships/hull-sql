@@ -70,3 +70,14 @@ Logs that are specific for SQL Connector:
   * `Database does not return any rows for saved query` - when database returned no results for saved query.
   * `Results have invalid format {messages}` - when results from database have invalid format. messages - list that contains specified 
   * `Interval syncing is enabled but interval time is less or equal zero` - when cron syncing is enabled but time provided by user is less than zero.
+
+### Notifications
+
+  Messages that may be sent to platform from this connector:
+    
+   - error: 
+      * `Server Error: {err}` - server side error, mostly connection errors
+      * `Invalid Syntax: {message}` - errors about invalid query syntax
+      * `Invalid structure {messages}` - errors about invalid results structure, e.g. missing email/external_id, json column in postgres database ...
+   - warning:
+      * `Warning: Query returned no results` - when query that was already saved returned no results
