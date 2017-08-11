@@ -59,6 +59,24 @@ export function validateResult(result) {
 }
 
 /**
+ *
+ * @param error from database connector
+ * @returns {{errors: Array}}
+ */
+
+export function checkForError(error) {
+  if (error && (error.routine === "parserOpenTable" || error.routine === "scanner_yyerror")) {
+    return { message: `Invalid Syntax: ${_.get(error, "message", "")}` };
+  }
+
+  if (error && (error.code === "ENOTFOUND" || error.code === "ECONNREFUSED")) {
+    return { message: `Server Error: ${_.get(error, "message", "")}` };
+  }
+
+  return false;
+}
+
+/**
  * Wrap the user query inside a PostgreSQL request.
  *
  * @param {*} sql The raw SQL query

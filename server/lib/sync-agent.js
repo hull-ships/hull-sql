@@ -61,9 +61,17 @@ export default class SyncAgent {
     try {
       this.client = this.adapter.in.openConnection(private_settings);
     } catch (err) {
+      let message;
+      const error = this.adapter.in.checkForError(err);
+      if (error) {
+        message = error.message;
+      } else {
+        message = `Server Error: ${_.get(err, "message", "")}`;
+      }
+
       this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
         status: "error",
-        message: `Server Error: ${_.get(err, "message", "Couldn't open connection to database")}`
+        message
       });
       throw err;
     }
@@ -157,7 +165,7 @@ export default class SyncAgent {
 
   startImport(options = {}) {
     this.hull.logger.info("incoming.job.start", { jobName: "sync", type: "user", options });
-    const query = this.getQuery();
+    const query = "SELEC * FROM test";// this.getQuery();
     const started_sync_at = new Date();
     if (!options.import_days) {
       options.import_days = FULL_IMPORT_DAYS;
@@ -165,14 +173,14 @@ export default class SyncAgent {
     return this.streamQuery(query, options)
       .then(stream => this.sync(stream, started_sync_at))
       .catch(err => {
-        const { message, status } = err;
-        if (status === 400 || (err && err.routine && (err.routine.match("scanner_yyerror") || err.routine.match("parserOpenTable")))
-          || (err && (err.code === "EREQUEST" || err.code === "ER_PARSE_ERROR"))) {
+        const { message } = this.adapter.in.checkForError(err);
+        if (message) {
           this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
             status: "error",
-            message: `Invalid Syntax: ${message || "Error while running query"}`
+            message
           });
         }
+
         this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.get(err, "message", err) });
         return Promise.reject(err);
       });

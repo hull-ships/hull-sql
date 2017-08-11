@@ -57,10 +57,11 @@ export default function server(app: express, options: any):express {
       .then(data => res.json(data))
       .catch((error) => {
         const { status, message } = error;
-        if (status === 400 || (message && message.toLowerCase().match("invalid")) || (error && error.code === "EREQUEST")) {
+        const err = agent.adapter.in.checkForError(error);
+        if (err) {
           hull.client.post(`${_.get(hull, "ship.id")}/notifications`, {
             status: "error",
-            message: `Invalid Syntax: ${message || "Error while running query"}`
+            message: `Invalid Syntax: ${err.message || "Error while running query"}`
           });
         }
         return res.status(status || 500).send({ message });

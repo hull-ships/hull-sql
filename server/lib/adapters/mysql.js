@@ -4,6 +4,7 @@
 import mysql from "mysql";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
+import _ from "lodash";
 import parseConnectionConfig from "../utils/parse-connection-config";
 import validateResultColumns from "./validate-result-columns";
 
@@ -39,6 +40,23 @@ export function closeConnection(client) {
 
 export function validateResult(result) {
   return validateResultColumns(result.columns.map(column => column.name));
+}
+
+/**
+ *
+ * @param error from database connector
+ * @returns {{errors: Array}}
+ */
+
+export function checkForError(error) {
+  if (error && (error.code === "ER_PARSE_ERROR" || error.code === "ER_NO_SUCH_TABLE")) {
+    return { message: `Invalid Syntax: ${_.get(error, "sqlMessage", "")}` };
+  }
+
+  if (error && (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND")) {
+    return { message: `Server Error: ${_.get(error, "message", "")}` };
+  }
+  return false;
 }
 
 /**
