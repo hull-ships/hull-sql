@@ -7,45 +7,42 @@ import SyncAgent from "./sync-agent";
 export default function (req: Request, res: Response) {
   let { agent } = req;
   const { client = {}, ship = {} } = req.hull;
-  const messages = [];
-  const promises = [];
   let status = "ok";
+  const messages = [];
+  const pushMessage = (message) => {
+    status = "error";
+    messages.push(message);
+  };
+  const promises = [];
 
   if (!req.agent.areConnectionParametersConfigured()) {
-    status = "error";
-    messages.push("Connection string is not configured");
+    pushMessage("Connection string is not configured");
   } else {
     // check connection and response
     promises.push(agent.runQuery("SELECT 1", { timeout: 3000 }).catch(err => {
-      status = "error";
-      messages.push(`Error when trying to connect with database. ${_.get(err, "message", "")}`);
+      pushMessage(`Error when trying to connect with database. ${_.get(err, "message", "")}`);
     }));
   }
 
   if (!agent.isQueryStringConfigured()) {
-    status = "error";
-    messages.push("Query string is not configured");
+    pushMessage("Query string is not configured");
   } else {
     agent = new SyncAgent(req.hull);
     promises.push(agent.runQuery(agent.getQuery(), { limit: 1, timeout: 3000 }).then(result => {
       if (result.entries && result.entries.length === 0) {
-        status = "error";
-        messages.push("Database does not return any rows for saved query");
+        pushMessage("Database does not return any rows for saved query");
       }
 
       if (result.errors) {
-        status = "error";
-        messages.push(`Results have invalid format. ${result.errors.join("\n")}`);
+        pushMessage(`Results have invalid format. ${result.errors.join("\n")}`);
       }
     }).catch(err => {
-      status = "error";
-      messages.push(`Error when trying to connect with database. ${_.get(err, "message", "")}`);
+      pushMessage(`Error when trying to connect with database. ${_.get(err, "message", "")}`);
     }));
   }
 
   if (_.get(ship, "private_settings.enabled") && _.get(ship, "private_settings.import_days", 0) < 0) {
-    status = "error";
-    messages.push("Interval syncing is enabled but interval time is less or equal zero.");
+    pushMessage("Interval syncing is enabled but interval time is less or equal zero.");
   }
 
   return Promise.all(promises).then(() => {
