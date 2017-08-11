@@ -17,6 +17,7 @@ export default function (req: Request, res: Response) {
   } else {
     // check connection and response
     promises.push(agent.runQuery("SELECT 1", { timeout: 3000 }).catch(err => {
+      status = "error";
       messages.push(`Error when trying to connect with database. ${_.get(err, "message", "")}`);
     }));
   }
@@ -28,13 +29,16 @@ export default function (req: Request, res: Response) {
     agent = new SyncAgent(req.hull);
     promises.push(agent.runQuery(agent.getQuery(), { limit: 1, timeout: 3000 }).then(result => {
       if (result.entries && result.entries.length === 0) {
+        status = "error";
         messages.push("Database does not return any rows for saved query");
       }
 
       if (result.errors) {
+        status = "error";
         messages.push(`Results have invalid format. ${result.errors.join("\n")}`);
       }
     }).catch(err => {
+      status = "error";
       messages.push(`Error when trying to connect with database. ${_.get(err, "message", "")}`);
     }));
   }
