@@ -49,7 +49,7 @@ export function validateResult(result) {
  */
 
 export function checkForError(error) {
-  if (error && (error.code === "ER_PARSE_ERROR" || error.code === "ER_NO_SUCH_TABLE")) {
+  if (error && error.code === "ER_PARSE_ERROR") {
     return { message: `Invalid Syntax: ${_.get(error, "sqlMessage", "")}` };
   }
 

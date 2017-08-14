@@ -9,8 +9,8 @@ export default function (req: Request, res: Response) {
   const { client = {}, ship = {} } = req.hull;
   let status = "ok";
   const messages = [];
-  const pushMessage = (message) => {
-    status = "error";
+  const pushMessage = (message, changeStatusTo = "error") => {
+    status = changeStatusTo;
     messages.push(message);
   };
   const promises = [];
@@ -30,7 +30,11 @@ export default function (req: Request, res: Response) {
     agent = new SyncAgent(req.hull);
     promises.push(agent.runQuery(agent.getQuery(), { limit: 1, timeout: 3000 }).then(result => {
       if (result.entries && result.entries.length === 0) {
-        pushMessage("Database does not return any rows for saved query");
+        let changeStatusTo = "warning";
+        if (status === "error") {
+          changeStatusTo = "error";
+        }
+        pushMessage("Database does not return any rows for saved query", changeStatusTo);
       }
 
       if (result.errors) {
@@ -41,7 +45,10 @@ export default function (req: Request, res: Response) {
     }));
   }
 
-  if (_.get(ship, "private_settings.enabled") && _.get(ship, "private_settings.import_days", 0) < 0) {
+  if (
+    _.get(ship, "private_settings.enabled") &&
+    _.get(ship, "private_settings.import_days", 0) < 0 &&
+    _.includes(_.get(ship, "private_settings.code"), "import_start_date")) {
     pushMessage("Interval syncing is enabled but interval time is less or equal zero.");
   }
 

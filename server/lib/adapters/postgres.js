@@ -65,7 +65,7 @@ export function validateResult(result) {
  */
 
 export function checkForError(error) {
-  if (error && (error.routine === "parserOpenTable" || error.routine === "scanner_yyerror")) {
+  if (error && error.routine === "scanner_yyerror") {
     return { message: `Invalid Syntax: ${_.get(error, "message", "")}` };
   }
 

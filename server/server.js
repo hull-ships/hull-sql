@@ -88,7 +88,7 @@ export default function server(app: express, options: any):express {
     res.json({ query });
   });
 
-  app.get("/status", statusCheck);
+  app.all("/status", statusCheck);
 
   return app;
 }
