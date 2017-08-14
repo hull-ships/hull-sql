@@ -1,4 +1,5 @@
 // @flow
+
 export default function checkConfigurationFactory({ checkQueryString = false }: Object = {}): Function {
   return function checkConfigurationMiddleware({ hull, agent }, res, next) {
     if (!agent.areConnectionParametersConfigured()) {

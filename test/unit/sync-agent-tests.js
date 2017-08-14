@@ -32,7 +32,8 @@ describe("SyncAgent", () => {
         logger: {
           error: () => {},
           info: () => {}
-        }
+        },
+        post: () => Promise.resolve({})
       },
       ship: {
         private_settings: {
@@ -64,7 +65,8 @@ describe("SyncAgent", () => {
         logger: {
           error: () => {},
           info: () => {}
-        }
+        },
+        post: () => Promise.resolve({})
       },
       ship: {
         private_settings: {

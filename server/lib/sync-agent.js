@@ -58,7 +58,23 @@ export default class SyncAgent {
       throw new ConfigurationError(`Invalid output type ${output_type}.`);
     }
 
-    this.client = this.adapter.in.openConnection(private_settings);
+    try {
+      this.client = this.adapter.in.openConnection(private_settings);
+    } catch (err) {
+      let message;
+      const error = this.adapter.in.checkForError(err);
+      if (error) {
+        message = error.message;
+      } else {
+        message = `Server Error: ${_.get(err, "message", "")}`;
+      }
+
+      this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
+        status: "error",
+        message
+      });
+      throw err;
+    }
     return this;
   }
 
@@ -135,7 +151,12 @@ export default class SyncAgent {
 
         const { errors } = this.adapter.in.validateResult(result);
         if (errors && errors.length > 0) {
+          this.hull.post(`${_.get(this.ship, "id")}/notifications`, { status: "error", message: `Invalid Structure: ${errors.join(", ")}` });
           return { entries: result.rows, errors };
+        }
+
+        if (result.rows && !result.rows.length) {
+          this.hull.post(`${_.get(this.ship, "id")}/notifications`, { status: "warning", message: "Warning: Query returned no results" });
         }
 
         return { entries: result.rows };
@@ -152,6 +173,14 @@ export default class SyncAgent {
     return this.streamQuery(query, options)
       .then(stream => this.sync(stream, started_sync_at))
       .catch(err => {
+        const { message } = this.adapter.in.checkForError(err);
+        if (message) {
+          this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
+            status: "error",
+            message
+          });
+        }
+
         this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.get(err, "message", err) });
         return Promise.reject(err);
       });
@@ -180,6 +209,10 @@ export default class SyncAgent {
     return this.adapter.in.streamQuery(this.client, wrappedQuery).then(stream => {
       return stream;
     }, err => {
+      this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
+        status: "error",
+        message: _.get(err, "message", "Server Error: Error while streaming query from database")
+      });
       this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.invoke(err, "toString") || err });
       err.status = 403;
       throw err;
@@ -218,7 +251,7 @@ export default class SyncAgent {
             this.job.queue.client.extendLock(this.job.queue, this.job.id);
             this.job.progress(processed);
           } catch (err) {
-            // unsupported adatpter operation
+            // unsupported adapter operation
           }
         }
       }
@@ -250,6 +283,10 @@ export default class SyncAgent {
     return new Promise((resolve, reject) => {
       ps.wait(stream
       .on("error", (err) => {
+        this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
+          status: "error",
+          message: _.get(err, "message", "Server Error: Error while streaming data from database")
+        });
         this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.invoke(err, "toString") || err });
         if (stream.close) stream.close();
         this.adapter.in.closeConnection(this.client);
@@ -295,9 +332,6 @@ export default class SyncAgent {
           last_job_id = job.id;
           this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, job });
           return { job };
-        })
-        .catch(err => {
-          this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.get(err, "message", err) });
         });
       }))
       )
@@ -318,7 +352,14 @@ export default class SyncAgent {
         return this.hull.utils.settings.update(settings)
           .then(resolve);
       })
-      .catch(reject);
+      .catch(err => {
+        this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
+          status: "error",
+          message: _.get(err, "message", "Server Error: Encountered error during sync operation")
+        });
+        this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.get(err, "message", err) });
+        reject(err);
+      });
     });
   }
 

@@ -3,7 +3,9 @@
 import express from "express";
 import bodyParser from "body-parser";
 import queueUiRouter from "hull/lib/infra/queue/ui-router";
+import _ from "lodash";
 
+import statusCheck from "./lib/status-check";
 import devModeMiddleware from "./lib/dev-mode";
 import SyncAgent from "./lib/sync-agent";
 import checkConfiguration from "./lib/check-conf-middleware";
@@ -43,7 +45,7 @@ export default function server(app: express, options: any):express {
     }
   });
 
-  app.post("/run", checkConfiguration(), ({ body, agent }, res) => {
+  app.post("/run", checkConfiguration(), ({ body, agent, hull }, res) => {
     const query = body.query || agent.getQuery();
 
     if (!query) {
@@ -51,11 +53,19 @@ export default function server(app: express, options: any):express {
     }
 
     return agent
-      .runQuery(query, { timeout: 20000 })
+      .runQuery(query, { timeout: 20000, limit: 100 })
       .then(data => res.json(data))
-      .catch(({ status, message }) =>
-        res.status(status || 500).send({ message })
-      );
+      .catch((error) => {
+        const { status, message } = error;
+        const err = agent.adapter.in.checkForError(error);
+        if (err) {
+          hull.client.post(`${_.get(hull, "ship.id")}/notifications`, {
+            status: "error",
+            message: err.message
+          });
+        }
+        return res.status(status || 500).send({ message });
+      });
   });
 
   app.post("/import", checkConfiguration({ checkQueryString: true }), (req, res) => {
@@ -77,6 +87,8 @@ export default function server(app: express, options: any):express {
     const query = agent.getQuery();
     res.json({ query });
   });
+
+  app.all("/status", statusCheck);
 
   return app;
 }

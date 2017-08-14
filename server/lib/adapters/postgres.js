@@ -59,6 +59,24 @@ export function validateResult(result) {
 }
 
 /**
+ *
+ * @param error from database connector
+ * @returns {{errors: Array}}
+ */
+
+export function checkForError(error) {
+  if (error && error.routine === "scanner_yyerror") {
+    return { message: `Invalid Syntax: ${_.get(error, "message", "")}` };
+  }
+
+  if (error && (error.code === "ENOTFOUND" || error.code === "ECONNREFUSED")) {
+    return { message: `Server Error: ${_.get(error, "message", "")}` };
+  }
+
+  return false;
+}
+
+/**
  * Wrap the user query inside a PostgreSQL request.
  *
  * @param {*} sql The raw SQL query
@@ -99,7 +117,7 @@ function cancelQuery(client) {
 export function runQuery(client, query, options = {}) {
   return new Promise((resolve, reject) => {
     // Limit the result.
-    query = `${query} LIMIT 100`;
+    query = `${query} LIMIT ${options.limit || 100}`;
 
     let timer;
     let currentQuery;
