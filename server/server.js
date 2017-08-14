@@ -61,7 +61,7 @@ export default function server(app: express, options: any):express {
         if (err) {
           hull.client.post(`${_.get(hull, "ship.id")}/notifications`, {
             status: "error",
-            message: `Invalid Syntax: ${err.message || "Error while running query"}`
+            message: err.message
           });
         }
         return res.status(status || 500).send({ message });
