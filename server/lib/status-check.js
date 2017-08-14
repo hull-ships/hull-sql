@@ -16,7 +16,7 @@ export default function (req: Request, res: Response) {
   const promises = [];
 
   if (!req.agent.areConnectionParametersConfigured()) {
-    pushMessage("Connection string is not configured");
+    pushMessage("Connection parameters are not fully configured");
   } else {
     // check connection and response
     promises.push(agent.runQuery("SELECT 1", { timeout: 3000 }).catch(err => {
@@ -25,8 +25,8 @@ export default function (req: Request, res: Response) {
   }
 
   if (!agent.isQueryStringConfigured()) {
-    pushMessage("Query string is not configured");
-  } else {
+    pushMessage("Query is not configured");
+  } else if (req.agent.areConnectionParametersConfigured()) {
     agent = new SyncAgent(req.hull);
     promises.push(agent.runQuery(agent.getQuery(), { limit: 1, timeout: 3000 }).then(result => {
       if (result.entries && result.entries.length === 0) {
