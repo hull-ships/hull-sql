@@ -1,3 +1,6 @@
+## 0.2.11
+- adds status endpoint and notifications
+
 ## 0.2.10
 - empty results validation
 
