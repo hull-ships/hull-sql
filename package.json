@@ -12,7 +12,8 @@
   },
   "engines": {
     "node": "7.x",
-    "npm": "3.x"
+    "npm": "3.x",
+    "yarn": "0.27.5"
   },
   "repository": {
     "type": "git",
