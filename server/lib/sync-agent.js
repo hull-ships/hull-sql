@@ -69,10 +69,7 @@ export default class SyncAgent {
         message = `Server Error: ${_.get(err, "message", "")}`;
       }
 
-      this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
-        status: "error",
-        message
-      });
+      client.logger.error("connection.error", { hull_summary: message });
       throw err;
     }
     return this;
@@ -151,12 +148,12 @@ export default class SyncAgent {
 
         const { errors } = this.adapter.in.validateResult(result);
         if (errors && errors.length > 0) {
-          this.hull.post(`${_.get(this.ship, "id")}/notifications`, { status: "error", message: `Invalid Structure: ${errors.join(", ")}` });
+          this.hull.logger.error("query.error", { hull_summary: `Invalid Structure: ${errors.join(", ")}` });
           return { entries: result.rows, errors };
         }
 
         if (result.rows && !result.rows.length) {
-          this.hull.post(`${_.get(this.ship, "id")}/notifications`, { status: "warning", message: "Warning: Query returned no results" });
+          this.hull.logger.warn("query.warning", { hull_summary: "Warning: Query returned no results" });
         }
 
         return { entries: result.rows };
@@ -175,10 +172,7 @@ export default class SyncAgent {
       .catch(err => {
         const { message } = this.adapter.in.checkForError(err);
         if (message) {
-          this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
-            status: "error",
-            message
-          });
+          this.hull.logger.error("incoming.job.error", { hull_summary: message });
         }
 
         this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.get(err, "message", err) });
@@ -209,11 +203,11 @@ export default class SyncAgent {
     return this.adapter.in.streamQuery(this.client, wrappedQuery).then(stream => {
       return stream;
     }, err => {
-      this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
-        status: "error",
-        message: _.get(err, "message", "Server Error: Error while streaming query from database")
+      this.hull.logger.error("incoming.job.error", {
+        jobName: "sync",
+        errors: _.invoke(err, "toString") || err,
+        hull_summary: _.get(err, "message", "Server Error: Error while streaming query from database")
       });
-      this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.invoke(err, "toString") || err });
       err.status = 403;
       throw err;
     });
@@ -283,11 +277,12 @@ export default class SyncAgent {
     return new Promise((resolve, reject) => {
       ps.wait(stream
       .on("error", (err) => {
-        this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
-          status: "error",
-          message: _.get(err, "message", "Server Error: Error while streaming data from database")
+        this.hull.logger.error("incoming.job.error", {
+          jobName: "sync",
+          errors: _.invoke(err, "toString") || err,
+          hull_summary: _.get(err, "message", "Server Error: Error while streaming query from database")
         });
-        this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.invoke(err, "toString") || err });
+
         if (stream.close) stream.close();
         this.adapter.in.closeConnection(this.client);
         reject(err);
@@ -353,11 +348,11 @@ export default class SyncAgent {
           .then(resolve);
       })
       .catch(err => {
-        this.hull.post(`${_.get(this.ship, "id")}/notifications`, {
-          status: "error",
-          message: _.get(err, "message", "Server Error: Encountered error during sync operation")
+        this.hull.logger.error("incoming.job.error", {
+          jobName: "sync",
+          errors: _.get(err, "message", err),
+          hull_summary: _.get(err, "message", "Server Error: Encountered error during sync operation")
         });
-        this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.get(err, "message", err) });
         reject(err);
       });
     });

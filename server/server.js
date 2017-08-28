@@ -59,10 +59,7 @@ export default function server(app: express, options: any):express {
         const { status, message } = error;
         const err = agent.adapter.in.checkForError(error);
         if (err) {
-          hull.client.post(`${_.get(hull, "ship.id")}/notifications`, {
-            status: "error",
-            message: err.message
-          });
+          hull.client.logger.error("query.error", { hull_summary: err.message });
         }
         return res.status(status || 500).send({ message });
       });
