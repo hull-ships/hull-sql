@@ -148,12 +148,7 @@ export default class SyncAgent {
 
         const { errors } = this.adapter.in.validateResult(result);
         if (errors && errors.length > 0) {
-          this.hull.logger.error("query.error", { hull_summary: `Invalid Structure: ${errors.join(", ")}` });
           return { entries: result.rows, errors };
-        }
-
-        if (result.rows && !result.rows.length) {
-          this.hull.logger.warn("query.warning", { hull_summary: "Warning: Query returned no results" });
         }
 
         return { entries: result.rows };
@@ -170,12 +165,12 @@ export default class SyncAgent {
     return this.streamQuery(query, options)
       .then(stream => this.sync(stream, started_sync_at))
       .catch(err => {
-        const { message } = this.adapter.in.checkForError(err);
-        if (message) {
-          this.hull.logger.error("incoming.job.error", { hull_summary: message });
+        let { message } = this.adapter.in.checkForError(err);
+        if (!message) {
+          message = _.get(err, "message", err);
         }
 
-        this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: _.get(err, "message", err) });
+        this.hull.logger.error("incoming.job.error", { jobName: "sync", hull_summary: message });
         return Promise.reject(err);
       });
   }
@@ -245,6 +240,7 @@ export default class SyncAgent {
             this.job.queue.client.extendLock(this.job.queue, this.job.id);
             this.job.progress(processed);
           } catch (err) {
+            this.hull.logger.debug("unsupported.adapter.operation", { errors: err });
             // unsupported adapter operation
           }
         }
@@ -334,6 +330,9 @@ export default class SyncAgent {
         const duration = new Date() - started_sync_at;
 
         this.metric.increment("ship.incoming.users", processed);
+        if (processed === 0) {
+          this.hull.logger.warn("incoming.job.warning", { hull_summary: "Warning: Saved query returned no results" });
+        }
         this.hull.logger.info("incoming.job.success", { jobName: "sync", duration, progress: processed });
 
         const settings = {

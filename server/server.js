@@ -56,10 +56,6 @@ export default function server(app: express, options: any):express {
       .then(data => res.json(data))
       .catch(error => {
         const { status, message } = error;
-        const err = agent.adapter.in.checkForError(error);
-        if (err) {
-          hull.client.logger.error("query.error", { hull_summary: err.message });
-        }
         return res.status(status || 500).send({ message });
       });
   });
@@ -69,7 +65,7 @@ export default function server(app: express, options: any):express {
     res.json({ status: "scheduled" });
   });
 
-  app.post("/sync", checkConfiguration({ checkQueryString: true }), (req, res) => {
+  app.post("/sync", checkConfiguration({ checkQueryString: true, sync: true }), (req, res) => {
     const response = { status: "ignored" };
     if (req.agent.isEnabled()) {
       response.status = "scheduled";

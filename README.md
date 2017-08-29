@@ -60,8 +60,7 @@ Logs that are specific for SQL Connector:
 
 * `incoming.job.query` - includes the full query which is run on the external database to import data from
 * `connection.error` - encountered problems when connecting with database
-* `query.error` - error with query
-* `query.warning` - query returned no results
+* `incoming.job.warning` - query returned no results
 
 ### Status
 
