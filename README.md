@@ -58,7 +58,10 @@ Logs that are specific for SQL Connector:
   - stepName: `upload` - showing progress for uploading chunks of data to S3
   - stepName: `import` - showing progress for triggering imports on the platform
 
-* `incoming.job.query` includes the full query which is run on the external database to import data from
+* `incoming.job.query` - includes the full query which is run on the external database to import data from
+* `connection.error` - encountered problems when connecting with database
+* `query.error` - error with query
+* `query.warning` - query returned no results
 
 ### Status
 
