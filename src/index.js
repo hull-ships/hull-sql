@@ -36,7 +36,7 @@ import "codemirror/mode/sql/sql.js";
           stored_query = data.query;
         },
         error(err) {
-          swal("Stored query", `Failed to load stored query: ${err.message}`, "error");
+          swal("Stored query", `Failed to load stored query: ${err.message || err.status}`, "error");
         }
       });
     }
@@ -99,7 +99,7 @@ import "codemirror/mode/sql/sql.js";
               if (err.responseJSON) {
                 error = err.responseJSON.message;
               } else {
-                error = err.message;
+                error = err.message || err.status;
               }
               $(".to-disable").prop("disabled", false);
               $("#error-query")
