@@ -20,7 +20,7 @@ export default function (req: Request, res: Response) {
   } else {
     // check connection and response
     promises.push(agent.runQuery("SELECT 1", { timeout: 3000 }).catch(err => {
-      pushMessage(`Error when trying to connect with database. ${_.get(err, "message", "")}`);
+      pushMessage(`Error when trying to connect with database: ${_.get(err, "message", "")}`);
     }));
   }
 
@@ -38,10 +38,10 @@ export default function (req: Request, res: Response) {
       }
 
       if (result.errors) {
-        pushMessage(`Results have invalid format. ${result.errors.join("\n")}`);
+        pushMessage(`Results have invalid format: ${result.errors.join("\n")}`);
       }
     }).catch(err => {
-      pushMessage(`Error when trying to connect with database. ${_.get(err, "message", "")}`);
+      pushMessage(`Error when trying to connect with database: ${_.get(err, "message", "")}`);
     }));
   }
 
