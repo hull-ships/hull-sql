@@ -36,7 +36,7 @@ import "codemirror/mode/sql/sql.js";
           stored_query = data.query;
         },
         error(err) {
-          swal("Stored query", `Failed to load stored query: ${err.message}`, "error");
+          swal("Stored query", `Failed to load stored query: ${err.message || err.status}`, "error");
         }
       });
     }
@@ -57,7 +57,12 @@ import "codemirror/mode/sql/sql.js";
 
       if (query === "") return swal("Empty query", "The current query is empty", "warning");
 
-      if (query !== stored_query) return swal("Unsaved query", `The current query '${query}' is not the query you saved '${stored_query}'. Please save your query first.`, "warning");
+      if (query !== stored_query) {
+        if (stored_query) {
+          return swal("Unsaved query", `The current query '${query}' is not the query you saved '${stored_query}'. Please save your query first.`, "warning");
+        }
+        return swal("Unsaved query", `The current query '${query}' is not the query you saved. Please save your query first.`, "warning");
+      }
 
       return swal({
         title: "Import the users from the current query? ",
@@ -90,11 +95,17 @@ import "codemirror/mode/sql/sql.js";
               $("#button_import").replaceWith("<button id=\"button_import\" class=\"btn-pill btn-rounded btn-danger btn to-disable\"><i class=\"icon icon-reset\"></i> Import everything</button>");
             },
             error(err) {
+              let error = "";
+              if (err.responseJSON) {
+                error = err.responseJSON.message;
+              } else {
+                error = err.message || err.status;
+              }
               $(".to-disable").prop("disabled", false);
               $("#error-query")
                 .empty()
                 .css("display", "block")
-                .append(err.message);
+                .append(error);
             }
           });
         }

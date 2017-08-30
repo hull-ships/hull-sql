@@ -35,7 +35,12 @@ export default function bootstrap(query, port) {
         }
       },
       client: {
-        post: () => Promise.resolve({})
+        post: () => Promise.resolve({}),
+        logger: {
+          info: () => {},
+          error: () => {},
+          warn: () => {}
+        }
       }
     };
 

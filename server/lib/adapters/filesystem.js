@@ -62,6 +62,10 @@ export function validateResult(result) {
   return postgresAdapter.validateResult(result);
 }
 
+export function checkForError() {
+  return false;
+}
+
 export function cancelQuery() {}
 
 /**

@@ -83,7 +83,7 @@ describe("Configuration", () => {
 
       res.on("end", () => {
         setTimeout(() => {
-          assert.equal(respContent, "{\"status\":\"connection string not configured\"}");
+          assert.equal(respContent, "{\"message\":\"connection parameters not configured\"}");
           done();
         }, 1000);
       });

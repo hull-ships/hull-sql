@@ -3,7 +3,6 @@
 import express from "express";
 import bodyParser from "body-parser";
 import queueUiRouter from "hull/lib/infra/queue/ui-router";
-import _ from "lodash";
 
 import statusCheck from "./lib/status-check";
 import devModeMiddleware from "./lib/dev-mode";
@@ -55,15 +54,8 @@ export default function server(app: express, options: any):express {
     return agent
       .runQuery(query, { timeout: 20000, limit: 100 })
       .then(data => res.json(data))
-      .catch((error) => {
+      .catch(error => {
         const { status, message } = error;
-        const err = agent.adapter.in.checkForError(error);
-        if (err) {
-          hull.client.post(`${_.get(hull, "ship.id")}/notifications`, {
-            status: "error",
-            message: err.message
-          });
-        }
         return res.status(status || 500).send({ message });
       });
   });
@@ -73,7 +65,7 @@ export default function server(app: express, options: any):express {
     res.json({ status: "scheduled" });
   });
 
-  app.post("/sync", checkConfiguration({ checkQueryString: true }), (req, res) => {
+  app.post("/sync", checkConfiguration({ checkQueryString: true, sync: true }), (req, res) => {
     const response = { status: "ignored" };
     if (req.agent.isEnabled()) {
       response.status = "scheduled";
