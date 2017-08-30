@@ -149,7 +149,7 @@
     {
       "url": "/status",
       "type": "cron",
-      "value": "45 */3 * * *"
+      "value": "30 */1 * * *"
     }
   ]
 }
