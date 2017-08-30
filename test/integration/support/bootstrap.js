@@ -20,16 +20,27 @@ export default function bootstrap(query, port) {
   connector.setupApp(app);
 
   app.use((req, res, next) => {
-    req.hull.ship = {
-      private_settings: {
-        db_type: "filesystem",
-        output_type: "filesystem",
-        query,
-        db_host: "localhost",
-        db_port: "5433",
-        db_name: "hullsql",
-        db_user: "hullsql",
-        db_password: "hullsql"
+    // noinspection JSAnnotator
+    req.hull = {
+      ship: {
+        private_settings: {
+          db_type: "filesystem",
+          output_type: "filesystem",
+          query,
+          db_host: "localhost",
+          db_port: "5433",
+          db_name: "hullsql",
+          db_user: "hullsql",
+          db_password: "hullsql"
+        }
+      },
+      client: {
+        post: () => Promise.resolve({}),
+        logger: {
+          info: () => {},
+          error: () => {},
+          warn: () => {}
+        }
       }
     };
 

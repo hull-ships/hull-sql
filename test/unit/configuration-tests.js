@@ -27,26 +27,31 @@ const query = "";
 
 connector.setupApp(app);
 
-app.use((req, res, next) => {
-  req.hull.ship = {
+const hull = {
+  ship: {
+    id: "1234",
     private_settings: {
       db_type: "filesystem",
       output_type: "filesystem",
       query,
-      db_host: "localhost",
       db_port: "5433",
       db_name: "hullsql",
       db_user: "hullsql",
       db_password: "hullsql"
     }
-  };
-  req.hull.client = {
+  },
+  client: {
     logger: {
       error: () => {}
     }
-  };
+  }
+};
+
+app.use((req, res, next) => {
+  req.hull = hull;
   next();
 });
+
 Server(app, options);
 connector.startApp(app);
 
@@ -77,8 +82,10 @@ describe("Configuration", () => {
       });
 
       res.on("end", () => {
-        console.log(respContent);
-        done();
+        setTimeout(() => {
+          assert.equal(respContent, "{\"message\":\"connection parameters not configured\"}");
+          done();
+        }, 1000);
       });
     });
 

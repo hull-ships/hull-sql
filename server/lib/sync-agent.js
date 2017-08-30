@@ -58,7 +58,20 @@ export default class SyncAgent {
       throw new ConfigurationError(`Invalid output type ${output_type}.`);
     }
 
-    this.client = this.adapter.in.openConnection(private_settings);
+    try {
+      this.client = this.adapter.in.openConnection(private_settings);
+    } catch (err) {
+      let message;
+      const error = this.adapter.in.checkForError(err);
+      if (error) {
+        message = error.message;
+      } else {
+        message = `Server Error: ${_.get(err, "message", "")}`;
+      }
+
+      client.logger.error("connection.error", { hull_summary: message });
+      throw err;
+    }
     return this;
   }
 
@@ -152,7 +165,12 @@ export default class SyncAgent {
     return this.streamQuery(query, options)
       .then(stream => this.sync(stream, started_sync_at))
       .catch(err => {
-        this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: err.message });
+        let { message } = this.adapter.in.checkForError(err);
+        if (!message) {
+          message = _.get(err, "message", err);
+        }
+
+        this.hull.logger.error("incoming.job.error", { jobName: "sync", hull_summary: message });
         return Promise.reject(err);
       });
   }
@@ -180,7 +198,11 @@ export default class SyncAgent {
     return this.adapter.in.streamQuery(this.client, wrappedQuery).then(stream => {
       return stream;
     }, err => {
-      this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: err.toString() });
+      this.hull.logger.error("incoming.job.error", {
+        jobName: "sync",
+        errors: _.invoke(err, "toString") || err,
+        hull_summary: _.get(err, "message", "Server Error: Error while streaming query from database")
+      });
       err.status = 403;
       throw err;
     });
@@ -218,7 +240,8 @@ export default class SyncAgent {
             this.job.queue.client.extendLock(this.job.queue, this.job.id);
             this.job.progress(processed);
           } catch (err) {
-            // unsupported adatpter operation
+            this.hull.logger.debug("unsupported.adapter.operation", { errors: err });
+            // unsupported adapter operation
           }
         }
       }
@@ -250,7 +273,12 @@ export default class SyncAgent {
     return new Promise((resolve, reject) => {
       ps.wait(stream
       .on("error", (err) => {
-        this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: err.toString() });
+        this.hull.logger.error("incoming.job.error", {
+          jobName: "sync",
+          errors: _.invoke(err, "toString") || err,
+          hull_summary: _.get(err, "message", "Server Error: Error while streaming query from database")
+        });
+
         if (stream.close) stream.close();
         this.adapter.in.closeConnection(this.client);
         reject(err);
@@ -295,9 +323,6 @@ export default class SyncAgent {
           last_job_id = job.id;
           this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, job });
           return { job };
-        })
-        .catch(err => {
-          this.hull.logger.info("incoming.job.error", { jobName: "sync", errors: err.message });
         });
       }))
       )
@@ -305,6 +330,9 @@ export default class SyncAgent {
         const duration = new Date() - started_sync_at;
 
         this.metric.increment("ship.incoming.users", processed);
+        if (processed === 0) {
+          this.hull.logger.warn("incoming.job.warning", { hull_summary: "Warning: Saved query returned no results" });
+        }
         this.hull.logger.info("incoming.job.success", { jobName: "sync", duration, progress: processed });
 
         const settings = {
@@ -318,7 +346,14 @@ export default class SyncAgent {
         return this.hull.utils.settings.update(settings)
           .then(resolve);
       })
-      .catch(reject);
+      .catch(err => {
+        this.hull.logger.error("incoming.job.error", {
+          jobName: "sync",
+          errors: _.get(err, "message", err),
+          hull_summary: _.get(err, "message", "Server Error: Encountered error during sync operation")
+        });
+        reject(err);
+      });
     });
   }
 

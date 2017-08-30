@@ -4,6 +4,7 @@
 import mysql from "mysql";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
+import _ from "lodash";
 import parseConnectionConfig from "../utils/parse-connection-config";
 import validateResultColumns from "./validate-result-columns";
 
@@ -42,6 +43,23 @@ export function validateResult(result) {
 }
 
 /**
+ *
+ * @param error from database connector
+ * @returns {{errors: Array}}
+ */
+
+export function checkForError(error) {
+  if (error && error.code === "ER_PARSE_ERROR") {
+    return { message: `Invalid Syntax: ${_.get(error, "sqlMessage", "")}` };
+  }
+
+  if (error && (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND")) {
+    return { message: `Server Error: ${_.get(error, "message", "")}` };
+  }
+  return false;
+}
+
+/**
  * Wrap the user query inside a My SQL request.
  *
  * @param {*} sql The raw SQL query
@@ -68,7 +86,7 @@ export function runQuery(client, query, options = {}) {
         return reject(connectionError);
       }
 
-      const params = { sql: `${query} LIMIT 100` };
+      const params = { sql: `${query} LIMIT ${options.limit || 100}` };
 
       if (options.timeout && options.timeout > 0) {
         params.timeout = options.timeout;

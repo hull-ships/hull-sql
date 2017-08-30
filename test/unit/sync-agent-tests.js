@@ -32,7 +32,8 @@ describe("SyncAgent", () => {
         logger: {
           error: () => {},
           info: () => {}
-        }
+        },
+        post: () => Promise.resolve({})
       },
       ship: {
         private_settings: {
@@ -44,7 +45,7 @@ describe("SyncAgent", () => {
     const mockStream = new stream.Readable();
     mockStream.close = () => {};
 
-    const closeStreamSub = sinon.stub(mockStream, "close");
+    const closeStreamStub = sinon.stub(mockStream, "close");
     const closeConnectionStub = sinon.stub(syncAgent.adapter.in, "closeConnection");
 
     syncAgent.sync(mockStream, new Date())
@@ -54,7 +55,38 @@ describe("SyncAgent", () => {
       });
 
     mockStream.emit("error", new Error("Expected"));
-    expect(closeStreamSub.callCount).to.be.equal(1);
+    expect(closeStreamStub.callCount).to.be.equal(1);
     expect(closeConnectionStub.callCount).to.be.equal(1);
+  });
+
+  it("not fail when undefined stream error occurs", (done) => {
+    const syncAgent = new SyncAgent({
+      client: {
+        logger: {
+          error: () => {},
+          info: () => {}
+        },
+        post: () => Promise.resolve({})
+      },
+      ship: {
+        private_settings: {
+          db_type: "filesystem",
+          import_days: 10
+        }
+      }
+    });
+    const mockStream = new stream.Readable();
+    mockStream.close = () => {};
+
+    const closeStreamStub = sinon.stub(mockStream, "close");
+
+    syncAgent.sync(mockStream, new Date())
+      .catch((err) => {
+        expect(err).to.be.equal(undefined);
+        done();
+      });
+
+    mockStream.emit("error", undefined);
+    expect(closeStreamStub.callCount).to.be.equal(1);
   });
 });
