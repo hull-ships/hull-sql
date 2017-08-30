@@ -19,8 +19,8 @@ export default function (req: Request, res: Response) {
     pushMessage("Connection parameters are not fully configured");
   } else {
     // check connection and response
-    promises.push(agent.runQuery("SELECT 1", { timeout: 3000 }).catch(err => {
-      pushMessage(`Error when trying to connect with database: ${_.get(err, "message", "")}`);
+    promises.push(agent.runQuery("SELECT 1 as test", { timeout: 3000 }).catch(err => {
+      pushMessage(`Error when trying to connect with database. ${_.get(err, "message", "")}`);
     }));
   }
 
@@ -56,7 +56,7 @@ export default function (req: Request, res: Response) {
   if (
     _.get(ship, "private_settings.enabled") &&
     _.get(ship, "private_settings.import_days", 0) < 0 &&
-    _.includes(_.get(ship, "private_settings.code"), "import_start_date")) {
+    _.includes(_.get(ship, "private_settings.query"), "import_start_date")) {
     pushMessage("Interval syncing is enabled but interval time is less or equal zero.");
   }
 
