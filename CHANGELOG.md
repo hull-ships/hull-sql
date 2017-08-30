@@ -1,3 +1,6 @@
+## 0.2.11
+- adds status endpoint and `hull_summary` param to error logs
+
 ## 0.2.10
 - empty results validation
 

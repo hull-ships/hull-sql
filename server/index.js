@@ -3,6 +3,8 @@ import Hull from "hull";
 import express from "express";
 import Aws from "aws-sdk";
 import { Cache, Queue } from "hull/lib/infra";
+import BullAdapter from "hull/lib/infra/queue/adapter/bull";
+import SqsAdapter from "hull/lib/infra/queue/adapter/sqs";
 
 import server from "./server";
 import worker from "./worker";
@@ -31,21 +33,21 @@ const cache = new Cache({
 let queue;
 
 if (process.env.QUEUE_ADAPTER === "sqs" && process.env.SQS_QUEUE_URL) {
-  queue = new Queue("sqs", {
+  queue = new Queue(new SqsAdapter({
     region: process.env.AWS_REGION || "us-east-1",
     accessKeyId: process.env.AWS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_KEY,
     queueUrl: process.env.SQS_QUEUE_URL
-  });
+  }));
 } else {
-  queue = new Queue("bull", {
+  queue = new Queue(new BullAdapter({
     prefix: process.env.KUE_PREFIX || "hull-sql",
     redis: process.env.REDIS_URL,
     settings: {
       lockDuration: process.env.OVERRIDE_LOCK_DURATION || 60000,
       stalledInterval: process.env.OVERRIDE_STALLED_INTERVAL || 60000
     }
-  });
+  }));
 }
 
 const connector = new Hull.Connector({

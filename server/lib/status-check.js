@@ -38,11 +38,19 @@ export default function (req: Request, res: Response) {
       }
 
       if (result.errors) {
-        pushMessage(`Results have invalid format. ${result.errors.join("\n")}`);
+        pushMessage(`Results have invalid format: ${result.errors.join("\n")}`);
       }
     }).catch(err => {
-      pushMessage(`Error when trying to connect with database. ${_.get(err, "message", "")}`);
+      pushMessage(`Error when trying to connect with database: ${_.get(err, "message", "")}`);
     }));
+  }
+
+  if (!agent.isEnabled()) {
+    let changeStatusTo = "warning";
+    if (status === "error") {
+      changeStatusTo = "error";
+    }
+    pushMessage("Sync is disabled. Enable it in settings.", changeStatusTo);
   }
 
   if (
