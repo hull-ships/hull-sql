@@ -45,6 +45,14 @@ export default function (req: Request, res: Response) {
     }));
   }
 
+  if (!agent.isEnabled()) {
+    let changeStatusTo = "warning";
+    if (status === "error") {
+      changeStatusTo = "error";
+    }
+    pushMessage("Sync is disabled. Enable it in settings.", changeStatusTo);
+  }
+
   if (
     _.get(ship, "private_settings.enabled") &&
     _.get(ship, "private_settings.import_days", 0) < 0 &&
