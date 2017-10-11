@@ -118,6 +118,12 @@
       "format": "hidden"
     },
     {
+      "name": "import_type",
+      "title": "Import type",
+      "type": "string",
+      "default": "users"
+    },
+    {
       "name": "last_sync_at",
       "title": "Last sync",
       "type": "string",

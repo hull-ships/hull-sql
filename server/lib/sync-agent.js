@@ -43,6 +43,7 @@ export default class SyncAgent {
     this.importDelay = _.random(0, process.env.IMPORT_DELAY || 120);
 
     const private_settings = this.ship.private_settings;
+    this.import_type = private_settings.import_type;
     // Get the DB type.
     const { db_type, output_type = "s3" } = private_settings;
     this.db_type = db_type;
@@ -372,7 +373,7 @@ export default class SyncAgent {
 
     this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, options: _.omit(params, "url") });
 
-    return this.hull.post("/import/users", params)
+    return this.hull.post("/import/${this.import_type}", params)
       .then(job => {
         return { job, partNumber };
       });
