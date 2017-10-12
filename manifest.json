@@ -17,12 +17,14 @@
     {
       "name": "import_type",
       "title": "Import type",
+      "description": "What do you want to import to Hull ?",
       "type": "string",
       "enum": [
         "users",
         "accounts"
       ],
-      "default": "users"
+      "default": "users",
+      "required" : true
     },
     {
       "name": "enabled",
