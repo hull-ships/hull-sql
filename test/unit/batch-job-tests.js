@@ -79,8 +79,10 @@ describe("Batch SQL import jobs", () => {
           const data = buf.toString();
           if (_.endsWith(file, "1.json")) {
             assert.equal(data.match(/\n/g).length, 2);
+            assert.equal(data.match(/userId/g).length, 2);
           } else if (_.endsWith(file, "2.json")) {
             assert.equal(data.match(/\n/g).length, 1);
+            assert.equal(data.match(/userId/g).length, 1);
           }
         });
       });
@@ -118,8 +120,10 @@ describe("Batch SQL import jobs", () => {
           const data = buf.toString();
           if (_.endsWith(file, "1.json")) {
             assert.equal(data.match(/\n/g).length, 2);
+            assert.equal(data.match(/accountId/g).length, 2);
           } else if (_.endsWith(file, "2.json")) {
             assert.equal(data.match(/\n/g).length, 1);
+            assert.equal(data.match(/accountId/g).length, 1);
           }
         });
       });
