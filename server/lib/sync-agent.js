@@ -248,9 +248,9 @@ export default class SyncAgent {
         }
       }
 
-      // Add the user id if exists.
+      // Add the external_id if exists.
       if (record.external_id) {
-        user.userId = record.external_id.toString();
+        user[`${this.import_type.slice(0, -1)}Id`] = record.external_id.toString();
       }
 
       if (record.updated_at) {
