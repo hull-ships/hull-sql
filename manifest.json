@@ -15,6 +15,16 @@
       "title": "Connector Configuration"
     },
     {
+      "name": "import_type",
+      "title": "Import type",
+      "type": "string",
+      "enum": [
+        "users",
+        "accounts"
+      ],
+      "default": "users"
+    },
+    {
       "name": "enabled",
       "title": "Enable Sync (default interval is 3 hours)",
       "type": "boolean",
@@ -116,12 +126,6 @@
       "title": "Query to run",
       "type": "string",
       "format": "hidden"
-    },
-    {
-      "name": "import_type",
-      "title": "Import type",
-      "type": "string",
-      "default": "users"
     },
     {
       "name": "last_sync_at",
