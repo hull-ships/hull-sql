@@ -24,6 +24,7 @@ export default function bootstrap(query, port) {
     req.hull = {
       ship: {
         private_settings: {
+          import_type: "user",
           db_type: "filesystem",
           output_type: "filesystem",
           query,

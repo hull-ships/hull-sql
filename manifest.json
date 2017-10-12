@@ -15,6 +15,18 @@
       "title": "Connector Configuration"
     },
     {
+      "name": "import_type",
+      "title": "Import type",
+      "description": "What do you want to import to Hull ?",
+      "type": "string",
+      "enum": [
+        "users",
+        "accounts"
+      ],
+      "default": "users",
+      "required" : true
+    },
+    {
       "name": "enabled",
       "title": "Enable Sync (default interval is 3 hours)",
       "type": "boolean",

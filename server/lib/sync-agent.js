@@ -43,6 +43,7 @@ export default class SyncAgent {
     this.importDelay = _.random(0, process.env.IMPORT_DELAY || 120);
 
     const private_settings = this.ship.private_settings;
+    this.import_type = private_settings.import_type || "users";
     // Get the DB type.
     const { db_type, output_type = "s3" } = private_settings;
     this.db_type = db_type;
@@ -156,7 +157,7 @@ export default class SyncAgent {
   }
 
   startImport(options = {}) {
-    this.hull.logger.info("incoming.job.start", { jobName: "sync", type: "user", options });
+    this.hull.logger.info("incoming.job.start", { jobName: "sync", type: this.import_type, options });
     const query = this.getQuery();
     const started_sync_at = new Date();
     if (!options.import_days) {
@@ -192,7 +193,7 @@ export default class SyncAgent {
     // Wrap the query.
     const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
 
-    this.hull.logger.info("incoming.job.query", { jobName: "sync", query: wrappedQuery });
+    this.hull.logger.info("incoming.job.query", { jobName: "sync", query: wrappedQuery, type: this.import_type });
 
     // Run the method for the specific adapter.
     return this.adapter.in.streamQuery(this.client, wrappedQuery).then(stream => {
@@ -201,7 +202,8 @@ export default class SyncAgent {
       this.hull.logger.error("incoming.job.error", {
         jobName: "sync",
         errors: _.invoke(err, "toString") || err,
-        hull_summary: _.get(err, "message", "Server Error: Error while streaming query from database")
+        hull_summary: _.get(err, "message", "Server Error: Error while streaming query from database"),
+        type: this.import_type
       });
       err.status = 403;
       throw err;
@@ -234,7 +236,7 @@ export default class SyncAgent {
 
       if (processed % 1000 === 0) {
         const elapsed = new Date() - started_sync_at;
-        this.hull.logger.info("incoming.job.progress", { jobId, jobName: "sync", stepName: "query", progress: processed, elapsed });
+        this.hull.logger.info("incoming.job.progress", { jobId, jobName: "sync", stepName: "query", progress: processed, elapsed, type: this.import_type });
         if (this.job && this.job.queue && this.job.queue.client) {
           try {
             this.job.queue.client.extendLock(this.job.queue, this.job.id);
@@ -276,7 +278,8 @@ export default class SyncAgent {
         this.hull.logger.error("incoming.job.error", {
           jobName: "sync",
           errors: _.invoke(err, "toString") || err,
-          hull_summary: _.get(err, "message", "Server Error: Error while streaming query from database")
+          hull_summary: _.get(err, "message", "Server Error: Error while streaming query from database"),
+          type: this.import_type
         });
 
         if (stream.close) stream.close();
@@ -313,7 +316,7 @@ export default class SyncAgent {
       }))
       .pipe(ps.map({ highWaterMark: 1 }, ({ url, partNumber, size }) => {
         return (() => {
-          this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "upload", progress: partNumber, size });
+          this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "upload", progress: partNumber, size, type: this.import_type });
           if (size > 0) {
             return this.startImportJob(url, partNumber, size);
           }
@@ -321,7 +324,7 @@ export default class SyncAgent {
         })()
         .then(({ job }) => {
           last_job_id = job.id;
-          this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, job });
+          this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, job, type: this.import_type });
           return { job };
         });
       }))
@@ -329,11 +332,11 @@ export default class SyncAgent {
       .then(() => {
         const duration = new Date() - started_sync_at;
 
-        this.metric.increment("ship.incoming.users", processed);
+        this.metric.increment(`ship.incoming.${this.import_type}`, processed);
         if (processed === 0) {
           this.hull.logger.warn("incoming.job.warning", { hull_summary: "Warning: Saved query returned no results" });
         }
-        this.hull.logger.info("incoming.job.success", { jobName: "sync", duration, progress: processed });
+        this.hull.logger.info("incoming.job.success", { jobName: "sync", duration, progress: processed, type: this.import_type });
 
         const settings = {
           last_sync_at: started_sync_at,
@@ -350,7 +353,8 @@ export default class SyncAgent {
         this.hull.logger.error("incoming.job.error", {
           jobName: "sync",
           errors: _.get(err, "message", err),
-          hull_summary: _.get(err, "message", "Server Error: Encountered error during sync operation")
+          hull_summary: _.get(err, "message", "Server Error: Encountered error during sync operation"),
+          type: this.import_type
         });
         reject(err);
       });
@@ -370,9 +374,9 @@ export default class SyncAgent {
       stats: { size }
     };
 
-    this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, options: _.omit(params, "url") });
+    this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, options: _.omit(params, "url"), type: this.import_type });
 
-    return this.hull.post("/import/users", params)
+    return this.hull.post(`/import/${this.import_type}`, params)
       .then(job => {
         return { job, partNumber };
       });
