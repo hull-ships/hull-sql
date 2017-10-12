@@ -5,7 +5,9 @@
   "version": "0.2.11",
   "tags": [
     "incoming",
-    "oneColumn"
+    "oneColumn",
+    "beta-release",
+    "sql-accounts"
   ],
   "private_settings": [
     {
