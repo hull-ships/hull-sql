@@ -83,7 +83,7 @@ describe("Batch SQL import jobs", () => {
       assert.deepEqual(lines, [
         { userId: "1", traits: { name: "Romain", age: 12 } },
         { userId: "2", traits: { name: "Thomas", age: 5 } },
-        { userId: "3", traits: { name: "Stephane", age: 8, account_id: "abcd" } }
+        { userId: "3", accountId: "abcd", traits: { name: "Stephane", age: 8 } }
       ]);
     }).then(done);
   });

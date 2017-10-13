@@ -260,8 +260,16 @@ export default class SyncAgent {
         }
       }
 
+      const omitTraits = ["external_id", "updated_at"];
+
+      // Extract account external_id when linking to users
+      if (this.import_type === "users" && record.account_id) {
+        user.accountId = record.account_id;
+        omitTraits.push("account_id");
+      }
+
       // Register everything else inside the "traits" object.
-      user.traits = _.omit(record, "external_id", "updated_at");
+      user.traits = _.omit(record, omitTraits);
       return user;
     });
 
