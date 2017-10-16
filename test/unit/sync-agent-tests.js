@@ -89,4 +89,44 @@ describe("SyncAgent", () => {
     mockStream.emit("error", undefined);
     expect(closeStreamStub.callCount).to.be.equal(1);
   });
+
+  describe("idKey", () => {
+    it("should return 'userId'", () => {
+      const syncAgent = new SyncAgent({ ship: { private_settings:
+        { db_type: "filesystem", import_type: "users" } } });
+      expect(syncAgent.idKey()).to.equal("userId");
+    });
+
+    it("should return 'accountId'", () => {
+      const syncAgent = new SyncAgent({ ship: { private_settings:
+        { db_type: "filesystem", import_type: "accounts" } } });
+      expect(syncAgent.idKey()).to.equal("accountId");
+    });
+
+    it("should return 'userId'", () => {
+      const syncAgent = new SyncAgent({ ship: { private_settings:
+        { db_type: "filesystem", import_type: "events" } } });
+      expect(syncAgent.idKey()).to.equal("userId");
+    });
+  });
+
+  describe("dataKey", () => {
+    it("should return 'traits'", () => {
+      const syncAgent = new SyncAgent({ ship: { private_settings:
+        { db_type: "filesystem", import_type: "users" } } });
+      expect(syncAgent.dataKey()).to.equal("traits");
+    });
+
+    it("should return 'traits'", () => {
+      const syncAgent = new SyncAgent({ ship: { private_settings:
+        { db_type: "filesystem", import_type: "accounts" } } });
+      expect(syncAgent.dataKey()).to.equal("traits");
+    });
+
+    it("should return 'properties'", () => {
+      const syncAgent = new SyncAgent({ ship: { private_settings:
+        { db_type: "filesystem", import_type: "events" } } });
+      expect(syncAgent.dataKey()).to.equal("properties");
+    });
+  });
 });

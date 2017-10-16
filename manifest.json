@@ -23,7 +23,8 @@
       "type": "string",
       "enum": [
         "users",
-        "accounts"
+        "accounts",
+        "events"
       ],
       "default": "users",
       "required" : true
