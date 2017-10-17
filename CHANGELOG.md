@@ -1,3 +1,6 @@
+## 0.3.0
+- add support for accounts
+
 ## 0.2.11
 - adds status endpoint and `hull_summary` param to error logs
 
