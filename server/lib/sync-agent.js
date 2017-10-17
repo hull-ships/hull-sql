@@ -274,6 +274,11 @@ export default class SyncAgent {
       if (this.import_type === "users" && record.account_id) {
         data.accountId = record.account_id;
         omitTraits.push("account_id");
+      } else if (this.import_type === "events") {
+        data.timestamp = record.timestamp;
+        data.event = record.event;
+        data.eventId = record.event_id;
+        omitTraits.push("timestamp", "event", "event_id");
       }
 
       // Register everything else inside the "traits" object.

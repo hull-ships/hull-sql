@@ -163,9 +163,9 @@ describe("Batch SQL import jobs", () => {
       }, []);
       assert.equal(lines.length, 3);
       assert.deepEqual(lines, [
-        { userId: "1", properties: { name: "click_event" } },
-        { userId: "2", properties: { name: "view_event" } },
-        { userId: "1", properties: { name: "download_event" } }
+        { userId: "1", eventId: "1234567890", timestamp: "2017-10-17T17:48:00", event: "click", properties: { foo: "bar" } },
+        { userId: "2", eventId: "1234567891", timestamp: "2017-10-17T17:45:00", event: "view", properties: { foo: "bat" } },
+        { userId: "1", eventId: "1234567892", timestamp: "2017-10-17T17:40:00", event: "download", properties: { foo: "toto" } }
       ]);
     }).then(done);
   });
