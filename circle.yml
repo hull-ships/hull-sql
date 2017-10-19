@@ -12,10 +12,6 @@ jobs:
       - run:
           name: install git openssh-client tar
           command: apk update && apk add git openssh-client tar
-      # - run:
-      #     name: Build App
-      #     command: |
-      #       yarn
       - run:
           name: Build Docker Image
           command: |
@@ -23,24 +19,24 @@ jobs:
       - deploy:
           name: Push Docker Image
           command: |
-            # if [ "$CIRCLE_BRANCH" != "master" ]
-            # then
-            #   exit
-            # fi
+            if [ "$CIRCLE_BRANCH" != "master" ]
+            then
+              exit
+            fi
             bash deployment/push-to-docker.sh
       - deploy:
           name: Setup and authorize GCloud
           command: |
-            # if [ "$CIRCLE_BRANCH" != "master" ]
-            # then
-            #   exit
-            # fi
+            if [ "$CIRCLE_BRANCH" != "master" ]
+            then
+              exit
+            fi
             bash deployment/setup-gcloud.sh
       - deploy:
           name: Deploy to kubernetes
           command: |
-            # if [ "$CIRCLE_BRANCH" != "master" ]
-            # then
-            #   exit
-            # fi
+            if [ "$CIRCLE_BRANCH" != "master" ]
+            then
+              exit
+            fi
             bash deployment/deploy-to-k8s.sh
