@@ -1,5 +1,5 @@
 #!/bin/bash
-ENVSUFFIX=`echo $CIRCLE_BRANCH | tr /a-z/ /A-Z/`
+ENVSUFFIX=`echo $CIRCLE_BRANCH | tr /a-z/ /A-Z/ | tr - _`
 echo "Setup for env $ENVSUFFIX"
 
 GCLOUD_SERVICE_KEY="GCLOUD_SERVICE_KEY_$ENVSUFFIX"
