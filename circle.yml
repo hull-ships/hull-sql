@@ -12,10 +12,10 @@ jobs:
       - run:
           name: install git openssh-client tar
           command: apk update && apk add git openssh-client tar
-      - run:
-          name: Build App
-          command: |
-            yarn 
+      # - run:
+      #     name: Build App
+      #     command: |
+      #       yarn
       - run:
           name: Build Docker Image
           command: |
