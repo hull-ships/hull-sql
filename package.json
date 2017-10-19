@@ -1,7 +1,7 @@
 {
   "name": "hull-sql",
   "description": "Install SQL connector on your Hull dashboard",
-  "version": "0.2.11",
+  "version": "0.3.0",
   "homepage": "https://github.com/hull-ships/hull-sql",
   "license": "MIT",
   "main": "dist/ship.js",
@@ -11,9 +11,9 @@
     "url": "https://github.com/hull"
   },
   "engines": {
-    "node": "7.x",
+    "node": "8.x",
     "npm": "3.x",
-    "yarn": "0.27.5"
+    "yarn": "1.x"
   },
   "repository": {
     "type": "git",

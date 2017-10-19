@@ -1,0 +1,57 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: sql-connector
+  labels:
+    name: sql-connector
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: sql-connector
+    spec:
+      imagePullSecrets:
+        - name: docker-regsitry-credentials
+      containers:
+        - name: sql-connector
+          image: hull/hull-sql:$CIRCLE_SHA1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8082
+          envFrom:
+            - configMapRef:
+                name: application-config
+            - configMapRef:
+                name: aws-config
+            - configMapRef:
+                name: hull-sql-config
+          env:
+            - name: PORT
+              value: "8082"
+            - name: COMBINED
+              value: "true"
+            - name: QUEUE_ADAPTER
+              value: "sqs"
+            - name: SQS_QUEUE_URL
+              value: "https://sqs.us-east-1.amazonaws.com/264311088298/hull-sql-enterprise-accounts.fifo"
+            - name: BUCKET_PATH
+              value: "hull-sql"
+            - name: OVERRIDE_LOCK_DURATION
+              value: "120000"
+            - name: NEW_RELIC_APP_NAME
+              value: "hull-sql-accounts.connectors.hullapp.net"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sql-connector
+  labels:
+    name: sql-connector
+spec:
+  ports:
+    - port: 8083
+      targetPort: 8082
+      protocol: TCP
+  selector:
+    name: sql-connector

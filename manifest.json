@@ -2,10 +2,12 @@
   "name": "SQL Importer",
   "description": "Import data from your SQL databases",
   "picture": "picture.png",
-  "version": "0.2.11",
+  "version": "0.3.0",
   "tags": [
     "incoming",
-    "oneColumn"
+    "oneColumn",
+    "beta-release",
+    "sql-accounts"
   ],
   "private_settings": [
     {
@@ -13,6 +15,18 @@
       "format": "title",
       "name": "connector_info",
       "title": "Connector Configuration"
+    },
+    {
+      "name": "import_type",
+      "title": "Import type",
+      "description": "What do you want to import to Hull ?",
+      "type": "string",
+      "enum": [
+        "users",
+        "accounts"
+      ],
+      "default": "users",
+      "required" : true
     },
     {
       "name": "enabled",
