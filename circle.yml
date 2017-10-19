@@ -15,7 +15,6 @@ jobs:
       - run:
           name: Build Docker Image
           command: |
-            node --version
             docker build -t hull/hull-sql:$CIRCLE_SHA1 .
       - deploy:
           name: Push Docker Image
