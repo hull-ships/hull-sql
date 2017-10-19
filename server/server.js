@@ -37,6 +37,7 @@ export default function server(app: express, options: any):express {
       res.render("connected.html", {
         query,
         last_sync_at: null,
+        import_type: "users",
         ...agent.ship.private_settings
       });
     } else {
