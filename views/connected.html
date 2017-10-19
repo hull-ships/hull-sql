@@ -77,7 +77,7 @@
                 <div class="col-sm-12 col-md-6">
                   <div class="well">
                     <h6>How to write valid queries</h6>
-                    <% if (import_type == "accounts") { %>
+                    <% if (typeof import_type !== "undefined" && import_type == "accounts") { %>
                       <p>
                         Valid queries MUST expose an <code>external_id</code> column or a <code>domain</code> column. Lines with no <code>external_id</code> or <code>domain</code> will be ignored.
                         All other fields will be imported as traits on the matching account.
@@ -90,7 +90,7 @@
                         All other fields will be imported as traits on the matching users.
                         For example, the following query will map the column <code>users.id</code> to your Hull users' <code>external_id</code>.
                         <pre><code>SELECT user_id as external_id, plan_name, monthly_amount FROM users_subscriptions</code></pre>
-                        You can also expose an <code>account_id</code>code> column to link users to an account. <code>account_id</code> will be used to resolve an account by its <code>external_id</code>.
+                        You can also expose an <code>account_id</code> column to link users to an account. <code>account_id</code> will be used to resolve an account by its <code>external_id</code>.
                       </p>
                     <% } %>
                   </div>
