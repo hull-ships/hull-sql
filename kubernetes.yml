@@ -1,21 +1,21 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: hull-sql-accounts
+  name: sql-connector
   labels:
-    name: hull-sql-accounts
+    name: sql-connector
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        name: hull-sql-accounts
+        name: sql-connector
     spec:
       imagePullSecrets:
         - name: docker-regsitry-credentials
       containers:
-        - name: hull-sql-accounts
-          image: hull/hull-sql:alpha-accounts
+        - name: sql-connector
+          image: hull/hull-sql:$CIRCLE_SHA1
           imagePullPolicy: Always
           ports:
             - containerPort: 8082
@@ -45,13 +45,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: hull-sql-accounts
+  name: sql-connector
   labels:
-    name: hull-sql-accounts
+    name: sql-connector
 spec:
   ports:
     - port: 8083
       targetPort: 8082
       protocol: TCP
   selector:
-    name: hull-sql-accounts
+    name: sql-connector
