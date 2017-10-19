@@ -15,4 +15,4 @@ RUN yarn
 
 # RUN yarn run build
 
-ENTRYPOINT npm start
+ENTRYPOINT node -r newrelic build
