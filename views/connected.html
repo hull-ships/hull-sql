@@ -84,6 +84,14 @@
                         For example, the following query will map the column <code>account.id</code> to your Hull accounts' <code>external_id</code>.
                         <pre><code>SELECT account_id as external_id, plan_name, monthly_amount FROM accounts_subscriptions</code></pre>
                       </p>
+                    <% } else if (typeof import_type !== "undefined" && import_type == "events") { %>
+                      <p>
+                      Valid queries MUST expose an <code>external_id</code> column matching a user, an <code>event</code> colums specifying the event name or type and a <code>timestamp</code> column. Lines with no <code>external_id</code>, <code>event</code> and <code>timestamp</code> will be ignored.
+                        All other fields will be imported as event properties.
+                        For example, the following query will map the column <code>users.id</code> to your Hull users' <code>external_id</code>.
+                        <pre><code>SELECT user_id as external_id, event, timestamp FROM users_events</code></pre>
+                      You can also provide an <code>event_id</code> column to ensure event unicity.
+                      </p>
                     <% } else { %>
                       <p>
                         Valid queries MUST expose an <code>external_id</code> column or an <code>email</code> column. Lines with no <code>external_id</code> or <code>email</code> will be ignored.
