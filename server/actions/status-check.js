@@ -2,7 +2,7 @@
 import { Request, Response } from "express";
 import _ from "lodash";
 
-import SyncAgent from "./sync-agent";
+import SyncAgent from "../lib/sync-agent";
 
 export default function (req: Request, res: Response) {
   let { agent } = req;

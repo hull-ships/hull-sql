@@ -4,10 +4,10 @@ import express from "express";
 import bodyParser from "body-parser";
 import queueUiRouter from "hull/lib/infra/queue/ui-router";
 
-import statusCheck from "./lib/status-check";
 import devModeMiddleware from "./lib/dev-mode";
 import SyncAgent from "./lib/sync-agent";
 import checkConfiguration from "./lib/check-conf-middleware";
+import * as actions from "./actions";
 
 export default function server(app: express, options: any):express {
   const { hostSecret, queue, devMode } = options;
@@ -31,57 +31,12 @@ export default function server(app: express, options: any):express {
     return res.status(403).json({ status: "missing credentials" });
   });
 
-  app.get("/admin.html", ({ agent }, res) => {
-    if (agent.areConnectionParametersConfigured()) {
-      const query = agent.getQuery();
-      res.render("connected.html", {
-        query,
-        last_sync_at: null,
-        import_type: "users",
-        ...agent.ship.private_settings
-      });
-    } else {
-      res.render("home.html", {});
-    }
-  });
-
-  app.post("/run", checkConfiguration(), ({ body, agent, hull }, res) => {
-    const query = body.query || agent.getQuery();
-
-    if (!query) {
-      return res.status(403).json({ status: "query string empty" });
-    }
-
-    return agent
-      .runQuery(query, { timeout: 20000, limit: 100 })
-      .then(data => res.json(data))
-      .catch(error => {
-        const { status, message } = error;
-        return res.status(status || 500).send({ message });
-      });
-  });
-
-  app.post("/import", checkConfiguration({ checkQueryString: true }), (req, res) => {
-    req.hull.enqueue("startImport");
-    res.json({ status: "scheduled" });
-  });
-
-  app.post("/sync", checkConfiguration({ checkQueryString: true, sync: true }), (req, res) => {
-    const response = { status: "ignored" };
-    if (req.agent.isEnabled()) {
-      response.status = "scheduled";
-      req.hull.enqueue("startSync");
-    }
-
-    res.json(response);
-  });
-
-  app.get("/storedquery", checkConfiguration(), ({ agent }, res) => {
-    const query = agent.getQuery();
-    res.json({ query });
-  });
-
-  app.all("/status", statusCheck);
+  app.get("/admin.html", actions.admin);
+  app.post("/run", checkConfiguration(), actions.run);
+  app.post("/import", checkConfiguration({ checkQueryString: true }), actions._import);
+  app.post("/sync", checkConfiguration({ checkQueryString: true, sync: true }), actions.sync);
+  app.get("/storedquery", checkConfiguration(), actions.storedQuery);
+  app.all("/status", actions.statusCheck);
 
   return app;
 }
