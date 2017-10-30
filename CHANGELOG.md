@@ -1,3 +1,6 @@
+## 0.3.1
+- add support for events
+
 ## 0.3.0
 - add support for accounts
 
