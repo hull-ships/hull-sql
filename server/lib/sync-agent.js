@@ -147,7 +147,7 @@ export default class SyncAgent {
       .then(result => {
         this.adapter.in.closeConnection(this.client);
 
-        const { errors } = this.adapter.in.validateResult(result);
+        const { errors } = this.adapter.in.validateResult(result, this.import_type);
         if (errors && errors.length > 0) {
           return { entries: result.rows, errors };
         }
