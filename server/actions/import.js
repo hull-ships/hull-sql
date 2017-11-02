@@ -1,4 +1,4 @@
-export default (req, res) => {
-  req.hull.enqueue("startImport");
+export default ({ hull }, res) => {
+  hull.enqueue("startImport");
   res.json({ status: "scheduled" });
 };

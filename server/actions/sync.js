@@ -1,8 +1,8 @@
-export default (req, res) => {
+export default ({ hull, agent }, res) => {
   const response = { status: "ignored" };
-  if (req.agent.isEnabled()) {
+  if (agent.isEnabled()) {
     response.status = "scheduled";
-    req.hull.enqueue("startSync");
+    hull.enqueue("startSync");
   }
 
   res.json(response);

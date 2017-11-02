@@ -12,6 +12,7 @@ import * as actions from "./actions";
 export default function server(app: express, options: any):express {
   const { hostSecret, queue, devMode } = options;
 
+  // middlewares
   if (devMode) {
     app.use(devModeMiddleware());
   }
@@ -31,6 +32,7 @@ export default function server(app: express, options: any):express {
     return res.status(403).json({ status: "missing credentials" });
   });
 
+  // endpoints
   app.get("/admin.html", actions.admin);
   app.post("/run", checkConfiguration(), actions.run);
   app.post("/import", checkConfiguration({ checkQueryString: true }), actions._import);

@@ -4,12 +4,14 @@
 import _ from "lodash";
 import moment from "moment";
 import ps from "promise-streams";
+import tunnel from "tunnel-ssh";
 
 // Map each record of the stream.
 import map from "through2-map";
 import through2 from "through2";
 
 import * as Adapters from "./adapters";
+import { shouldUseSshTunnel, getSshTunnelConfig } from "./utils/ssh-tunnel";
 
 const DEFAULT_BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "10000", 10);
 const FULL_IMPORT_DAYS = process.env.FULL_IMPORT_DAYS || "10000";
@@ -59,8 +61,12 @@ export default class SyncAgent {
       throw new ConfigurationError(`Invalid output type ${output_type}.`);
     }
 
+    return this;
+  }
+
+  openConnection() {
     try {
-      this.client = this.adapter.in.openConnection(private_settings);
+      return this.adapter.in.openConnection(this.ship.private_settings);
     } catch (err) {
       let message;
       const error = this.adapter.in.checkForError(err);
@@ -70,10 +76,9 @@ export default class SyncAgent {
         message = `Server Error: ${_.get(err, "message", "")}`;
       }
 
-      client.logger.error("connection.error", { hull_summary: message });
+      this.hull.logger.error("connection.error", { hull_summary: message });
       throw err;
     }
-    return this;
   }
 
   /**
@@ -94,13 +99,10 @@ export default class SyncAgent {
       let val = settings[`db_${key}`];
       if (key === "type" && val === "redshift") val = "postgres";
       if (c && val && val.length > 0) {
-        return { ...c,
-          [key]: val
-        };
+        return { ...c, [key]: val };
       }
       return false;
     }, {});
-
     return !!conn;
   }
 
@@ -108,7 +110,7 @@ export default class SyncAgent {
    * Returns whether the query string has been configured.
    * @return {boolean} True if the query string is set; otherwise false.
    */
-  isQueryStringConfigured() {
+  isQueryStringConfigured(): Boolean {
     return !!this.getQuery();
   }
 
@@ -118,6 +120,23 @@ export default class SyncAgent {
    */
   getQuery() {
     return this.ship.private_settings.query;
+  }
+
+  exec(callback) {
+    if (shouldUseSshTunnel(this.ship.private_settings)) {
+      const tunnelConfig = getSshTunnelConfig(this.ship.private_settings);
+      this.hull.logger.info("connecting through SSH tunnel", _.omit(tunnelConfig, "privateKey"));
+      tunnel(tunnelConfig, (err, tnl) => {
+        if (err) {
+          this.hull.logger.error("failed to connect in SSH", { err });
+          throw err;
+        }
+        const result = callback();
+        result.then(() => tnl.close());
+        return result;
+      });
+    }
+    return callback();
   }
 
   /**
@@ -132,8 +151,15 @@ export default class SyncAgent {
    *     - @error Object
    *     - @success Object
    */
-
   runQuery(query, options = {}) {
+    query = query || this.getQuery();
+
+    if (!query) {
+      const err = new Error("query string empty");
+      err.status = 403;
+      throw err;
+    }
+
     // Wrap the query.
     const oneDayAgo = moment().subtract(1, "day").utc();
     const replacements = {
@@ -142,18 +168,21 @@ export default class SyncAgent {
     };
 
     const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
+
+    return this.exec(() => {
+      const client = this.openConnection();
       // Run the method for the specific adapter.
-    return this.adapter.in.runQuery(this.client, wrappedQuery, options)
-      .then(result => {
-        this.adapter.in.closeConnection(this.client);
+      return this.adapter.in.runQuery(client, wrappedQuery, options)
+        .then(result => {
+          this.adapter.in.closeConnection(client);
+          const { errors } = this.adapter.in.validateResult(result, this.import_type);
+          if (errors && errors.length > 0) {
+            return { entries: result.rows, errors };
+          }
 
-        const { errors } = this.adapter.in.validateResult(result, this.import_type);
-        if (errors && errors.length > 0) {
-          return { entries: result.rows, errors };
-        }
-
-        return { entries: result.rows };
-      });
+          return { entries: result.rows };
+        });
+    });
   }
 
   startImport(options = {}) {
@@ -163,17 +192,21 @@ export default class SyncAgent {
     if (!options.import_days) {
       options.import_days = FULL_IMPORT_DAYS;
     }
-    return this.streamQuery(query, options)
-      .then(stream => this.sync(stream, started_sync_at))
-      .catch(err => {
-        let { message } = this.adapter.in.checkForError(err);
-        if (!message) {
-          message = _.get(err, "message", err);
-        }
 
-        this.hull.logger.error("incoming.job.error", { jobName: "sync", hull_summary: message });
-        return Promise.reject(err);
-      });
+    return this.exec(() => {
+      const client = this.openConnection();
+      return this.streamQuery(query, client, options)
+        .then(stream => this.sync(stream, client, started_sync_at))
+        .catch(err => {
+          let { message } = this.adapter.in.checkForError(err);
+          if (!message) {
+            message = _.get(err, "message", err);
+          }
+
+          this.hull.logger.error("incoming.job.error", { jobName: "sync", hull_summary: message });
+          return Promise.reject(err);
+        });
+    });
   }
 
   startSync(options = {}) {
@@ -184,7 +217,7 @@ export default class SyncAgent {
     return this.startImport({ ...options, last_updated_at });
   }
 
-  streamQuery(query, options = {}) {
+  streamQuery(query, client, options = {}) {
     const { last_updated_at } = options;
     const replacements = {
       last_updated_at,
@@ -196,7 +229,7 @@ export default class SyncAgent {
     this.hull.logger.info("incoming.job.query", { jobName: "sync", query: wrappedQuery, type: this.import_type });
 
     // Run the method for the specific adapter.
-    return this.adapter.in.streamQuery(this.client, wrappedQuery).then(stream => {
+    return this.adapter.in.streamQuery(client, wrappedQuery).then(stream => {
       return stream;
     }, err => {
       this.hull.logger.error("incoming.job.error", {
@@ -208,6 +241,14 @@ export default class SyncAgent {
       err.status = 403;
       throw err;
     });
+  }
+
+  idKey() {
+    return this.import_type === "accounts" ? "accountId" : "userId";
+  }
+
+  dataKey() {
+    return this.import_type === "events" ? "properties" : "traits";
   }
 
   /**
@@ -223,16 +264,7 @@ export default class SyncAgent {
    *     - @error Object
    *     - @success Object
    */
-
-  idKey() {
-    return this.import_type === "accounts" ? "accountId" : "userId";
-  }
-
-  dataKey() {
-    return this.import_type === "events" ? "properties" : "traits";
-  }
-
-  sync(stream, started_sync_at) {
+  sync(stream, client, started_sync_at) {
     let processed = 0;
     let last_updated_at;
 
@@ -304,7 +336,7 @@ export default class SyncAgent {
         });
 
         if (stream.close) stream.close();
-        this.adapter.in.closeConnection(this.client);
+        this.adapter.in.closeConnection(client);
         reject(err);
       })
       .pipe(transform)

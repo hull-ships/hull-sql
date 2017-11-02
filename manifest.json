@@ -134,6 +134,23 @@
       "required" : true
     },
     {
+      "type": "string",
+      "format": "title",
+      "name": "ssh_tunnel_login",
+      "title": "SSH Tunnel Login"
+    },
+    {
+      "name": "ssh_username",
+      "type": "string",
+      "title": "SSH username"
+    },
+    {
+      "name": "ssh_private_key",
+      "type": "string",
+      "format": "textarea",
+      "title": "SSH private key"
+    },
+    {
       "name": "query",
       "title": "Query to run",
       "type": "string",
