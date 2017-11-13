@@ -1,20 +1,24 @@
 import _ from "lodash";
 
+function isNotIn(collection) {
+  return key => !_.includes(collection, key)
+}
+
 export default function validate(columnNames, import_type = "users") {
   const errors = [];
   switch (import_type) {
     case "users":
-      if (["email", "external_id"].every(key => !_.includes(columnNames, key))) {
+      if (["email", "external_id"].every(isNotIn(columnNames))) {
         errors.push("Column names should include email and/or external_id");
       }
       break;
     case "accounts":
-      if (["domain", "external_id"].every(key => !_.includes(columnNames, key))) {
+      if (["domain", "external_id"].every(isNotIn(columnNames))) {
         errors.push("Column names should include domain and/or external_id");
       }
       break;
     case "events":
-      if (["timestamp", "event", "external_id"].some(key => !_.includes(columnNames, key))) {
+      if (["timestamp", "event"].some(isNotIn(columnNames)) || ["external_id", "email"].every(isNotIn(columnNames))) {
         errors.push("Column names should include event, timestamp and external_id");
       }
       break;
