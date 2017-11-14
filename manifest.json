@@ -36,6 +36,15 @@
       "default": "false"
     },
     {
+      "name": "sync_interval",
+      "title": "Sync interval",
+      "type": "number",
+      "default": 180,
+      "enum": [
+        5, 30, 60, 180, 360, 720, 1440
+      ]
+    },
+    {
       "name": "overwrite",
       "title": "Use SQL value in case of data conflict",
       "type": "boolean",
@@ -158,13 +167,13 @@
   "schedules": [
     {
       "url": "/sync",
-      "type": "cron",
-      "value": "0 */3 * * *"
+      "type": "interval",
+      "value_from": "private_settings.sync_interval"
     },
     {
       "url": "/status",
       "type": "cron",
-      "value": "30 */1 * * *"
+      "value": "30 * * * *"
     }
   ]
 }
