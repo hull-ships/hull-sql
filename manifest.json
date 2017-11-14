@@ -37,12 +37,10 @@
     },
     {
       "name": "sync_interval",
-      "title": "Sync interval",
+      "title": "Sync interval (in minutes)",
       "type": "number",
       "default": 180,
-      "enum": [
-        5, 30, 60, 180, 360, 720, 1440
-      ]
+      "enum": [ 5, 30, 60, 180, 360, 720, 1440 ]
     },
     {
       "name": "overwrite",
@@ -168,7 +166,8 @@
     {
       "url": "/sync",
       "type": "interval",
-      "value_from": "private_settings.sync_interval"
+      "value_from": "private_settings.sync_interval",
+      "default": 180
     },
     {
       "url": "/status",
