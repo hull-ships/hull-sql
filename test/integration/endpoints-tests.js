@@ -116,7 +116,7 @@ describe("Server", () => {
       });
 
       res.on("end", () => {
-        assert.equal(JSON.parse(respContent).errors[0], "Column names should include event, timestamp and external_id");
+        assert.equal(JSON.parse(respContent).errors[0], "Column names should include event, timestamp and external_id or email");
         done();
       });
     });
