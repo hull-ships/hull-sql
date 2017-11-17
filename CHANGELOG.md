@@ -1,3 +1,6 @@
+## 0.3.2
+- support sync interval in settings
+
 ## 0.3.1
 - add support for events
 
