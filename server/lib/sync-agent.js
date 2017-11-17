@@ -147,7 +147,7 @@ export default class SyncAgent {
       .then(result => {
         this.adapter.in.closeConnection(this.client);
 
-        const { errors } = this.adapter.in.validateResult(result);
+        const { errors } = this.adapter.in.validateResult(result, this.import_type);
         if (errors && errors.length > 0) {
           return { entries: result.rows, errors };
         }
@@ -224,12 +224,20 @@ export default class SyncAgent {
    *     - @success Object
    */
 
+  idKey() {
+    return this.import_type === "accounts" ? "accountId" : "userId";
+  }
+
+  dataKey() {
+    return this.import_type === "events" ? "properties" : "traits";
+  }
+
   sync(stream, started_sync_at) {
     let processed = 0;
     let last_updated_at;
 
     const transform = map({ objectMode: true }, (record) => {
-      const user = {};
+      const data = {}; // data formated to be sent to hull
       processed += 1;
 
       const jobId = this.job ? this.job.id : undefined;
@@ -250,7 +258,7 @@ export default class SyncAgent {
 
       // Add the external_id if exists.
       if (record.external_id) {
-        user[`${this.import_type.slice(0, -1)}Id`] = record.external_id.toString();
+        data[this.idKey()] = record.external_id.toString();
       }
 
       if (record.updated_at) {
@@ -264,13 +272,18 @@ export default class SyncAgent {
 
       // Extract account external_id when linking to users
       if (this.import_type === "users" && record.account_id) {
-        user.accountId = record.account_id;
+        data.accountId = record.account_id;
         omitTraits.push("account_id");
+      } else if (this.import_type === "events") {
+        data.timestamp = record.timestamp;
+        data.event = record.event;
+        data.eventId = record.event_id;
+        omitTraits.push("timestamp", "event", "event_id");
       }
 
       // Register everything else inside the "traits" object.
-      user.traits = _.omit(record, omitTraits);
-      return user;
+      data[this.dataKey()] = _.omit(record, omitTraits);
+      return data;
     });
 
     let numBatches = 1;

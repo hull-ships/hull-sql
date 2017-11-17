@@ -2,7 +2,7 @@
   "name": "SQL Importer",
   "description": "Import data from your SQL databases",
   "picture": "picture.png",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "tags": [
     "incoming",
     "oneColumn",
@@ -23,7 +23,8 @@
       "type": "string",
       "enum": [
         "users",
-        "accounts"
+        "accounts",
+        "events"
       ],
       "default": "users",
       "required" : true
@@ -33,6 +34,13 @@
       "title": "Enable Sync (default interval is 3 hours)",
       "type": "boolean",
       "default": "false"
+    },
+    {
+      "name": "sync_interval",
+      "title": "Sync interval (in minutes)",
+      "type": "string",
+      "default": "180",
+      "enum": [ "1", "5", "30", "60", "180", "360", "720", "1440" ]
     },
     {
       "name": "overwrite",
@@ -157,13 +165,14 @@
   "schedules": [
     {
       "url": "/sync",
-      "type": "cron",
-      "value": "0 */3 * * *"
+      "type": "interval",
+      "value_from": "private_settings.sync_interval",
+      "default": "180"
     },
     {
       "url": "/status",
       "type": "cron",
-      "value": "30 */1 * * *"
+      "value": "30 * * * *"
     }
   ]
 }

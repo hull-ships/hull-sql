@@ -40,7 +40,7 @@ export function closeConnection(client) {
  * @returns Array of errors
  */
 
-export function validateResult(result) {
+export function validateResult(result, import_type = "users") {
   const incorrectColumnNames = [];
 
   _.forEach(result.fields, (column) => {
@@ -50,7 +50,7 @@ export function validateResult(result) {
     }
   });
 
-  const { errors } = validateResultColumns(result.fields.map(column => column.name));
+  const { errors } = validateResultColumns(result.fields.map(column => column.name), import_type);
 
   if (incorrectColumnNames.length > 0) {
     errors.push([`Following columns from postgres database are in json format which is not supported : ${incorrectColumnNames.join(", ")}`]);

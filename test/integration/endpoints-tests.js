@@ -46,10 +46,10 @@ describe("Server", () => {
     req.end();
   });
 
-  it("should return errors if result does not contain required column names", (done) => {
+  it("should return errors if result does not contain required column names for users import", (done) => {
     const port = 8077;
     const query = "test/fixtures/query-data-without-required-columns.json";
-    bootstrap(query, port);
+    bootstrap(query, port, "users");
 
     const postData = JSON.stringify({
       query
@@ -77,6 +77,46 @@ describe("Server", () => {
 
       res.on("end", () => {
         assert.equal(JSON.parse(respContent).errors[0], "Column names should include email and/or external_id");
+        done();
+      });
+    });
+
+    req.write(postData);
+    req.end();
+  });
+
+  it("should return errors if result does not contain required column names for events import", (done) => {
+    const port = 8078;
+    const query = "test/fixtures/query-events-data-without-required-columns.json";
+    bootstrap(query, port, "events");
+
+    const postData = JSON.stringify({
+      query
+    });
+
+    const requestOptions = {
+      host: "localhost",
+      port,
+      method: "POST",
+      path: "/run",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(postData)
+      }
+    };
+
+    const req = http.request(requestOptions, (res) => {
+      res.setEncoding("utf-8");
+      // console.log({ res });
+      assert(res.statusCode === 200);
+      let respContent = "";
+
+      res.on("data", chunk => {
+        respContent += chunk.toString();
+      });
+
+      res.on("end", () => {
+        assert.equal(JSON.parse(respContent).errors[0], "Column names should include event, timestamp and external_id or email");
         done();
       });
     });
