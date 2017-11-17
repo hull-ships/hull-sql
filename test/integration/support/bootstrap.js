@@ -4,7 +4,7 @@ import express from "express";
 import Server from "../../../server/server";
 
 
-export default function bootstrap(query, port) {
+export default function bootstrap(query, port, import_type = "users") {
   const app = express();
   const cache = new Cache({
     store: "memory",
@@ -24,7 +24,7 @@ export default function bootstrap(query, port) {
     req.hull = {
       ship: {
         private_settings: {
-          import_type: "user",
+          import_type,
           db_type: "filesystem",
           output_type: "filesystem",
           query,

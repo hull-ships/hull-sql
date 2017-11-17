@@ -55,9 +55,9 @@ export function wrapQuery(query) {
  * @returns Array of errors
  */
 
-export function validateResult(result) {
+export function validateResult(result, import_type = "users") {
   if (process.env.POSTGRES_DATABASE_TEST !== "true") {
-    return validateResultColumns(result.columns.map(column => column.name));
+    return validateResultColumns(result.columns.map(column => column.name), import_type);
   }
   return postgresAdapter.validateResult(result);
 }

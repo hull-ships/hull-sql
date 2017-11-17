@@ -1,3 +1,7 @@
+## 0.3.1
+- add support for events
+- support sync interval in settings
+
 ## 0.3.0
 - add support for accounts
 

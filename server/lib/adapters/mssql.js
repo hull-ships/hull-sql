@@ -76,8 +76,8 @@ export function closeConnection(client) {
  * @returns Array of errors
  */
 
-export function validateResult(result) {
-  return validateResultColumns(result.columns.map(column => column.colName));
+export function validateResult(result, import_type = "users") {
+  return validateResultColumns(result.columns.map(column => column.colName), import_type);
 }
 
 /**
