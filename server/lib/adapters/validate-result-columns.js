@@ -1,7 +1,7 @@
 import _ from "lodash";
 
 function isNotIn(collection) {
-  return key => !_.includes(collection, key)
+  return key => !_.includes(collection, key);
 }
 
 export default function validate(columnNames, import_type = "users") {
@@ -19,7 +19,7 @@ export default function validate(columnNames, import_type = "users") {
       break;
     case "events":
       if (["timestamp", "event"].some(isNotIn(columnNames)) || ["external_id", "email"].every(isNotIn(columnNames))) {
-        errors.push("Column names should include event, timestamp and external_id");
+        errors.push("Column names should include event, timestamp and external_id or email");
       }
       break;
     default:
