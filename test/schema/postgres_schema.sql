@@ -29,8 +29,8 @@ CREATE VIEW dummy_view AS
   SELECT generate_series as external_id, faker_first_name() as first_name, faker_last_name() as last_name, ceil(random() * 10) as random_rank FROM generate_series(1,31000);
 
 -- to load the schema
--- bash tests/schema/install_faker.sh
--- docker run -it --rm -v `pwd`:/app -w /app --network=host postgres:9.6 bash -c 'cat tests/schema/postgres_schema.sql | PGPASSWORD=postgres psql -h localhost -U postgres'
+-- bash test/schema/install_faker.sh
+-- docker run -it --rm -v `pwd`:/app -w /app --network=host postgres:9.6 bash -c 'cat test/schema/postgres_schema.sql | PGPASSWORD=postgres psql -h localhost -U postgres'
 
 -- example query:
 -- SELECT id as external_id, name as first_name, foo_numeric as testing_trait, foo_date FROM users_view
