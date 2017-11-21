@@ -12,7 +12,7 @@ export default function (req: Request, res: Response) {
     messages.push(message);
   };
   const promises = [];
-  client.logger.debug("connector.status.start");
+  client.logger.debug("connector.statusCheck.start");
 
   if (!req.agent.areConnectionParametersConfigured()) {
     pushMessage("Connection parameters are not fully configured");
@@ -44,7 +44,7 @@ export default function (req: Request, res: Response) {
 
   return Promise.all(promises).then(() => {
     res.json({ messages: _.uniq(messages), status });
-    client.logger.debug("connector.status.success", { status, messages: _.uniq(messages) });
+    client.logger.debug("connector.statusCheck.success", { status, messages: _.uniq(messages) });
     return client.put(`${ship.id}/status`, { status, messages: _.uniq(messages) });
   });
 }

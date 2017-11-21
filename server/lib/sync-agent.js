@@ -372,6 +372,14 @@ export default class SyncAgent {
           settings.last_job_id = last_job_id;
         }
         return this.hull.utils.settings.update(settings)
+          .then(() => {
+            if (_.get(this.ship, "status.status") === "error") {
+              return this.hull.put("app/status", {
+                status: "ok",
+              });
+            }
+            return Promise.resolve();
+          })
           .then(resolve);
       })
       .catch(err => {
