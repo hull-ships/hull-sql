@@ -1,5 +1,7 @@
 ## 0.3.2
-- 
+- add status update on `/sync` endpoint error
+- remove actual query execution from `/status` endpoint
+- fix connection closing
 
 ## 0.3.1
 - add support for events
