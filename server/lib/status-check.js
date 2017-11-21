@@ -2,10 +2,8 @@
 import { Request, Response } from "express";
 import _ from "lodash";
 
-import SyncAgent from "./sync-agent";
-
 export default function (req: Request, res: Response) {
-  let { agent } = req;
+  const { agent } = req;
   const { client = {}, ship = {} } = req.hull;
   let status = "ok";
   const messages = [];
@@ -14,6 +12,7 @@ export default function (req: Request, res: Response) {
     messages.push(message);
   };
   const promises = [];
+  client.logger.debug("connector.status.start");
 
   if (!req.agent.areConnectionParametersConfigured()) {
     pushMessage("Connection parameters are not fully configured");
@@ -26,23 +25,6 @@ export default function (req: Request, res: Response) {
 
   if (!agent.isQueryStringConfigured()) {
     pushMessage("Query is not configured");
-  } else if (req.agent.areConnectionParametersConfigured()) {
-    agent = new SyncAgent(req.hull);
-    promises.push(agent.runQuery(agent.getQuery(), { limit: 1, timeout: 3000 }).then(result => {
-      if (result.entries && result.entries.length === 0) {
-        let changeStatusTo = "warning";
-        if (status === "error") {
-          changeStatusTo = "error";
-        }
-        pushMessage("Database does not return any rows for saved query", changeStatusTo);
-      }
-
-      if (result.errors) {
-        pushMessage(`Results have invalid format: ${result.errors.join("\n")}`);
-      }
-    }).catch(err => {
-      pushMessage(`Error when trying to connect with database: ${_.get(err, "message", "")}`);
-    }));
   }
 
   if (!agent.isEnabled()) {
@@ -62,6 +44,7 @@ export default function (req: Request, res: Response) {
 
   return Promise.all(promises).then(() => {
     res.json({ messages: _.uniq(messages), status });
+    client.logger.debug("connector.status.success", { status, messages: _.uniq(messages) });
     return client.put(`${ship.id}/status`, { status, messages: _.uniq(messages) });
   });
 }

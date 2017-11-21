@@ -142,7 +142,7 @@ export default class SyncAgent {
     };
 
     const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
-      // Run the method for the specific adapter.
+    // Run the method for the specific adapter.
     return this.adapter.in.runQuery(this.client, wrappedQuery, options)
       .then(result => {
         this.adapter.in.closeConnection(this.client);
@@ -153,6 +153,10 @@ export default class SyncAgent {
         }
 
         return { entries: result.rows };
+      })
+      .catch((err) => {
+        this.adapter.in.closeConnection(this.client);
+        return Promise.reject(err);
       });
   }
 
@@ -376,6 +380,10 @@ export default class SyncAgent {
           errors: _.get(err, "message", err),
           hull_summary: _.get(err, "message", "Server Error: Encountered error during sync operation"),
           type: this.import_type
+        });
+        this.hull.put("app/status", {
+          status: "error",
+          messages: [_.get(err, "message", err)]
         });
         reject(err);
       });
