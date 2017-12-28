@@ -2,6 +2,8 @@
   "name": "SQL Importer",
   "description": "Import data from your SQL databases",
   "picture": "picture.png",
+  "source": "sql",
+  "logo": "logo.png",
   "version": "0.3.2",
   "tags": [
     "incoming",
