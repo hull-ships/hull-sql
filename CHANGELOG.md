@@ -1,3 +1,8 @@
+# Changelog
+
+## 0.3.3
+- [hotfix] ensure that objectMode is set with proper casing for Node v8.x and above when streaming MS SQL records
+
 ## 0.3.2
 - add status update on `/sync` endpoint error
 - remove actual query execution from `/status` endpoint
