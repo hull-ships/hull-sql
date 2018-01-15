@@ -218,7 +218,7 @@ export function streamQuery(client, query, options = {}) {
     const conn = new tedious.Connection(conf);
 
     const streamOpts = {};
-    streamOpts.ObjectMode = true;
+    streamOpts.objectMode = true;
     streamOpts.highWaterMark = 10;
     const stream = new Readable(streamOpts);
 
