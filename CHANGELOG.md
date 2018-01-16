@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.4
+- [hotfix] ensure that JSON object is passed to stream instead of string
+
 ## 0.3.3
 - [hotfix] ensure that objectMode is set with proper casing for Node v8.x and above when streaming MS SQL records
 

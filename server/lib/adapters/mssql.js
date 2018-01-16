@@ -241,7 +241,7 @@ export function streamQuery(client, query, options = {}) {
           _.forEach(columns, (column) => {
             row[column.metadata.colName] = column.value;
           });
-          stream.push(JSON.stringify(row));
+          stream.push(row);
         });
 
         request.on("done", (rowCount) => { // eslint-disable-line consistent-return
