@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.5
+- [hotfix] adjust the import delay to the interval
+
 ## 0.3.4
 - [hotfix] ensure that JSON object is passed to stream instead of string
 
