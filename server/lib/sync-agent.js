@@ -40,7 +40,7 @@ export default class SyncAgent {
     this.metric = metric;
     this.batchSize = batchSize;
 
-    this.importDelay = _.random(0, process.env.IMPORT_DELAY || 120);
+    this.importDelay = _.random(0, _.get(this.ship.private_settings, "sync_interval", 120));
 
     const private_settings = this.ship.private_settings;
     this.import_type = private_settings.import_type || "users";
