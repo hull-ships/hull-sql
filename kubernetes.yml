@@ -5,7 +5,7 @@ metadata:
   labels:
     name: sql-connector
 spec:
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
@@ -41,6 +41,9 @@ spec:
               value: "120000"
             - name: NEW_RELIC_APP_NAME
               value: "hull-sql-accounts.connectors.hullapp.net"
+          resources:
+            limits:
+              memory: "1Gi"
 ---
 apiVersion: v1
 kind: Service
