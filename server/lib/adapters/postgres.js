@@ -119,18 +119,20 @@ export function runQuery(client, query, options = {}) {
     // Limit the result.
     query = `${query} LIMIT ${options.limit || 100}`;
 
-    let timer;
+    let connectionTimeout;
+    let queryTimeout;
     let currentQuery;
 
-    if (options.timeout) {
-      timer = setTimeout(() => {
-        reject(new Error("Timeout error"));
+    if (options.timeout || options.connectionTimeout) {
+      connectionTimeout = setTimeout(() => {
+        reject(new Error("Connection Timeout"));
         cancelQuery(client);
-      }, options.timeout);
+      }, options.timeout || options.connectionTimeout);
     }
 
     // Connect the connection.
     client.connect((connectionError) => {
+      if (connectionTimeout) clearTimeout(connectionTimeout);
       if (connectionError) {
         // Ensure that we release the connection under
         // all circumstances
@@ -139,9 +141,16 @@ export function runQuery(client, query, options = {}) {
         return reject(connectionError);
       }
 
+      if (options.queryTimeout) {
+        queryTimeout = setTimeout(() => {
+          reject(new Error("Query Timeout"));
+          cancelQuery(client);
+        }, options.queryTimeout);
+      }
+
       // Run the query.
       currentQuery = client.query(query, (queryError, result) => {
-        if (timer) clearTimeout(timer);
+        if (queryTimeout) clearTimeout(queryTimeout);
         if (queryError) {
           queryError.status = 400;
           return reject(queryError);

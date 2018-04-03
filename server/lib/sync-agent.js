@@ -61,6 +61,7 @@ export default class SyncAgent {
 
     try {
       this.client = this.adapter.in.openConnection(private_settings);
+      console.log("connection opened");
     } catch (err) {
       let message;
       const error = this.adapter.in.checkForError(err);
@@ -121,18 +122,11 @@ export default class SyncAgent {
   }
 
   /**
-   * Run a wrapped query.
-   *
-   * Params:
-   *   @query String*
-   *   @callback Function*
-   *
-   * Return:
-   *   @callback Function
-   *     - @error Object
-   *     - @success Object
+   * One time query run for UI preview and status endpoint
+   * @param  {string} query
+   * @param  {Object} options [description]
+   * @return {[type]}         [description]
    */
-
   runQuery(query, options = {}) {
     // Wrap the query.
     const oneDayAgo = moment().subtract(1, "day").utc();
@@ -140,11 +134,14 @@ export default class SyncAgent {
       last_updated_at: options.last_updated_at || oneDayAgo.toISOString(),
       import_start_date: moment().subtract(this.ship.private_settings.import_days, "days").format()
     };
-
+    options.connectionTimeout = 1000;
+    options.queryTimeout = 10000;
     const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
     // Run the method for the specific adapter.
+    console.log("runQuery");
     return this.adapter.in.runQuery(this.client, wrappedQuery, options)
       .then(result => {
+        console.log("query run");
         this.adapter.in.closeConnection(this.client);
 
         const { errors } = this.adapter.in.validateResult(result, this.import_type);

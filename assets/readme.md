@@ -54,3 +54,25 @@ Please enter the number of days as integer or whole number. Fractional days are 
 - PostgreSQL
 - MySQL
 - Microsoft SQL
+
+## Troubleshooting
+
+Every connector can return different errors - they will be shown when previewing query results or in connector logs (`import.job.error` message):
+
+|Error message|Root cause|Possible solution|
+|---|---|---|
+|Connection Error|Connector could not connect to the database|Double check database credentials, error message may contain additional infromation|
+|Connection Timeout|Connector could not access the database in provided time|Check database availability, its IP whitelist, port and hostname|
+|Query Timeout|Connector could not get query results in provided time|Database server may be too slow to process query, the query may be too complex or sync interval is too short|
+|Database Error|There was an error thrown by database during query execution|Please refer to error message to get details|
+
+
+Also connector would set one of those statuses:
+
+|Status|Message|
+|---|---|
+|`error`|Connection parameters are not fully configured|
+|`error`|Error when trying to connect with database|
+|`error`|Query is not configured|
+|`warning`|Sync is disabled. Enable it in settings.|
+|`error`|Interval syncing is enabled but interval time is less or equal zero.|

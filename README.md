@@ -48,6 +48,17 @@ You might also want to configure your S3 bucket's lifecycle to expire files auto
 
 In the S3 section of your AWS console, go to your bucket's Management tab and add a Lifecycle rule to automatically expire Objects after 7 days.
 
+### Error and timeout handling
+
+|Endpoint|Purpose|Connection timeout|Query timeout|Error handling|
+|---|---|---|---|---|
+|/run|Runs query from preview - does not import any data, only show results|1s|10s|Returns error message back to UI|
+|/import|Runs one time full import|1s|10m|Sends `import.job.error` log line and update connector status to error|
+|/sync|Runs on configurable interval|1s|less than configured interval|Sends `import.job.error` log line and update connector status to error|
+|/status|Runs on fixed interval and preforms simple SQL query to check connection|1s|1m|Sets connector status|
+
+To see customer facing logs refer to [this section of documentation](./assets/readme.md#troubleshooting).
+
 ### Logs
 
 Logs that are specific for SQL Connector:
