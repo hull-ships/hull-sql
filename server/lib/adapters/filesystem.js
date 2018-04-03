@@ -1,12 +1,13 @@
 /**
  * Module dependencies.
  */
-import Promise from "bluebird";
-import fs from "fs";
-import JSONStream from "JSONStream";
-import Stream from "stream";
-import through2 from "through2";
-import validateResultColumns from "./validate-result-columns";
+const Promise = require("bluebird");
+const fs = require("fs");
+const JSONStream = require("JSONStream");
+const Stream = require("stream");
+const through2 = require("through2");
+
+const validateResultColumns = require("./validate-result-columns");
 const postgresAdapter = require("./postgres");
 
 /**
@@ -23,7 +24,7 @@ const postgresAdapter = require("./postgres");
  *   @client Instance
  */
 
-export function openConnection() {}
+function openConnection() {}
 
 /**
  * Close the connection.
@@ -32,7 +33,7 @@ export function openConnection() {}
  *   @client Instance
  */
 
-export function closeConnection() {}
+function closeConnection() {}
 
 /**
  * Wrap the user query
@@ -46,7 +47,7 @@ export function closeConnection() {}
  *   @wrappedQuery String
  */
 
-export function wrapQuery(query) {
+function wrapQuery(query) {
   return query;
 }
 
@@ -55,18 +56,18 @@ export function wrapQuery(query) {
  * @returns Array of errors
  */
 
-export function validateResult(result, import_type = "users") {
+function validateResult(result, import_type = "users") {
   if (process.env.POSTGRES_DATABASE_TEST !== "true") {
     return validateResultColumns(result.columns.map(column => column.name), import_type);
   }
   return postgresAdapter.validateResult(result);
 }
 
-export function checkForError() {
+function checkForError() {
   return false;
 }
 
-export function cancelQuery() {}
+function cancelQuery() {}
 
 /**
  * Run a wrapped query.
@@ -82,7 +83,7 @@ export function cancelQuery() {}
  *     - @rows Array
  */
 
-export function runQuery(client, query = {}) {
+function runQuery(client, query = {}) {
   return new Promise((resolve) => {
     const file = fs.readFileSync(query, { encoding: "utf8" });
     const result = JSON.parse(file);
@@ -104,7 +105,7 @@ export function runQuery(client, query = {}) {
  *     - @stream Stream
  */
 
-export function streamQuery(client, query) {
+function streamQuery(client, query) {
   return new Promise((resolve) => {
     const stream = fs.createReadStream(query).pipe(JSONStream.parse());
     resolve(stream);
@@ -112,7 +113,7 @@ export function streamQuery(client, query) {
   });
 }
 
-export function upload(shipId, partNumber) {
+function upload(shipId, partNumber) {
   const stream = new Stream.PassThrough();
   const promise = new Promise((resolve, reject) => {
     const filename = `test/extracts/${new Date().getTime()}-${partNumber}.json`;
@@ -133,3 +134,17 @@ export function upload(shipId, partNumber) {
   });
   return { promise, stream };
 }
+
+
+module.exports = {
+  validateResultColumns,
+  openConnection,
+  closeConnection,
+  wrapQuery,
+  validateResult,
+  checkForError,
+  cancelQuery,
+  runQuery,
+  streamQuery,
+  upload
+};

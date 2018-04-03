@@ -1,6 +1,6 @@
 // @flow
 
-export default function checkConfigurationFactory({ checkQueryString = false, sync = false }: Object = {}): Function {
+function checkConfigurationFactory({ checkQueryString = false, sync = false }: Object = {}): Function {
   return function checkConfigurationMiddleware({ hull, agent }, res, next) {
     if (!agent.areConnectionParametersConfigured()) {
       if (sync) {
@@ -23,3 +23,5 @@ export default function checkConfigurationFactory({ checkQueryString = false, sy
     return next();
   };
 }
+
+module.exports = checkConfigurationFactory;

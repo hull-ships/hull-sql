@@ -1,12 +1,13 @@
 /**
  * Module dependencies.
  */
-import mysql from "mysql";
-import Promise from "bluebird";
-import SequelizeUtils from "sequelize/lib/utils";
-import _ from "lodash";
-import parseConnectionConfig from "../utils/parse-connection-config";
-import validateResultColumns from "./validate-result-columns";
+const mysql = require("mysql");
+const Promise = require("bluebird");
+const SequelizeUtils = require("sequelize/lib/utils");
+const _ = require("lodash");
+
+const parseConnectionConfig = require("../utils/parse-connection-config");
+const validateResultColumns = require("./validate-result-columns");
 
 /**
  * mySQL adapter.
@@ -19,7 +20,7 @@ import validateResultColumns from "./validate-result-columns";
  *
  * @return {mysql.IConnection} A mysql connection instance
  */
-export function openConnection(settings) {
+function openConnection(settings) {
   const connection_string = parseConnectionConfig(settings);
   return mysql.createConnection(connection_string);
 }
@@ -29,7 +30,7 @@ export function openConnection(settings) {
  *
  * @param {mysql.IConnection} client The mysql client
  */
-export function closeConnection(client) {
+function closeConnection(client) {
   client.end();
 }
 
@@ -38,7 +39,7 @@ export function closeConnection(client) {
  * @returns Array of errors
  */
 
-export function validateResult(result, import_type = "users") {
+function validateResult(result, import_type = "users") {
   return validateResultColumns(result.columns.map(column => column.name), import_type);
 }
 
@@ -48,7 +49,7 @@ export function validateResult(result, import_type = "users") {
  * @returns {{errors: Array}}
  */
 
-export function checkForError(error) {
+function checkForError(error) {
   if (error && error.code === "ER_PARSE_ERROR") {
     return { message: `Invalid Syntax: ${_.get(error, "sqlMessage", "")}` };
   }
@@ -65,7 +66,7 @@ export function checkForError(error) {
  * @param {*} sql The raw SQL query
  * @param {*} replacements The replacement parameters
  */
-export function wrapQuery(sql, replacements) {
+function wrapQuery(sql, replacements) {
   return SequelizeUtils.formatNamedParameters(sql, replacements, "mysql");
 }
 
@@ -77,7 +78,7 @@ export function wrapQuery(sql, replacements) {
  *
  * @returns {Promise} A promise object of the following format: { rows }
  */
-export function runQuery(client, query, options = {}) {
+function runQuery(client, query, options = {}) {
   return new Promise((resolve, reject) => {
     // Connect the connection.
     client.connect((connectionError) => {
@@ -112,7 +113,7 @@ export function runQuery(client, query, options = {}) {
  *
  * @returns {Promise} A promise object that wraps a stream.
  */
-export function streamQuery(client, query, options = {}) {
+function streamQuery(client, query, options = {}) {
   return new Promise((resolve, reject) => {
     // Connect the connection.
     client.connect((connectionError) => {
@@ -133,3 +134,14 @@ export function streamQuery(client, query, options = {}) {
   });
 }
 
+
+module.exports = {
+  parseConnectionConfig,
+  openConnection,
+  closeConnection,
+  wrapQuery,
+  validateResult,
+  checkForError,
+  runQuery,
+  streamQuery
+};

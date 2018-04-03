@@ -1,8 +1,6 @@
 /* global describe, it */
-import {
-  expect
-} from "chai";
-import * as mssql from "../../server/lib/adapters/mssql";
+const { expect } = require("chai");
+const mssql = require("../../server/lib/adapters/mssql");
 
 describe("Connection string util for MSSQL", () => {
   it("should build the connectionString", () => {

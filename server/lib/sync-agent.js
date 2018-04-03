@@ -1,15 +1,16 @@
 /**
  * Module dependencies.
  */
-import _ from "lodash";
-import moment from "moment";
-import ps from "promise-streams";
+const _ = require("lodash");
+const moment = require("moment");
+const ps = require("promise-streams");
+const { ConfigurationError } = require("hull/lib/errors");
 
 // Map each record of the stream.
-import map from "through2-map";
-import through2 from "through2";
+const map = require("through2-map");
+const through2 = require("through2");
 
-import * as Adapters from "./adapters";
+const Adapters = require("./adapters");
 
 const DEFAULT_BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "10000", 10);
 const FULL_IMPORT_DAYS = process.env.FULL_IMPORT_DAYS || "10000";
@@ -17,15 +18,7 @@ const FULL_IMPORT_DAYS = process.env.FULL_IMPORT_DAYS || "10000";
 /**
  * Export the sync agent for the SQL ship.
  */
-
-class ConfigurationError extends Error {
-  constructor(msg) {
-    super(msg);
-    this.status = 403;
-  }
-}
-
-export default class SyncAgent {
+class SyncAgent {
 
   /**
    * Creates a new SyncAgent instance.
@@ -61,7 +54,6 @@ export default class SyncAgent {
 
     try {
       this.client = this.adapter.in.openConnection(private_settings);
-      console.log("connection opened");
     } catch (err) {
       let message;
       const error = this.adapter.in.checkForError(err);
@@ -138,10 +130,8 @@ export default class SyncAgent {
     options.queryTimeout = 10000;
     const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
     // Run the method for the specific adapter.
-    console.log("runQuery");
     return this.adapter.in.runQuery(this.client, wrappedQuery, options)
       .then(result => {
-        console.log("query run");
         this.adapter.in.closeConnection(this.client);
 
         const { errors } = this.adapter.in.validateResult(result, this.import_type);
@@ -416,3 +406,5 @@ export default class SyncAgent {
       });
   }
 }
+
+module.exports = SyncAgent;

@@ -1,13 +1,13 @@
 /* eslint-env node, mocha */
 
 const assert = require("assert");
+const _ = require("lodash");
+const fs = require("fs");
+const path = require("path");
+const sinon = require("sinon");
 
-import _ from "lodash";
-import fs from "fs";
-import path from "path";
-import sinon from "sinon";
-import SyncAgent from "../../server/lib/sync-agent";
-import ClientMock from "./client-mock";
+const SyncAgent = require("../../server/lib/sync-agent");
+const ClientMock = require("./client-mock");
 
 describe("Batch SQL import jobs", () => {
   const extractsDir = "test/extracts";

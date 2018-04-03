@@ -4,7 +4,7 @@ function isNotIn(collection) {
   return key => !_.includes(collection, key);
 }
 
-export default function validate(columnNames, import_type = "users") {
+function validate(columnNames, import_type = "users") {
   const errors = [];
   switch (import_type) {
     case "users":
@@ -39,3 +39,5 @@ export default function validate(columnNames, import_type = "users") {
   }
   return { errors };
 }
+
+module.exports = validate;

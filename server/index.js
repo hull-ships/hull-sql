@@ -1,13 +1,13 @@
 /* @flow */
-import Hull from "hull";
-import express from "express";
-import Aws from "aws-sdk";
-import { Cache, Queue } from "hull/lib/infra";
-import BullAdapter from "hull/lib/infra/queue/adapter/bull";
-import SqsAdapter from "hull/lib/infra/queue/adapter/sqs";
+const Hull = require("hull");
+const express = require("express");
+const Aws = require("aws-sdk");
+const { Cache, Queue } = require("hull/lib/infra");
+const BullAdapter = require("hull/lib/infra/queue/adapter/bull");
+const SqsAdapter = require("hull/lib/infra/queue/adapter/sqs");
 
-import server from "./server";
-import worker from "./worker";
+const server = require("./server");
+const worker = require("./worker");
 
 const hostSecret = process.env.SECRET;
 const port = process.env.PORT || 8082;

@@ -1,8 +1,7 @@
 /* @flow */
-import { Request, Response } from "express";
-import _ from "lodash";
+const _ = require("lodash");
 
-export default function (req: Request, res: Response) {
+function statusCheck(req: Object, res: Object) {
   const { agent } = req;
   const { client = {}, ship = {} } = req.hull;
   let status = "ok";
@@ -48,3 +47,5 @@ export default function (req: Request, res: Response) {
     return client.put(`${ship.id}/status`, { status, messages: _.uniq(messages) });
   });
 }
+
+module.exports = statusCheck;

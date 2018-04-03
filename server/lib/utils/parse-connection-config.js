@@ -1,6 +1,6 @@
-import URI from "urijs";
+const URI = require("urijs");
 
-export function parseConnectionConfig(settings) {
+function parseConnectionConfig(settings) {
   const conn = ["type", "host", "port", "name", "user", "password"].reduce((c, key) => {
     let val = settings[`db_${key}`];
     if (key === "type" && val === "redshift") val = "postgres";
@@ -29,4 +29,4 @@ export function parseConnectionConfig(settings) {
   return false;
 }
 
-export default parseConnectionConfig;
+module.exports = parseConnectionConfig;

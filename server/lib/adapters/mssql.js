@@ -1,19 +1,18 @@
 /**
  * Module dependencies.
  */
-import tedious from "tedious";
-import Promise from "bluebird";
-import _ from "lodash";
-import Readable from "readable-stream";
-import SequelizeUtils from "sequelize/lib/utils";
-import validateResultColumns from "./validate-result-columns";
+const tedious = require("tedious");
+const Promise = require("bluebird");
+const _ = require("lodash");
+const Readable = require("readable-stream");
+const SequelizeUtils = require("sequelize/lib/utils");
+
+const validateResultColumns = require("./validate-result-columns");
 
 /**
  * MS SQL adapter.
  */
-
-
-export function parseConnectionConfig(settings) {
+function parseConnectionConfig(settings) {
   const conn = ["type", "host", "port", "name", "user", "password"].reduce((c, key) => {
     const val = settings[`db_${key}`];
     if (c && val && val.length > 0) {
@@ -57,7 +56,7 @@ export function parseConnectionConfig(settings) {
  *
  * @return {tedious.Connection} The tedious.Connection instance
  */
-export function openConnection(settings) {
+function openConnection(settings) {
   const config = parseConnectionConfig(settings);
   return new tedious.Connection(config);
 }
@@ -67,7 +66,7 @@ export function openConnection(settings) {
  *
  * @param {tedious.Connection} client The MSSQL client
  */
-export function closeConnection(client) {
+function closeConnection(client) {
   client.close();
 }
 
@@ -76,7 +75,7 @@ export function closeConnection(client) {
  * @returns Array of errors
  */
 
-export function validateResult(result, import_type = "users") {
+function validateResult(result, import_type = "users") {
   return validateResultColumns(result.columns.map(column => column.colName), import_type);
 }
 
@@ -86,7 +85,7 @@ export function validateResult(result, import_type = "users") {
  * @returns {{errors: Array}}
  */
 
-export function checkForError(error) {
+function checkForError(error) {
   if (error && (error.code === "EREQUEST")) {
     return { message: `Invalid Syntax: ${_.get(error, "message", "")}` };
   }
@@ -104,7 +103,7 @@ export function checkForError(error) {
  * @param {*} sql The raw SQL query
  * @param {*} replacements The replacement parameters
  */
-export function wrapQuery(sql, replacements) {
+function wrapQuery(sql, replacements) {
   return SequelizeUtils.formatNamedParameters(sql, replacements, "mssql");
 }
 
@@ -116,7 +115,7 @@ export function wrapQuery(sql, replacements) {
  *
  * @returns {Promise} A promise object of the following format: { rows }
  */
-export function runQuery(client, query, options) {
+function runQuery(client, query, options) {
   const limit = options.limit || 100;
   const opts = _.omit(options, "limit");
 
@@ -210,7 +209,7 @@ export function runQuery(client, query, options) {
  *
  * @returns {Promise} A promise object that wraps a stream.
  */
-export function streamQuery(client, query, options = {}) {
+function streamQuery(client, query, options = {}) {
   return new Promise((resolve) => {
     const confoptions = _.merge(client.config.options, options);
     const conf = _.cloneDeep(client.config);
@@ -277,3 +276,14 @@ export function streamQuery(client, query, options = {}) {
     return resolve(stream);
   });
 }
+
+module.exports = {
+  parseConnectionConfig,
+  openConnection,
+  closeConnection,
+  wrapQuery,
+  validateResult,
+  checkForError,
+  runQuery,
+  streamQuery,
+};

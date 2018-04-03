@@ -1,12 +1,12 @@
 /**
  * Configure the streaming to AWS.
  */
-import Stream from "stream";
-import zlib from "zlib";
-import Aws from "aws-sdk";
-import through2 from "through2";
+const Stream = require("stream");
+const zlib = require("zlib");
+const Aws = require("aws-sdk");
+const through2 = require("through2");
 
-export function upload(shipId, partNumber) {
+function upload(shipId, partNumber) {
   const stream = new Stream.PassThrough();
   const gzip = zlib.createGzip();
 
@@ -46,3 +46,7 @@ export function upload(shipId, partNumber) {
 
   return { promise, stream };
 }
+
+module.exports = {
+  upload
+};

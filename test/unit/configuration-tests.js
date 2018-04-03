@@ -2,11 +2,12 @@
 
 const assert = require("assert");
 
-import express from "express";
-import http from "http";
-import Hull from "hull";
-import { Cache, Queue } from "hull/lib/infra";
-import Server from "../../server/server";
+const express = require("express");
+const http = require("http");
+const Hull = require("hull");
+const { Cache, Queue } = require("hull/lib/infra");
+
+const Server = require("../../server/server");
 
 /* Test Configuration */
 

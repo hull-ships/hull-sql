@@ -1,8 +1,8 @@
 /* global describe, it */
-import { expect } from "chai";
-import moment from "moment";
+const { expect } = require("chai");
+const moment = require("moment");
 
-import * as postgresAdapter from "../../server/lib/adapters/postgres";
+const postgresAdapter = require("../../server/lib/adapters/postgres");
 
 describe("Postgres Adapter", () => {
   it("should replace import_start_date in query", () => {

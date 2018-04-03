@@ -11,9 +11,9 @@
     "url": "https://github.com/hull"
   },
   "engines": {
-    "node": "8.x",
-    "npm": "3.x",
-    "yarn": "1.x"
+    "node": "8.10.x",
+    "npm": "5.6.x",
+    "yarn": "1.5.x"
   },
   "repository": {
     "type": "git",
@@ -62,7 +62,7 @@
     "dotenv": "^2.0.0",
     "ejs": "^2.5.7",
     "express": "^4.15.4",
-    "hull": "0.12.3",
+    "hull": "0.13.11",
     "jquery": "^3.2.1",
     "json-loader": "^0.5.7",
     "lodash": "^4.13.1",

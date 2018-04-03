@@ -1,9 +1,9 @@
 /* @flow */
-import { Connector } from "hull";
+const { Connector } = require("hull");
 
-import SyncAgent from "./lib/sync-agent";
+const SyncAgent = require("./lib/sync-agent");
 
-export default function workerJobs(connector: Connector): Connector {
+function workerJobs(connector: Connector): Connector {
   connector.worker({
     startSync: function startSyncWrapper(ctx) {
       ctx.job = this;
@@ -18,3 +18,5 @@ export default function workerJobs(connector: Connector): Connector {
   });
   return connector;
 }
+
+module.exports = workerJobs;

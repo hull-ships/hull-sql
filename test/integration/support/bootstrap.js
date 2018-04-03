@@ -1,10 +1,10 @@
-import Hull from "hull";
-import { Cache, Queue } from "hull/lib/infra";
-import express from "express";
-import Server from "../../../server/server";
+const Hull = require("hull");
+const { Cache, Queue } = require("hull/lib/infra");
+const express = require("express");
+const Server = require("../../../server/server");
 
 
-export default function bootstrap(query, port, import_type = "users") {
+function bootstrap(query, port, import_type = "users") {
   const app = express();
   const cache = new Cache({
     store: "memory",
@@ -50,3 +50,5 @@ export default function bootstrap(query, port, import_type = "users") {
   Server(app, options);
   connector.startApp(app);
 }
+
+module.exports = bootstrap;

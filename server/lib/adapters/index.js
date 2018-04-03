@@ -1,14 +1,6 @@
-import * as postgres from "./postgres";
-import * as mysql from "./mysql";
-import * as s3 from "./s3";
-import * as filesystem from "./filesystem";
-import * as mssql from "./mssql";
-
-const redshift = postgres;
-
-export { mysql };
-export { redshift };
-export { postgres };
-export { s3 };
-export { filesystem };
-export { mssql };
+module.exports.postgres = require("./postgres");
+module.exports.mysql = require("./mysql");
+module.exports.s3 = require("./s3");
+module.exports.filesystem = require("./filesystem");
+module.exports.mssql = require("./mssql");
+module.exports.redshift = module.exports.postgres;

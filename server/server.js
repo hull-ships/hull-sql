@@ -1,15 +1,15 @@
 /* @flow */
 
-import express from "express";
-import bodyParser from "body-parser";
-import queueUiRouter from "hull/lib/infra/queue/ui-router";
+const express = require("express");
+const bodyParser = require("body-parser");
+const queueUiRouter = require("hull/lib/infra/queue/ui-router");
 
-import statusCheck from "./lib/status-check";
-import devModeMiddleware from "./lib/dev-mode";
-import SyncAgent from "./lib/sync-agent";
-import checkConfiguration from "./lib/check-conf-middleware";
+const statusCheck = require("./lib/status-check");
+const devModeMiddleware = require("./lib/dev-mode");
+const SyncAgent = require("./lib/sync-agent");
+const checkConfiguration = require("./lib/check-conf-middleware");
 
-export default function server(app: express, options: any):express {
+function server(app: express, options: any): express {
   const { hostSecret, queue, devMode } = options;
 
   if (devMode) {
@@ -85,3 +85,5 @@ export default function server(app: express, options: any):express {
 
   return app;
 }
+
+module.exports = server;

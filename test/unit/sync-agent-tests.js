@@ -1,10 +1,10 @@
 /* global describe, it */
-import { expect } from "chai";
-import sinon from "sinon";
-import moment from "moment";
-import stream from "stream";
+const { expect } = require("chai");
+const sinon = require("sinon");
+const moment = require("moment");
+const stream = require("stream");
 
-import SyncAgent from "../../server/lib/sync-agent.js";
+const SyncAgent = require("../../server/lib/sync-agent.js");
 
 describe("SyncAgent", () => {
   it("should pass import_start_date to adapter", () => {

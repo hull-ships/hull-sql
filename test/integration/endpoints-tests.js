@@ -1,9 +1,9 @@
 /* eslint-env node, mocha */
 
-import assert from "assert";
-import http from "http";
-import fs from "fs";
-import bootstrap from "./support/bootstrap";
+const assert = require("assert");
+const http = require("http");
+const fs = require("fs");
+const bootstrap = require("./support/bootstrap");
 
 describe("Server", () => {
   it("should return status OK on /run endpoint", (done) => {
