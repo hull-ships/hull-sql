@@ -70,6 +70,10 @@ function closeConnection(client) {
   client.close();
 }
 
+function cancelQuery(client) {
+  closeConnection(client);
+}
+
 /**
  * Validate Result specific for mssql database
  * @returns Array of errors
@@ -210,7 +214,10 @@ function runQuery(client, query, options) {
  * @returns {Promise} A promise object that wraps a stream.
  */
 function streamQuery(client, query, options = {}) {
-  return new Promise((resolve) => {
+  let connectionTimeout;
+  let queryTimeout;
+
+  return new Promise((resolve, reject) => {
     const confoptions = _.merge(client.config.options, options);
     const conf = _.cloneDeep(client.config);
     conf.options = confoptions;
@@ -220,13 +227,27 @@ function streamQuery(client, query, options = {}) {
     streamOpts.objectMode = true;
     streamOpts.highWaterMark = 10;
     const stream = new Readable(streamOpts);
-
+    if (options.connectionTimeout) {
+      connectionTimeout = setTimeout(() => {
+        stream.emit("error", new Error("Connection Timeout"));
+        cancelQuery(client);
+      }, options.connectionTimeout);
+    }
     let resultReturned = false;
 
     stream._read = function () { // eslint-disable-line func-names
       conn.on("connect", (err) => { // eslint-disable-line consistent-return
+        if (connectionTimeout) {
+          clearTimeout(connectionTimeout);
+        }
         if (err) {
           stream.emit("error", err);
+        }
+        if (options.queryTimeout) {
+          queryTimeout = setTimeout(() => {
+            reject(new Error("Query Timeout"));
+            cancelQuery(client);
+          }, options.queryTimeout);
         }
 
         const request = new tedious.Request(query, (reqError) => { // eslint-disable-line consistent-return
@@ -244,6 +265,9 @@ function streamQuery(client, query, options = {}) {
         });
 
         request.on("done", (rowCount) => { // eslint-disable-line consistent-return
+          if (queryTimeout) {
+            clearTimeout(queryTimeout);
+          }
           if (_.isNumber(rowCount) && !resultReturned) {
             resultReturned = true;
             stream.push(null);

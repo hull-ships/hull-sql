@@ -104,6 +104,7 @@ function cancelQuery(client) {
     });
     return c2;
   });
+  closeConnection(client);
 }
 
 /**
@@ -132,7 +133,9 @@ function runQuery(client, query, options = {}) {
 
     // Connect the connection.
     client.connect((connectionError) => {
-      if (connectionTimeout) clearTimeout(connectionTimeout);
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout);
+      }
       if (connectionError) {
         // Ensure that we release the connection under
         // all circumstances
@@ -150,7 +153,9 @@ function runQuery(client, query, options = {}) {
 
       // Run the query.
       currentQuery = client.query(query, (queryError, result) => {
-        if (queryTimeout) clearTimeout(queryTimeout);
+        if (queryTimeout) {
+          clearTimeout(queryTimeout);
+        }
         if (queryError) {
           queryError.status = 400;
           return reject(queryError);
@@ -171,16 +176,38 @@ function runQuery(client, query, options = {}) {
  *
  * @returns {Promise} A promise object that wraps a stream.
  */
-function streamQuery(client, query) {
+function streamQuery(client, query, options = {}) {
+  let connectionTimeout;
+  let queryTimeout;
   return new Promise((resolve, reject) => {
+    if (options.timeout || options.connectionTimeout) {
+      connectionTimeout = setTimeout(() => {
+        reject(new Error("Connection Timeout"));
+        cancelQuery(client);
+      }, options.timeout || options.connectionTimeout);
+    }
     // After connecting the connection, stream the query.
     client.connect((connectionError) => {
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout);
+      }
       if (connectionError) {
         return reject(connectionError);
       }
       const stream = client.query(new QueryStream(query));
+      if (options.queryTimeout) {
+        queryTimeout = setTimeout(() => {
+          stream.emit("error", new Error("Query Timeout"));
+          cancelQuery(client);
+        }, options.queryTimeout);
+      }
       // Ensure that we release the connection under all circumstances.
-      stream.on("end", () => { client.end(); });
+      stream.on("end", () => {
+        if (queryTimeout) {
+          clearTimeout(queryTimeout);
+        }
+        client.end();
+      });
       resolve(stream);
       return stream;
     });

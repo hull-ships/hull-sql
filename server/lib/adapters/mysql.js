@@ -34,6 +34,10 @@ function closeConnection(client) {
   client.end();
 }
 
+function cancelQuery(client) {
+  closeConnection(client);
+}
+
 /**
  * Validate Result specific for mysql database
  * @returns Array of errors
@@ -79,12 +83,30 @@ function wrapQuery(sql, replacements) {
  * @returns {Promise} A promise object of the following format: { rows }
  */
 function runQuery(client, query, options = {}) {
+  let connectionTimeout;
+  let queryTimeout;
+
   return new Promise((resolve, reject) => {
+    if (options.connectionTimeout) {
+      connectionTimeout = setTimeout(() => {
+        reject(new Error("Connection Timeout"));
+        cancelQuery(client);
+      }, options.connectionTimeout);
+    }
     // Connect the connection.
     client.connect((connectionError) => {
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout);
+      }
       if (connectionError) {
         connectionError.status = 401;
         return reject(connectionError);
+      }
+      if (options.queryTimeout) {
+        queryTimeout = setTimeout(() => {
+          reject(new Error("Query Timeout"));
+          cancelQuery(client);
+        }, options.queryTimeout);
       }
 
       const params = { sql: `${query} LIMIT ${options.limit || 100}` };
@@ -95,6 +117,9 @@ function runQuery(client, query, options = {}) {
 
       // Run the query.
       return client.query(params, (queryError, rows, fieldPackets) => {
+        if (queryTimeout) {
+          clearTimeout(queryTimeout);
+        }
         if (queryError) {
           queryError.status = 400;
           return reject(queryError);
@@ -114,9 +139,21 @@ function runQuery(client, query, options = {}) {
  * @returns {Promise} A promise object that wraps a stream.
  */
 function streamQuery(client, query, options = {}) {
+  let connectionTimeout;
+  let queryTimeout;
+
   return new Promise((resolve, reject) => {
+    if (options.connectionTimeout) {
+      connectionTimeout = setTimeout(() => {
+        reject(new Error("Connection Timeout"));
+        cancelQuery(client);
+      }, options.connectionTimeout);
+    }
     // Connect the connection.
     client.connect((connectionError) => {
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout);
+      }
       if (connectionError) {
         connectionError.status = 401;
         return reject(connectionError);
@@ -127,9 +164,22 @@ function streamQuery(client, query, options = {}) {
       if (options.timeout && options.timeout > 0) {
         params.timeout = options.timeout;
       }
+      const stream = client.query(params).stream({ highWaterMark: 10 });
+      if (options.queryTimeout) {
+        queryTimeout = setTimeout(() => {
+          stream.emit("error", new Error("Query Timeout"));
+          cancelQuery(client);
+        }, options.queryTimeout);
+      }
 
+      stream.on("end", () => {
+        if (queryTimeout) {
+          clearTimeout(queryTimeout);
+        }
+        client.end();
+      });
       // Run the query.
-      return resolve(client.query(params).stream({ highWaterMark: 10 }));
+      return resolve(stream);
     });
   });
 }
