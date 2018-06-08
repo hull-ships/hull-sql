@@ -5,6 +5,8 @@ import _ from "lodash";
 import moment from "moment";
 import ps from "promise-streams";
 
+import uuid from "uuid/v1";
+
 // Map each record of the stream.
 import map from "through2-map";
 import through2 from "through2";
@@ -239,12 +241,11 @@ export default class SyncAgent {
   sync(stream, started_sync_at) {
     let processed = 0;
     let last_updated_at;
+    const jobId = _.get(this, "job.id", uuid());
 
     const transform = map({ objectMode: true }, (record) => {
       const data = {}; // data formated to be sent to hull
       processed += 1;
-
-      const jobId = this.job ? this.job.id : undefined;
 
       if (processed % 1000 === 0) {
         const elapsed = new Date() - started_sync_at;
@@ -343,7 +344,7 @@ export default class SyncAgent {
         return (() => {
           this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "upload", progress: partNumber, size, type: this.import_type });
           if (size > 0) {
-            return this.startImportJob(url, partNumber, size);
+            return this.startImportJob(url, partNumber, size, jobId);
           }
           return false;
         })()
@@ -398,7 +399,7 @@ export default class SyncAgent {
     });
   }
 
-  startImportJob(url, partNumber, size) {
+  startImportJob(url, partNumber, size, jobId) {
     const { overwrite } = this.ship.private_settings;
     const params = {
       url,
@@ -409,7 +410,9 @@ export default class SyncAgent {
       name: `Import from hull-sql ${this.ship.name} - part ${partNumber}`,
       schedule_at: moment().add(this.importDelay + (2 * partNumber), "minutes").toISOString(),
       stats: { size },
-      size
+      size,
+      job_id: jobId,
+      part_number: partNumber
     };
 
     this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, options: _.omit(params, "url"), type: this.import_type });
