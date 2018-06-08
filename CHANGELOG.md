@@ -2,6 +2,7 @@
 
 ## 0.3.6
 - [hotfix] Fix reporting of import size
+- remove options to sync every minute
 
 ## 0.3.5
 - [hotfix] adjust the import delay to the interval
