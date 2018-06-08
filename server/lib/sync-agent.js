@@ -242,6 +242,7 @@ export default class SyncAgent {
     let processed = 0;
     let last_updated_at;
     const jobId = _.get(this, "job.id", uuid());
+    const importId = uuid();
 
     const transform = map({ objectMode: true }, (record) => {
       const data = {}; // data formated to be sent to hull
@@ -344,7 +345,7 @@ export default class SyncAgent {
         return (() => {
           this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "upload", progress: partNumber, size, type: this.import_type });
           if (size > 0) {
-            return this.startImportJob(url, partNumber, size, jobId);
+            return this.startImportJob(url, partNumber, size, importId);
           }
           return false;
         })()
@@ -399,7 +400,7 @@ export default class SyncAgent {
     });
   }
 
-  startImportJob(url, partNumber, size, jobId) {
+  startImportJob(url, partNumber, size, import_id) {
     const { overwrite } = this.ship.private_settings;
     const params = {
       url,
@@ -411,7 +412,7 @@ export default class SyncAgent {
       schedule_at: moment().add(this.importDelay + (2 * partNumber), "minutes").toISOString(),
       stats: { size },
       size,
-      job_id: jobId,
+      import_id,
       part_number: partNumber
     };
 
