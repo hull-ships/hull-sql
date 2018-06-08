@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.6
+- [hotfix] Fix reporting of import size
+
 ## 0.3.5
 - [hotfix] adjust the import delay to the interval
 
