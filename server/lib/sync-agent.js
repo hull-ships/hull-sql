@@ -408,7 +408,8 @@ export default class SyncAgent {
       overwrite: !!overwrite,
       name: `Import from hull-sql ${this.ship.name} - part ${partNumber}`,
       schedule_at: moment().add(this.importDelay + (2 * partNumber), "minutes").toISOString(),
-      stats: { size }
+      stats: { size },
+      size
     };
 
     this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, options: _.omit(params, "url"), type: this.import_type });
