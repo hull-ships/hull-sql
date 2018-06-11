@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.7
+- add job_id and part_number to import job API
+
 ## 0.3.6
 - [hotfix] Fix reporting of import size
 - remove options to sync every minute
