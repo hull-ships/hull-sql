@@ -241,8 +241,8 @@ export default class SyncAgent {
   sync(stream, started_sync_at) {
     let processed = 0;
     let last_updated_at;
-    const jobId = _.get(this, "job.id", uuid());
-    const importId = uuid();
+    const jobId = _.get(this, "job.id", uuid()); // ID of the job chunk
+    const importId = uuid(); // ID of the whole job
 
     const transform = map({ objectMode: true }, (record) => {
       const data = {}; // data formated to be sent to hull
@@ -400,7 +400,7 @@ export default class SyncAgent {
     });
   }
 
-  startImportJob(url, partNumber, size, import_id) {
+  startImportJob(url, partNumber, size, importId) {
     const { overwrite } = this.ship.private_settings;
     const params = {
       url,
@@ -412,7 +412,7 @@ export default class SyncAgent {
       schedule_at: moment().add(this.importDelay + (2 * partNumber), "minutes").toISOString(),
       stats: { size },
       size,
-      import_id,
+      import_id: importId,
       part_number: partNumber
     };
 
