@@ -129,4 +129,24 @@ describe("SyncAgent", () => {
       expect(syncAgent.dataKey()).to.equal("properties");
     });
   });
+
+  describe("getQuery", () => {
+    it("should trim semicolon at the end of the string", () => {
+      const syncAgent = new SyncAgent({ ship: { private_settings:
+        { db_type: "filesystem", query: "SELECT * FROM users;" } } });
+      expect(syncAgent.getQuery()).to.equal("SELECT * FROM users");
+    });
+
+    it("should trim multiple semicolons at the end of the string", () => {
+      const syncAgent = new SyncAgent({ ship: { private_settings:
+        { db_type: "filesystem", query: "SELECT * FROM users;;;;" } } });
+      expect(syncAgent.getQuery()).to.equal("SELECT * FROM users");
+    });
+
+    it("should not remove semicolons from everything than end", () => {
+      const syncAgent = new SyncAgent({ ship: { private_settings:
+        { db_type: "filesystem", query: ";SELECT; *; FROM; users;p;;" } } });
+      expect(syncAgent.getQuery()).to.equal(";SELECT; *; FROM; users;p");
+    });
+  });
 });

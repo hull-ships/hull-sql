@@ -119,7 +119,7 @@ export default class SyncAgent {
    * @return {string} The SQL query string as supplied by the user.
    */
   getQuery() {
-    return this.ship.private_settings.query;
+    return _.trimEnd(this.ship.private_settings.query, ";");
   }
 
   /**
