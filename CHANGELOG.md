@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.8
+- allow to specify timeout on process env vars level - in `ms` npm package format - env var name: `CONNECTOR_TIMEOUT`
+- trim semicolons `;` from user query
+
 ## 0.3.7
 - add job_id and part_number to import job API
 
