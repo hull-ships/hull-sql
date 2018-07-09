@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.9
+- upgrade hull-node to the latest version
+
 ## 0.3.8
 - allow to specify timeout on process env vars level - in `ms` npm package format - env var name: `CONNECTOR_TIMEOUT`
 - trim semicolons `;` from user query
