@@ -17,7 +17,7 @@ describe("SyncAgent", () => {
       }
     });
     sinon.stub(syncAgent.adapter.in, "runQuery").callsFake(() => {
-      return Promise.resolve();
+      return Promise.resolve({ columns: [] });
     });
 
     const wrapQueryStub = sinon.spy(syncAgent.adapter.in, "wrapQuery");
