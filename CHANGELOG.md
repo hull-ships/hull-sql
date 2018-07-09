@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.10
+- upgrade newrelic dependency
+
 ## 0.3.9
 - upgrade hull-node to the latest version
 
