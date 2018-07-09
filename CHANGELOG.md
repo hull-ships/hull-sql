@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.11
+- make preview timeout configurable and set default to 60 seconds
+
 ## 0.3.10
 - upgrade newrelic dependency
 
