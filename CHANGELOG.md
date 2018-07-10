@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.13
+- revert back newrelic dependency
+
 ## 0.3.12
 - revert back hull-node to latest working version
 
