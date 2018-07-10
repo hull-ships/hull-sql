@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.14
+- fix internal dependency
+
 ## 0.3.13
 - revert back newrelic dependency
 
