@@ -6,6 +6,8 @@ const moment = require("moment");
 const ps = require("promise-streams");
 const { ConfigurationError } = require("hull/lib/errors");
 
+import uuid from "uuid/v1";
+
 // Map each record of the stream.
 const map = require("through2-map");
 const through2 = require("through2");
@@ -110,7 +112,7 @@ class SyncAgent {
    * @return {string} The SQL query string as supplied by the user.
    */
   getQuery() {
-    return this.ship.private_settings.query;
+    return _.trimEnd(this.ship.private_settings.query, ";");
   }
 
   /**
@@ -226,12 +228,12 @@ class SyncAgent {
   sync(stream, started_sync_at) {
     let processed = 0;
     let last_updated_at;
+    const jobId = _.get(this, "job.id", uuid()); // ID of the job chunk
+    const importId = uuid(); // ID of the whole job
 
     const transform = map({ objectMode: true }, (record) => {
       const data = {}; // data formated to be sent to hull
       processed += 1;
-
-      const jobId = this.job ? this.job.id : undefined;
 
       if (processed % 1000 === 0) {
         const elapsed = new Date() - started_sync_at;
@@ -330,7 +332,7 @@ class SyncAgent {
         return (() => {
           this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "upload", progress: partNumber, size, type: this.import_type });
           if (size > 0) {
-            return this.startImportJob(url, partNumber, size);
+            return this.startImportJob(url, partNumber, size, importId);
           }
           return false;
         })()
@@ -385,7 +387,7 @@ class SyncAgent {
     });
   }
 
-  startImportJob(url, partNumber, size) {
+  startImportJob(url, partNumber, size, importId) {
     const { overwrite } = this.ship.private_settings;
     const params = {
       url,
@@ -395,7 +397,10 @@ class SyncAgent {
       overwrite: !!overwrite,
       name: `Import from hull-sql ${this.ship.name} - part ${partNumber}`,
       schedule_at: moment().add(this.importDelay + (2 * partNumber), "minutes").toISOString(),
-      stats: { size }
+      stats: { size },
+      size,
+      import_id: importId,
+      part_number: partNumber
     };
 
     this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, options: _.omit(params, "url"), type: this.import_type });

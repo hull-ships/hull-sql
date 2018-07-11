@@ -53,7 +53,7 @@ function server(app: express, options: any): express {
     }
 
     return agent
-      .runQuery(query, { timeout: 20000, limit: 100 })
+      .runQuery(query, { timeout: parseInt(process.env.RUN_TIMEOUT_MS, 10) | 60000, limit: 100 })
       .then(data => res.json(data))
       .catch(error => {
         const { status, message } = error;

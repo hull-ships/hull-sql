@@ -51,6 +51,7 @@ if (process.env.QUEUE_ADAPTER === "sqs" && process.env.SQS_QUEUE_URL) {
 }
 
 const connector = new Hull.Connector({
+  timeout: process.env.CONNECTOR_TIMEOUT,
   hostSecret,
   port,
   cache,

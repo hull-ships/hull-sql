@@ -36,11 +36,11 @@ function upload(shipId, partNumber) {
       }
     });
     stream
-      .pipe(gzip)
       .pipe(through2((chunk, enc, callback) => {
         size += 1;
         callback(null, chunk);
       }))
+      .pipe(gzip)
       .pipe(Body);
   });
 

@@ -4,7 +4,7 @@
   "picture": "picture.png",
   "source": "sql",
   "logo": "logo.png",
-  "version": "0.3.5",
+  "version": "0.3.14",
   "tags": [
     "incoming",
     "oneColumn",
@@ -42,7 +42,7 @@
       "title": "Sync interval (in minutes)",
       "type": "string",
       "default": "180",
-      "enum": [ "1", "5", "30", "60", "180", "360", "720", "1440" ]
+      "enum": [ "30", "60", "180", "360", "720", "1440" ]
     },
     {
       "name": "overwrite",

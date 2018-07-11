@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.3.14
+- fix internal dependency
+
+## 0.3.13
+- revert back newrelic dependency
+
+## 0.3.12
+- revert back hull-node to latest working version
+
+## 0.3.11
+- make preview timeout configurable and set default to 60 seconds
+
+## 0.3.10
+- upgrade newrelic dependency
+
+## 0.3.9
+- upgrade hull-node to the latest version
+
+## 0.3.8
+- allow to specify timeout on process env vars level - in `ms` npm package format - env var name: `CONNECTOR_TIMEOUT`
+- trim semicolons `;` from user query
+
+## 0.3.7
+- add job_id and part_number to import job API
+
+## 0.3.6
+- [hotfix] Fix reporting of import size
+- remove options to sync every minute
+
 ## 0.3.5
 - [hotfix] adjust the import delay to the interval
 
