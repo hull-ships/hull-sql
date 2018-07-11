@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.16
+- update error wording
+
 ## 0.3.15
 - upgrade hull-node and newrelic to the latest versions
 
