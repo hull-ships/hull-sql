@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.15
+- upgrade hull-node and newrelic to the latest versions
+
 ## 0.3.14
 - fix internal dependency
 
