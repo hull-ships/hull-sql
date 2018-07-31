@@ -162,7 +162,14 @@
   ],
   "resources": [],
   "readme": "readme.md",
-  "admin": "admin.html",
+  "tabs": [
+    {
+      "title": "Query Editor",
+      "url": "admin.html",
+      "size": "large",
+      "editable": true
+    }
+  ],
   "ui": false,
   "schedules": [
     {
