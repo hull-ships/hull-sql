@@ -13,6 +13,26 @@ import validateResultColumns from "./validate-result-columns";
  * PostgreSQL adapter.
  */
 
+function parseIncomingFloat(val) {
+  return parseFloat(val);
+}
+function parseIncomingInt(val) {
+  return parseInt(val, 10);
+}
+
+/**
+ * Got these types from searching the pg_type database.  Not sure if these are per instance config or are global...
+ * https://github.com/brianc/node-pg-types
+ */
+function initializeTypes() {
+  // select typname, typrelid, typelem, typarray from pg_type where typname like '%numeric'
+  Pg.types.setTypeParser(1700, parseIncomingFloat);
+  Pg.types.setTypeParser(1231, parseIncomingFloat);
+  // select typname, typrelid, typelem, typarray from pg_type where typname like '%int8';
+  Pg.types.setTypeParser(20, parseIncomingInt);
+  Pg.types.setTypeParser(1016, parseIncomingInt);
+}
+
 /**
  * Open a new connection.
  *
@@ -21,6 +41,7 @@ import validateResultColumns from "./validate-result-columns";
  * @return {Pg.Client} A postgre client instance
  */
 export function openConnection(settings) {
+  initializeTypes();
   const connection_string = parseConnectionConfig(settings);
   return new Pg.Client(connection_string);
 }
