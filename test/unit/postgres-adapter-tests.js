@@ -17,7 +17,6 @@ describe("Postgres Adapter", () => {
   // Testing to make sure that the type parsers were associated correctly
   // and are parsing properly
   it("should have set type handlers for postgres types", () => {
-
     // Testing float parser for 1700 and 1231 the postgres oids for numeric type
     const numericParseFunction = Pg.types.getTypeParser(1700, "text");
     expect(numericParseFunction.name).to.be.equal("parseIncomingFloat");
@@ -43,7 +42,6 @@ describe("Postgres Adapter", () => {
     expect(defaultParse.name).to.be.equal("noParse");
     expect(defaultParse("8")).to.be.equal("8");
     expect(defaultParse("8.66")).to.be.equal("8.66");
-
   });
 });
 
