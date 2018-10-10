@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.17
+- added data type handler to the postgres connection to make sure numeric and int8 values are cast to Numbers
+
 ## 0.3.16
 - update error wording
 
