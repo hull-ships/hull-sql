@@ -3,9 +3,7 @@
  */
 import snowflake from "snowflake-sdk";
 import Promise from "bluebird";
-import _ from "lodash";
-import parseConnectionConfig from "../utils/parse-connection-config";
-import validateResultColumns from "./validate-result-columns";
+import SequelizeUtils from "sequelize/lib/utils";
 
 /**
  * SnowFlake adapter.
@@ -18,13 +16,14 @@ import validateResultColumns from "./validate-result-columns";
  *
  */
 export function openConnection(settings) {
-  var connection = snowflake.createConnection({
+  const conf = {
     account: settings.db_host,
     username: settings.db_user,
     password: settings.db_password,
     region: settings.db_port,
     database: settings.db_name
-  });
+  };
+  return snowflake.createConnection(conf);
 }
 
 /**
@@ -44,6 +43,7 @@ export function closeConnection(client) {
 export function validateResult(result, import_type = "users") {
   // return validateResultColumns(result.columns.map(column => column.name), import_type);
   // TODO
+  return {};
 }
 
 /**
@@ -83,15 +83,17 @@ export function runQuery(client, query, options = {}) {
         connectionError.status = 401;
         return reject(connectionError);
       }
-      client.execute({
-        sqlText: `${query} LIMIT ${options.limit || 100}`,
+      const sqlText = `${query} LIMIT ${options.limit || 100}`;
+
+      return client.execute({
+        sqlText,
         complete: (queryError, stmt, rows) => {
-        if (queryError) {
-          queryError.status = 400;
-          return reject(queryError);
-        }
-        resolve({ rows });
-      }));
+          if (queryError) {
+            queryError.status = 400;
+            return reject(queryError);
+          }
+          return resolve({ rows });
+        } });
     });
   });
 }
@@ -104,7 +106,7 @@ export function runQuery(client, query, options = {}) {
  *
  * @returns {Promise} A promise object that wraps a stream.
  */
-export function streamQuery(client, query, options = {}) {
+export function streamQuery(client, query) {
   return new Promise((resolve, reject) => {
     // Connect the connection.
     client.connect((connectionError) => {
@@ -113,17 +115,16 @@ export function streamQuery(client, query, options = {}) {
         return reject(connectionError);
       }
 
-      client.execute({
+      return client.execute({
         sqlText: query,
         streamResult: true,
-        complete: (queryError, stmt, rows) => {
-        if (queryError) {
-          queryError.status = 400;
-          return reject(queryError);
-        }
-        const stream = stmt.streamRows();
-        resolve(stream);
-      }));
+        complete: (queryError, stmt) => {
+          if (queryError) {
+            queryError.status = 400;
+            return reject(queryError);
+          }
+          return resolve(stmt.streamRows());
+        } });
     });
   });
 }
