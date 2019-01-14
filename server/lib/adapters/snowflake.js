@@ -17,10 +17,10 @@ import SequelizeUtils from "sequelize/lib/utils";
  */
 export function openConnection(settings) {
   const conf = {
-    account: settings.db_host,
+    account: settings.db_account,
     username: settings.db_user,
     password: settings.db_password,
-    region: settings.db_port,
+    region: settings.db_region,
     database: settings.db_name
   };
   return snowflake.createConnection(conf);
