@@ -78,7 +78,7 @@
       "type": "string",
       "title": "Snowflake Account Name",
       "required" : true,
-      "description": "The public account name for connecting"
+      "description": "Do not include the region.  This is the public account name for connecting.  It is the FIRST part of your connection string.  Example: ab12334"
     },
     {
       "name": "db_region",
@@ -162,7 +162,7 @@
   "tabs": [
     {
       "title": "Query Editor",
-      "url": "/admin.html",
+      "url": "admin.html",
       "size": "large",
       "editable": true
     }

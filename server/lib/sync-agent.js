@@ -92,6 +92,21 @@ export default class SyncAgent {
    */
   areConnectionParametersConfigured() {
     const settings = this.ship.private_settings;
+
+    if (settings.db_type === "snowflake") {
+      const conn = ["account", "region", "name", "user", "password"].reduce((c, key) => {
+        const val = settings[`db_${key}`];
+        if (c && val && val.length > 0) {
+          return { ...c,
+            [key]: val
+          };
+        }
+        return false;
+      }, {});
+
+      return !!conn;
+    }
+
     const conn = ["type", "host", "port", "name", "user", "password"].reduce((c, key) => {
       let val = settings[`db_${key}`];
       if (key === "type" && val === "redshift") val = "postgres";

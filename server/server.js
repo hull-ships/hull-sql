@@ -9,6 +9,17 @@ import devModeMiddleware from "./lib/dev-mode";
 import SyncAgent from "./lib/sync-agent";
 import checkConfiguration from "./lib/check-conf-middleware";
 
+const path = require("path");
+
+// function readmeRouteFactory() {
+//   return function readmeRoute(req, res) {
+//     // console.log("Trying: " + `https://dashboard.hullapp.io/readme?url=https://${req.headers.host}/${subpath}`);
+//     return res.redirect(
+//       `https://dashboard.hullapp.io/readme?url=https://${req.headers.host}/${req.originalUrl}`
+//     );
+//   };
+// }
+
 export default function server(app: express, options: any):express {
   const { hostSecret, queue, devMode } = options;
 
@@ -22,6 +33,27 @@ export default function server(app: express, options: any):express {
     app.use("/kue", queueUiRouter({ hostSecret, queueAgent: queue }));
   }
 
+  const applicationDirectory = path.dirname(
+    path.join(require.main.filename, "..")
+  );
+
+  // any subdirectories can serve custom static assets
+  app.use(express.static(`${applicationDirectory}/connectors`));
+
+  // can get this to work by puting it in the routes Router
+  // but then it requires authentication if called directly
+  // one way or another, these routes don't even look like they are used
+  // looks like readme.md is called directly, which because we enable all static assets under /connectors
+  // is easily reachable without these routes
+  // const staticRoutes = express.Router();
+  // // making sure the other special static routes are set in the custom adapter router
+  // staticRoutes.use(express.static(`${applicationDirectory}/dist`));
+  // staticRoutes.get("/", readmeRouteFactory());
+  // staticRoutes.get("/readme", readmeRouteFactory());
+  //
+  // app.use(staticRoutes);
+  // app.use("/:adapter/", staticRoutes);
+
   app.use((req, res, next) => {
     if (req.hull && req.hull.ship) {
       req.agent = new SyncAgent(req.hull);
@@ -31,7 +63,10 @@ export default function server(app: express, options: any):express {
     return res.status(403).json({ status: "missing credentials" });
   });
 
-  app.get("/admin.html", ({ agent }, res) => {
+
+  const routes = express.Router();
+
+  routes.get("/admin.html", ({ agent }, res) => {
     if (agent.areConnectionParametersConfigured()) {
       const query = agent.getQuery();
       res.render("connected.html", {
@@ -45,7 +80,7 @@ export default function server(app: express, options: any):express {
     }
   });
 
-  app.post("/run", checkConfiguration(), ({ body, agent, hull }, res) => {
+  routes.post("/run", checkConfiguration(), ({ body, agent, hull }, res) => {
     const query = body.query || agent.getQuery();
 
     if (!query) {
@@ -61,12 +96,12 @@ export default function server(app: express, options: any):express {
       });
   });
 
-  app.post("/import", checkConfiguration({ checkQueryString: true }), (req, res) => {
+  routes.post("/import", checkConfiguration({ checkQueryString: true }), (req, res) => {
     req.hull.enqueue("startImport");
     res.json({ status: "scheduled" });
   });
 
-  app.post("/sync", checkConfiguration({ checkQueryString: true, sync: true }), (req, res) => {
+  routes.post("/sync", checkConfiguration({ checkQueryString: true, sync: true }), (req, res) => {
     const response = { status: "ignored" };
     if (req.agent.isEnabled()) {
       response.status = "scheduled";
@@ -76,12 +111,15 @@ export default function server(app: express, options: any):express {
     res.json(response);
   });
 
-  app.get("/storedquery", checkConfiguration(), ({ agent }, res) => {
+  routes.get("/storedquery", checkConfiguration(), ({ agent }, res) => {
     const query = agent.getQuery();
     res.json({ query });
   });
 
-  app.all("/status", statusCheck);
+  routes.all("/status", statusCheck);
+
+  app.use(routes);
+  app.use("/:adapter/", routes);
 
   return app;
 }

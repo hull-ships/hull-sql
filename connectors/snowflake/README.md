@@ -1,85 +1,49 @@
-# Hull SQL Ship.
+# Hull Snowflake Connector
 
-### Using :
+The Hull Snowflake Connector makes it easy to bring data from your Snowflake data warehouse into Hull by  writing your own queries.
 
-- Go to your `Hull Dashboard > Ships > Add new`
-- Paste the URL for your Heroku deployment, or use ours : `https://hull-sql.herokuapp.com/`
-- Visit the Setup Page (see below)
-- Add your ship to a Platform.
+## Getting Started
 
-### Developing :
+Go to the Connectors page of your Hull organization, click the button “Add Connector” and click “Install” on the Snowflake importer card. After installation, switch to the “Settings” tab and begin with the configuration.
 
-- Fork
-- Install
+Begin your configuration in the section **Database Connection** by specifying your snowflake account name, region, and the name of your snowflake database:
+![Getting Started Step 1](docs/gettingstarted01.png)
 
-```sh
-npm i -g gulp
-npm i
-npm run start:dev #starts in dev mode with nodemon
-npm run test #runs unit tests, lints and checks dependencies
-npm run watch #builds client package
-npm run build # build
-# Checkout package.json for more tasks
-```
+Move on to the section **Database Login** and specify the user credentials:
+![Getting Started Step 2](docs/gettingstarted02.png)
 
+To complete your configuration, save your changes to the settings. You can now move on to the tab “Query Editor” and write your Snowflake query:
+![Getting Started Step 3](docs/gettingstarted03.png)
 
-### Installing 
+Click on the button “Preview” to check if your query is working and delivering the results you expect. Once you are satisfied with the result, save your changes. The Snowflake connector will run the query on a given interval (3 hours per default) once you enable the sync (see Synchronize data on a scheduled basis for further details). If you want to start the import directly, click on the button “Import everything” and we will get you going right away.
 
-#### Dependencies for this connector 
+## Features
 
-- Redis
-- S3 Bucket
-- IAM profile with read/write access to a S3 bucket
+The Snowflake connector supports to `create users`, `add traits` and `update traits`.
 
-#### Environment variables
+You can bring in new users or update existing user profiles from your Snowflake databases to create segments, transform and enrich customer data and send them to other services with our other Connectors.
 
-| SECRET | Connector Secret - Generate a random secret string |
-| AWS_KEY_ID | Access Key for IAM profile |
-| AWS_SECRET_KEY | Secret Key for IAM profile |
-| BUCKET_PATH | S3 Bucket name and path for extracted files |
-| REDIS_URL | Redis URL for the jobs queue |
+Hull Snowflake Connector allows you to synchronize data on a given schedule, define how data is treated in terms of conflicts and run incremental queries.
 
+## Synchronize data on a scheduled basis
 
-#### How to setup the S3 bucket and IAM profile
+**Enable Sync** to run your query on a given time interval to keep your data automatically up-to-date:
+![Synchronize Data](docs/syncschedule01.png)
 
-This article explains how to create an IAM profile and grant access to a S3 bucket : https://aws.amazon.com/blogs/security/writing-iam-policies-how-to-grant-access-to-an-amazon-s3-bucket/
+By checking the box your query runs automatically every 3 hours. To increase performance we recommend to use incremental queries.
 
-You might also want to configure your S3 bucket's lifecycle to expire files automatically after a few days.
+Note: You can always manually run your query from the dashboard by clicking on the button “Import everything”.
 
-In the S3 section of your AWS console, go to your bucket's Management tab and add a Lifecycle rule to automatically expire Objects after 7 days.
+## Define behavior in case of a data conflict
 
-### Logs
+A user profile in Hull is usually composed of data from a multitude of sources, so it is likely that you have already stored a value for a given trait and your Snowflake data source returns a different value. Let’s say you have already stored the phone number 123-444-6666 in the user profile for Brad Smith but your query returns the number 456-233-8899. This represents a typical data conflict and you can decide how the Snowflake connector shall resolve this conflict: either keep the number or overwrite it. By selecting **Use Snowflake value in case of data conflict** in the connector configuration section, you make the decision that your Snowflake data source is the leading system for the particular traits it returns:
+![Handle Data Conflicts](docs/dataconflict01.png)
+Note: The default behavior is to use the Snowflake value in case of data conflict. This is consistent across all connectors in Hull.
 
-Logs that are specific for SQL Connector:
+## Query data that has changed in a given time period (Incremental Queries)
 
-* `incoming.job.*`
-  - jobName: `sync`
-  - stepName: `query` - showing progress for fetching users from database
-  - stepName: `upload` - showing progress for uploading chunks of data to S3
-  - stepName: `import` - showing progress for triggering imports on the platform
-
-* `incoming.job.query` - includes the full query which is run on the external database to import data from
-* `connection.error` - encountered problems when connecting with database
-* `incoming.job.warning` - query returned no results
-
-### Status
-
-  Messages that may come from status endpoint: 
-  
-  * `Connection string is not configured.` - when some of database settings are not configured in connector's private settings
-  * `Error when trying to connect with database. {err}` - when trying to establish connection and perform simple query 
-  * `Query string is not configured` - when `query` is not configured in connector's private settings
-  * `Database does not return any rows for saved query` - when database returned no results for saved query.
-  * `Results have invalid format {messages}` - when results from database have invalid format. messages - list that contains specified 
-  * `Interval syncing is enabled but interval time is less or equal zero` - when cron syncing is enabled but time provided by user is less than zero.
-
-### Notifications
-
-  Messages that may be sent to platform from this connector:
-    
-   - error: 
-      * `Server Error: {err}` - server side error, mostly connection errors
-      * `Invalid Syntax: {message}` - errors about invalid query syntax
-      * `Invalid structure {messages}` - errors about invalid results structure, e.g. missing email/external_id, json column in postgres database ...
-   - warning:
-      * `Warning: Query returned no results` - when query that was already saved returned no results
+If the tables in your Snowflake database hold large sets of data, you might want to query only data that has changed within the last couple of days - this is what we call incremental queries. The advantage of incremental queries is that you return a smaller subset of data that can be processed faster which improves the overall performance. You can write an incremental query by using the placeholder `:import_start_date`  in your query string. The Snowflake connector will automatically replace this at runtime with a proper datetime value that represents the current point of time x days ago. Here is an example of an incremental query:
+![Incremental Queries Dashboard](docs/incrementalqueries01.png)
+You can define the number of days on the tab “Settings“ in the section “Connector Configuration”:
+![Incremental Queries Settings](docs/incrementalqueries02.png)
+Please enter the number of days as integer or whole number. Fractional days are not supported.

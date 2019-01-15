@@ -16,11 +16,14 @@ import SequelizeUtils from "sequelize/lib/utils";
  *
  */
 export function openConnection(settings) {
+  // Must specify region even though it's supposed to be deprecated
+  // Known issue with nodejs sdk (today is Jan 15 2019)
+  // https://stackoverflow.com/questions/54129786/snowflake-dw-conncetion-with-node-js-driver
   const conf = {
     account: settings.db_account,
+    region: settings.db_region,
     username: settings.db_user,
     password: settings.db_password,
-    region: settings.db_region,
     database: settings.db_name
   };
   return snowflake.createConnection(conf);
@@ -30,6 +33,9 @@ export function openConnection(settings) {
  * Close the connection.
  */
 export function closeConnection(client) {
+  if (!client.isUp()) {
+    return Promise.resolve();
+  }
   return new Promise((resolve, reject) => client.destroy((err, conn) => {
     return err ? reject(err) : resolve(conn);
   }));
@@ -53,7 +59,8 @@ export function validateResult(result, import_type = "users") {
  */
 
 export function checkForError(error) {
-  console.warn("TODO: Implement checkForError");
+  // console.warn("TODO: Implement checkForError");
+  // default behavior is to check for a "message" and bubble it up which is correct
   return false;
 }
 

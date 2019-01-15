@@ -63,8 +63,6 @@ const connector = new Hull.Connector({
 
 connector.setupApp(app);
 
-app.use("/snowflake", require("./custom-connect-router")("connectors/snowflake"));
-
 if (process.env.COMBINED || process.env.WORKER) {
   worker(connector);
   connector.startWorker();
