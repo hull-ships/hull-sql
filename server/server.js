@@ -14,6 +14,7 @@ const path = require("path");
 function adapterReadmeRouteFactory() {
   return function readmeRoute(req, res) {
     // make sure this route has the :adapter parameter specified
+    console.log(`Adapter: ${JSON.stringify(req.params)}`);
     return res.redirect(
       `https://dashboard.hullapp.io/readme?url=https://${req.headers.host}/${req.params.adapter}`
     );
