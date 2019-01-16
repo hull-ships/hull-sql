@@ -1,9 +1,9 @@
 {
   "name": "SQL Importer",
   "description": "Import data from your SQL databases",
-  "picture": "snowflake/picture.png",
+  "picture": "picture.png",
   "source": "sql",
-  "logo": "snowflake/logo.png",
+  "logo": "logo.png",
   "version": "0.3.15",
   "tags": [
     "incoming",
@@ -92,20 +92,6 @@
       "type": "string",
       "title": "Database name",
       "required" : true
-    },
-    {
-      "name": "db_options",
-      "type": "string",
-      "title": "Additional connection options",
-      "required" : false,
-      "description": "Add connection options for the different database types. See below for more details."
-    },
-    {
-      "name": "db_options_hero",
-      "type": "string",
-      "headerTemplate": "***MySql and Postgres***<br>Specify options as plain text in the format `ssl=true`.<br><br>***MS SQL***<br>Specify a valid JSON object like `{\"encrypt\": true}`. Please refer to the [tedious driver documentation](http://tediousjs.github.io/tedious/api-connection.html#function_newConnection) for available options.<br>**Important Note for SQL Azure**: SQL Azure requires the option encrypt to be set to true which is not the default. Please specify `{\"encrypt\": true}` in the options otherwise the connection will be refused.",
-      "format": "information",
-      "title": " "
     },
     {
       "type": "string",

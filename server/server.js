@@ -11,14 +11,14 @@ import checkConfiguration from "./lib/check-conf-middleware";
 
 const path = require("path");
 
-// function readmeRouteFactory() {
-//   return function readmeRoute(req, res) {
-//     // console.log("Trying: " + `https://dashboard.hullapp.io/readme?url=https://${req.headers.host}/${subpath}`);
-//     return res.redirect(
-//       `https://dashboard.hullapp.io/readme?url=https://${req.headers.host}/${req.originalUrl}`
-//     );
-//   };
-// }
+function adapterReadmeRouteFactory() {
+  return function readmeRoute(req, res) {
+    // make sure this route has the :adapter parameter specified
+    return res.redirect(
+      `https://dashboard.hullapp.io/readme?url=https://${req.headers.host}/${req.params.adapter}`
+    );
+  };
+}
 
 export default function server(app: express, options: any):express {
   const { hostSecret, queue, devMode } = options;
@@ -40,19 +40,19 @@ export default function server(app: express, options: any):express {
   // any subdirectories can serve custom static assets
   app.use(express.static(`${applicationDirectory}/connectors`));
 
-  // can get this to work by puting it in the routes Router
-  // but then it requires authentication if called directly
-  // one way or another, these routes don't even look like they are used
-  // looks like readme.md is called directly, which because we enable all static assets under /connectors
-  // is easily reachable without these routes
-  // const staticRoutes = express.Router();
-  // // making sure the other special static routes are set in the custom adapter router
-  // staticRoutes.use(express.static(`${applicationDirectory}/dist`));
-  // staticRoutes.get("/", readmeRouteFactory());
-  // staticRoutes.get("/readme", readmeRouteFactory());
-  //
-  // app.use(staticRoutes);
-  // app.use("/:adapter/", staticRoutes);
+  const staticRoutes = express.Router();
+  // the dist directory is one of the static routes set at the root
+  // do we need to add the route to the relative roots?
+  // doesn't seem like it right now...
+  // app.use(express.static(`${applicationDirexctory}/dist`));
+
+  // traditionally, the root serves a redirect to the readme
+  // which is why we have these staticRoutes
+  // however because we're using a wildcard ":adapter"
+  // this route is also going to get used for anything we put in
+  // which proceeds to a "Not Found" screen which should be ok
+  app.get("/:adapter/", adapterReadmeRouteFactory());
+  app.get("/:adapter/readme", adapterReadmeRouteFactory());
 
   app.use((req, res, next) => {
     if (req.hull && req.hull.ship) {
@@ -62,7 +62,6 @@ export default function server(app: express, options: any):express {
 
     return res.status(403).json({ status: "missing credentials" });
   });
-
 
   const routes = express.Router();
 
