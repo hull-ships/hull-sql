@@ -41,32 +41,20 @@ export default function server(app: express, options: any):express {
   // any subdirectories can serve custom static assets
   app.use(express.static(`${applicationDirectory}/connectors`));
 
-  const staticRoutes = express.Router();
-  // the dist directory is one of the static routes set at the root
-  // do we need to add the route to the relative roots?
-  // doesn't seem like it right now...
-  // app.use(express.static(`${applicationDirexctory}/dist`));
+  const routes = express.Router();
 
-  // traditionally, the root serves a redirect to the readme
-  // which is why we have these staticRoutes
-  // however because we're using a wildcard ":adapter"
-  // this route is also going to get used for anything we put in
-  // which proceeds to a "Not Found" screen which should be ok
-  app.get("/:adapter/", adapterReadmeRouteFactory());
-  app.get("/:adapter/readme", adapterReadmeRouteFactory());
-
-  app.use((req, res, next) => {
+  const validationMiddleware = (req, res, next) => {
     if (req.hull && req.hull.ship) {
       req.agent = new SyncAgent(req.hull);
       return next();
     }
 
     return res.status(403).json({ status: "missing credentials" });
-  });
+  };
 
-  const routes = express.Router();
-
-  routes.get("/admin.html", ({ agent }, res) => {
+  routes.get("/admin.html",
+    validationMiddleware,
+    ({ agent }, res) => {
     if (agent.areConnectionParametersConfigured()) {
       const query = agent.getQuery();
       res.render("connected.html", {
@@ -80,7 +68,10 @@ export default function server(app: express, options: any):express {
     }
   });
 
-  routes.post("/run", checkConfiguration(), ({ body, agent, hull }, res) => {
+  routes.post("/run",
+    validationMiddleware,
+    checkConfiguration(),
+    ({ body, agent, hull }, res) => {
     const query = body.query || agent.getQuery();
 
     if (!query) {
@@ -96,12 +87,18 @@ export default function server(app: express, options: any):express {
       });
   });
 
-  routes.post("/import", checkConfiguration({ checkQueryString: true }), (req, res) => {
+  routes.post("/import",
+    validationMiddleware,
+    checkConfiguration({ checkQueryString: true }),
+    (req, res) => {
     req.hull.enqueue("startImport");
     res.json({ status: "scheduled" });
   });
 
-  routes.post("/sync", checkConfiguration({ checkQueryString: true, sync: true }), (req, res) => {
+  routes.post("/sync",
+    validationMiddleware,
+    checkConfiguration({ checkQueryString: true, sync: true }),
+    (req, res) => {
     const response = { status: "ignored" };
     if (req.agent.isEnabled()) {
       response.status = "scheduled";
@@ -111,7 +108,9 @@ export default function server(app: express, options: any):express {
     res.json(response);
   });
 
-  routes.get("/storedquery", checkConfiguration(), ({ agent }, res) => {
+  routes.get("/storedquery",
+    validationMiddleware,
+    checkConfiguration(), ({ agent }, res) => {
     const query = agent.getQuery();
     res.json({ query });
   });
@@ -119,6 +118,14 @@ export default function server(app: express, options: any):express {
   routes.all("/status", statusCheck);
 
   app.use(routes);
+
+  // the dist directory is one of the static routes set at the root
+  // do we need to add the route to the relative roots?
+  // doesn't seem like it right now...
+  // app.use(express.static(`${applicationDirexctory}/dist`));
+
+  app.get("/:adapter/", adapterReadmeRouteFactory());
+  app.get("/:adapter/readme", adapterReadmeRouteFactory());
   app.use("/:adapter/", routes);
 
   return app;
