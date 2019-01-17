@@ -206,6 +206,99 @@ describe("Server", () => {
     req.end();
   });
 
+  it("making sure we get to the right responses from the base path", (done) => {
+    const port = 8090;
+    bootstrap("", port, "users", false);
+
+    const requestOptions = {
+      host: "localhost",
+      port,
+      method: "GET",
+      path: "/admin.html"
+    };
+
+    let admin = false;
+    let readme = false;
+
+    http.get(requestOptions, (res) => {
+      assert(res.statusCode === 403);
+      admin = true;
+      if (admin && readme) {
+        done();
+      }
+    });
+
+    const requestOptionsReadme = {
+      host: "localhost",
+      port,
+      method: "GET",
+      path: "/readme"
+    };
+
+    http.get(requestOptionsReadme, (res) => {
+      assert(res.statusCode === 302);
+      readme = true;
+      if (admin && readme) {
+        done();
+      }
+    });
+  });
+
+  it("snowflake calls to make sure we get the right responses from the subpath", (done) => {
+    const port = 8091;
+    bootstrap("", port, "users", false);
+
+    const requestOptions = {
+      host: "localhost",
+      port,
+      method: "GET",
+      path: "/snowflake/admin.html"
+    };
+
+    let admin = false;
+    let readme = false;
+    let bad = false;
+
+    http.get(requestOptions, (res) => {
+      assert(res.statusCode === 403);
+      admin = true;
+      if (admin && readme && bad) {
+        done();
+      }
+    });
+
+    const requestOptionsReadme = {
+      host: "localhost",
+      port,
+      method: "GET",
+      path: "/snowflake/readme"
+    };
+
+    http.get(requestOptionsReadme, (res) => {
+      assert(res.statusCode === 302);
+      readme = true;
+      if (admin && readme && bad) {
+        done();
+      }
+    });
+
+    const requestOptionsBad = {
+      host: "localhost",
+      port,
+      method: "GET",
+      path: "/snowflake/asdf"
+    };
+
+    http.get(requestOptionsBad, (res) => {
+      assert(res.statusCode === 404);
+      bad = true;
+      if (admin && readme && bad) {
+        done();
+      }
+    });
+  });
+
+
   it("should return status OK for /admin.html endpoint", (done) => {
     bootstrap("", 8888);
     http.get("http://localhost:8888/admin.html", (res) => {

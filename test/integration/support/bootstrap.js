@@ -4,7 +4,7 @@ import express from "express";
 import Server from "../../../server/server";
 
 
-export default function bootstrap(query, port, import_type = "users") {
+export default function bootstrap(query, port, import_type = "users", insert_credentials = true) {
   const app = express();
   const cache = new Cache({
     store: "memory",
@@ -19,34 +19,37 @@ export default function bootstrap(query, port, import_type = "users") {
   const options = { connector, queue };
   connector.setupApp(app);
 
-  app.use((req, res, next) => {
-    // noinspection JSAnnotator
-    req.hull = {
-      ship: {
-        private_settings: {
-          import_type,
-          db_type: "filesystem",
-          output_type: "filesystem",
-          query,
-          db_host: "localhost",
-          db_port: "5433",
-          db_name: "hullsql",
-          db_user: "hullsql",
-          db_password: "hullsql"
+  if (insert_credentials) {
+    app.use((req, res, next) => {
+      // noinspection JSAnnotator
+      req.hull = {
+        ship: {
+          private_settings: {
+            import_type,
+            db_type: "filesystem",
+            output_type: "filesystem",
+            query,
+            db_host: "localhost",
+            db_port: "5433",
+            db_name: "hullsql",
+            db_user: "hullsql",
+            db_password: "hullsql"
+          }
+        },
+        client: {
+          post: () => Promise.resolve({}),
+          logger: {
+            info: () => {},
+            error: () => {},
+            warn: () => {}
+          }
         }
-      },
-      client: {
-        post: () => Promise.resolve({}),
-        logger: {
-          info: () => {},
-          error: () => {},
-          warn: () => {}
-        }
-      }
-    };
+      };
 
-    next();
-  });
+      next();
+    });
+  }
+
   Server(app, options);
   connector.startApp(app);
 }
