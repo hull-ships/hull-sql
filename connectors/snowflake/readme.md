@@ -17,6 +17,8 @@ To complete your configuration, save your changes to the settings. You can now m
 
 Click on the button “Preview” to check if your query is working and delivering the results you expect. Once you are satisfied with the result, save your changes. The Snowflake connector will run the query on a given interval (3 hours per default) once you enable the sync (see Synchronize data on a scheduled basis for further details). If you want to start the import directly, click on the button “Import everything” and we will get you going right away.
 
+### IMPORTANT: when specifying Hull integrated keys like external_id, account_id etc... Please wrap the field name in quotes like this: select someid as "external_id"...  Snowflake returns columns in uppercase by default and if you don't wrap the Hull specific keys in quotes, then it won't be recognized or imported
+
 ## Features
 
 The Snowflake connector supports to `create users`, `add traits` and `update traits`.

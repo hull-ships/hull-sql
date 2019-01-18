@@ -4,6 +4,7 @@
 import snowflake from "snowflake-sdk";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
+import validateResultColumns from "./validate-result-columns";
 
 /**
  * SnowFlake adapter.
@@ -47,9 +48,10 @@ export function closeConnection(client) {
  */
 
 export function validateResult(result, import_type = "users") {
-  // return validateResultColumns(result.columns.map(column => column.name), import_type);
-  // TODO
-  return {};
+  if (!result.rows || result.rows.length === 0) {
+    return "Try to select a preview query which will return some results to validate";
+  }
+  return validateResultColumns(Object.keys(result.rows[0]), import_type);
 }
 
 /**
