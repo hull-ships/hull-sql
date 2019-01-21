@@ -1,6 +1,6 @@
 {
-  "name": "SQL Importer",
-  "description": "Import data from your SQL databases",
+  "name": "Snowflake Importer",
+  "description": "Import data from your Snowflake Warehouse",
   "picture": "picture.png",
   "source": "sql",
   "logo": "logo.png",
