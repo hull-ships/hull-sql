@@ -97,6 +97,23 @@ export default class SyncAgent {
 
     if (settings.db_type === "snowflake") {
       validationParameters = ["account", "region", "name", "user", "password"];
+
+      const val = settings.db_account;
+      if (val && typeof val === "string" && val.length > 0) {
+        // Need to validate that all account names consist of only letters/digits
+        // js1234.us-east-1 is how some people enter the account name
+        // and it really blows stuff up on the connector:
+        // TypeError: Cannot read property 'getPeerCertificate' of null
+        const accountNameRegEx = /^\w+$/g;
+        const result = val.match(accountNameRegEx);
+        if (
+          !Array.isArray(result) ||
+          result.length !== 1 ||
+          result[0].length !== val.length
+        ) {
+          return false;
+        }
+      }
     }
 
     const conn = validationParameters.reduce((c, key) => {
