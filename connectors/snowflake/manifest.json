@@ -2,7 +2,7 @@
   "name": "Snowflake Importer",
   "description": "Import data from your Snowflake Warehouse",
   "picture": "picture.png",
-  "source": "sql",
+  "source": "snowflake",
   "logo": "logo.png",
   "version": "0.3.15",
   "tags": [
