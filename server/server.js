@@ -114,7 +114,7 @@ export default function server(app: express, options: any):express {
     res.json({ query });
   });
 
-  routes.all("/status", statusCheck);
+  routes.all("/status", validationMiddleware, statusCheck);
 
   app.use(routes);
 
