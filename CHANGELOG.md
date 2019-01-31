@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.18
+- prevent malicious dep flatmap-stream@0.1.1 from installing
+
+## 0.3.17
+- added data type handler to the postgres connection to make sure numeric and int8 values are cast to Numbers
+
+## 0.3.16
+- update error wording
+
 ## 0.3.15
 - upgrade hull-node and newrelic to the latest versions
 

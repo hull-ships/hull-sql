@@ -4,7 +4,7 @@ export default function checkConfigurationFactory({ checkQueryString = false, sy
   return function checkConfigurationMiddleware({ hull, agent }, res, next) {
     if (!agent.areConnectionParametersConfigured()) {
       if (sync) {
-        hull.client.logger.error("incoming.job.error", { hull_summary: "connection string not configured" });
+        hull.client.logger.error("incoming.job.error", { hull_summary: "connection string not configured, please update it or disable sync" });
       } else {
         hull.client.logger.error("connection string not configured");
       }
@@ -13,7 +13,7 @@ export default function checkConfigurationFactory({ checkQueryString = false, sy
 
     if (checkQueryString && !agent.isQueryStringConfigured()) {
       if (sync) {
-        hull.client.logger.error("incoming.job.error", { hull_summary: "query string not configured" });
+        hull.client.logger.error("incoming.job.error", { hull_summary: "query string not configured, please update it or disable sync" });
       } else {
         hull.client.logger.error("query string not configured");
       }
