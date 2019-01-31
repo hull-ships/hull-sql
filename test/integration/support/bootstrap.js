@@ -38,8 +38,10 @@ export default function bootstrap(query, port, import_type = "users", insert_cre
         },
         client: {
           post: () => Promise.resolve({}),
+          put: () => Promise.resolve({}),
           logger: {
             info: () => {},
+            debug: () => {},
             error: () => {},
             warn: () => {}
           }
