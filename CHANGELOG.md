@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.19
+- Adding the ability to pull from a snowflake warehouse
+- Also adding the ability to migrate specific connectors to a place where each different type of sql can serve their own assets
+
 ## 0.3.18
 - prevent malicious dep flatmap-stream@0.1.1 from installing
 
