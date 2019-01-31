@@ -40,7 +40,7 @@ spec:
             - name: OVERRIDE_LOCK_DURATION
               value: "120000"
             - name: NEW_RELIC_APP_NAME
-              value: "hull-sql-accounts.connectors.hullapp.net"
+              value: "sql.connectors.hullapp.net"
 ---
 apiVersion: v1
 kind: Service
