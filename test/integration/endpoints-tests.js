@@ -299,11 +299,26 @@ describe("Server", () => {
   });
 
 
-  it("should return status OK for /admin.html endpoint", (done) => {
-    bootstrap("", 8888);
-    http.get("http://localhost:8888/admin.html", (res) => {
+  it("should return status OK for /admin.html and status endpoint", (done) => {
+    bootstrap("", 8092);
+
+    let admin = false;
+    let status = false;
+
+    http.get("http://localhost:8092/admin.html", (res) => {
       assert(res.statusCode === 200);
-      done();
+      admin = true;
+      if (admin && status) {
+        done();
+      }
+    });
+
+    http.get("http://localhost:8092/status", (res) => {
+      assert(res.statusCode === 200);
+      status = true;
+      if (admin && status) {
+        done();
+      }
     });
   });
 });
