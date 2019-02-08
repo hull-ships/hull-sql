@@ -1,7 +1,7 @@
 {
   "name": "hull-sql",
   "description": "Install SQL connector on your Hull dashboard",
-  "version": "0.3.19",
+  "version": "0.3.17",
   "homepage": "https://github.com/hull-ships/hull-sql",
   "license": "MIT",
   "main": "dist/ship.js",
@@ -78,7 +78,6 @@
     "rimraf": "^2.4.3",
     "s3-upload-stream": "^1.0.7",
     "sequelize": "^3.30.0",
-    "snowflake-sdk": "^1.1.9",
     "sqs-consumer": "^3.6.1",
     "style-loader": "^0.18.2",
     "sweetalert": "^1.1.3",
