@@ -90,6 +90,83 @@ describe("SyncAgent", () => {
     expect(closeStreamStub.callCount).to.be.equal(1);
   });
 
+  it("snowflake initialization tests", (done) => {
+    const initializationParameters = {
+      client: {
+        logger: {
+          error: () => {},
+          info: () => {}
+        },
+        post: () => Promise.resolve({})
+      },
+      ship: {
+        private_settings: {
+          db_type: "snowflake",
+          import_days: 10
+        }
+      }
+    };
+    const emptySyncAgent = new SyncAgent(initializationParameters);
+    expect(emptySyncAgent.areConnectionParametersConfigured()).to.be.equal(false);
+
+    initializationParameters.ship.private_settings = {
+      db_type: "snowflake",
+      db_account: "ab12345.us-east-1",
+      db_region: "us-east-1",
+      db_user: "tim",
+      db_password: "somepass",
+      db_name: "test",
+      import_days: 10
+    };
+    const badSyncAgent = new SyncAgent(initializationParameters);
+    expect(badSyncAgent.areConnectionParametersConfigured()).to.be.equal(false);
+
+    initializationParameters.ship.private_settings.db_account = "ab12345";
+    const goodSyncAgent = new SyncAgent(initializationParameters);
+    expect(goodSyncAgent.areConnectionParametersConfigured()).to.be.equal(true);
+
+
+    done();
+  });
+
+  it("postgres initialization tests", (done) => {
+    const initializationParameters = {
+      client: {
+        logger: {
+          error: () => {},
+          info: () => {}
+        },
+        post: () => Promise.resolve({})
+      },
+      ship: {
+        private_settings: {
+          db_type: "postgres",
+          import_days: 10
+        }
+      }
+    };
+    const emptySyncAgent = new SyncAgent(initializationParameters);
+    expect(emptySyncAgent.areConnectionParametersConfigured()).to.be.equal(false);
+
+    initializationParameters.ship.private_settings = {
+      db_type: "postgres",
+      db_host: "somehost.com",
+      db_port: "5432",
+      db_user: "tim",
+      db_name: "test",
+      import_days: 10
+    };
+    const badSyncAgent = new SyncAgent(initializationParameters);
+    expect(badSyncAgent.areConnectionParametersConfigured()).to.be.equal(false);
+
+    initializationParameters.ship.private_settings.db_password = "somepass";
+    const goodSyncAgent = new SyncAgent(initializationParameters);
+    expect(goodSyncAgent.areConnectionParametersConfigured()).to.be.equal(true);
+
+
+    done();
+  });
+
   describe("idKey", () => {
     it("should return 'userId'", () => {
       const syncAgent = new SyncAgent({ ship: { private_settings:
