@@ -4,42 +4,39 @@
   <script src="/ship.js" type="text/javascript" charset="utf-8" async defer></script>
 </head>
 <body>
-  <div class="row">
-    <div class="col-xs-offset-1 col-xs-10 col-lg-10 col-lg-offset-1 panel mt-2">
-      <div class="panel-body">
-
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-xs-12">
         <div class="mb-1 ps-3">
-
-          <h1 class="mb-0 mt-05 text-center"><i class="icon icon-hull" style="font-size:64px;"></i> </h1>
-
-          <div class="mb-1 media pb-1">
+          <div class="media">
             <div class="media-left">
               <div class="media-object pr-1 pt-1">
                 <div class="check valid"><i class="icon icon-valid"></i></div>
               </div>
             </div>
             <div class="media-body pt-1">
-              <h4 class="m-0 pt-05 text-muted">Connected to your <%= db_type %> database</h4>
+              <h4 class="m-0 pt-025 text-muted">Connected to your <%= db_type %> database</h4>
+              <% if (last_sync_at) { %>
+                <small class="pull-right">Last Sync on <span data-time=""><%= last_sync_at %></span></small>
+              <% } %>
             </div>
           </div>
-          <% if (last_sync_at) { %>
-          <h5>Last Sync <small class="pull-right">on <span data-time=""><%= last_sync_at %></span></small></h5>
-          <% } %>
           <hr>
           <div class="row">
             <div class="col-sm-12">
-              <h4 class="mt-0 text-muted">SQL Query</h4>
-              <div class="row mb-1">
-                <div class="col-sm-12 col-lg-8">
+              <h4 class="mt-0 mb-05 text-muted">SQL Query</h4>
+
+              <div class="row">
+                <div class="col-sm-12 col-lg-9">
                   <textarea name="" rows="15" id="querying" class="form-control"><%= query %></textarea>
                 </div>
-                <div class="col-sm-12 col-lg-4">
+                <div class="col-sm-12 col-lg-3">
                   <div class="alert alert-info">
                     <h4 class='mt-05 mb-0'>Preview &amp; Save queries</h4>
                     <p>Each time you change your query, you <strong>must</strong> run a successful preview by clicking the <strong>Preview</strong> below before you can <strong>Save it</strong> (with the Save button on the top right of this screen)</p>
                     <small>In preview mode, your query will be run with a <code>LIMIT 100</code> or <code>TOP(100)</code> in T-SQL</small>
                   </div>
-                  <div class="mt-1 mb-1">
+                  <div class="mt-1">
                     <button id="button_preview" class="mb-1 btn-block btn-pill btn-rounded btn-success btn to-disable"><i class="icon icon-eye_open"></i> Preview</button>
                     <button id="button_import" class="mb-1 btn-block btn-pill btn-rounded btn-danger btn to-disable"><i class="icon icon-reset"></i> Import everything</button>
                   </div>
@@ -48,7 +45,7 @@
 
               <hr>
 
-              <h4 class="text-muted">Results Preview <span id="results-title"></span></h4>
+              <h4 class="text-muted mb-05 mt-1">Results Preview <span id="results-title"></span></h4>
 
               <div id="error-query" class="alert alert-danger">
               </div>
@@ -70,11 +67,7 @@
                 </table>
               </div>
 
-              <hr>
-
-
-
-              <div class="row">
+              <div class="row mt-1">
                 <div class="col-sm-12 col-md-6">
                   <div class="well">
                     <h6>How to write valid queries</h6>
@@ -87,11 +80,11 @@
                       </p>
                     <% } else if (typeof import_type !== "undefined" && import_type == "events") { %>
                       <p>
-                      Valid queries MUST expose an <code>external_id</code> column matching a user, an <code>event</code> colums specifying the event name or type and a <code>timestamp</code> column. Lines with no <code>external_id</code>, <code>event</code> and <code>timestamp</code> will be ignored.
+                        Valid queries MUST expose an <code>external_id</code> column matching a user, an <code>event</code> colums specifying the event name or type and a <code>timestamp</code> column. Lines with no <code>external_id</code>, <code>event</code> and <code>timestamp</code> will be ignored.
                         All other fields will be imported as event properties.
                         For example, the following query will map the column <code>users.id</code> to your Hull users' <code>external_id</code>.
                         <pre><code>SELECT user_id as external_id, event, timestamp FROM users_events</code></pre>
-                      You can also provide an <code>event_id</code> column to ensure event unicity.
+                        You can also provide an <code>event_id</code> column to ensure event unicity.
                       </p>
                     <% } else { %>
                       <p>
@@ -121,11 +114,17 @@
 
             </div>
           </div>
-
         </div>
+      </div>
     </div>
   </div>
   <style type="text/css" media="screen">
+    body{
+      background: white;
+    }
+    #button_import {
+      margin: 0;
+    }
     .alert.alert-danger {
       background-color: #f3502f;
       border-color: #fffaf9;
@@ -133,6 +132,10 @@
     }
     #error-query, #loading-query {
       display: none;
+    }
+    #result {
+      font-family: monospace;
+      white-space: nowrap;
     }
     .check i.icon {
       color: rgba(75, 222, 122, 0.52);
@@ -168,6 +171,12 @@
     }
     td pre {
       margin: 0;
+    }
+    hr {
+      margin: 1rem 0;
+    }
+    h6 {
+      margin-top: 0;
     }
   </style>
 </body></html>
