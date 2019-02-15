@@ -72,3 +72,4 @@ if (process.env.COMBINED || process.env.SERVER) {
   server(app, { hostSecret, queue, devMode });
   connector.startApp(app);
 }
+

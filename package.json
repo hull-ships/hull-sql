@@ -78,7 +78,6 @@
     "rimraf": "^2.4.3",
     "s3-upload-stream": "^1.0.7",
     "sequelize": "^3.30.0",
-    "snowflake-sdk": "^1.1.9",
     "sqs-consumer": "^3.6.1",
     "style-loader": "^0.18.2",
     "sweetalert": "^1.1.3",
