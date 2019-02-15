@@ -13,20 +13,57 @@ import "codemirror/mode/sql/sql.js";
   let stored_query = "";
   const { swal } = window;
 
-  $(() => {
-    const editor = CodeMirror.fromTextArea(document.getElementById("querying"), {
-      mode: "text/x-pgsql",
-      indentWithTabs: false,
-      parserfile: "codemirror/contrib/sql/js/parsesql.js",
-      path: "codemirror/js/",
-      stylesheet: "css/sqlcolors.css",
-      smartIndent: true,
-      lineNumbers: true,
-      matchBrackets: true,
-      autofocus: true
-    });
+  const button_import = $("#button_import");
+  const button_preview = $("#button_preview");
+  const changed_indicator = $("#changed-indicator");
+  const preview_query = $("#preview-query");
+  const preview_results = $("#preview-results");
+  const preview_error = $("#preview-error");
+  const preview_loading = $("#preview-loading");
 
-    $(".to-disable").prop("disabled", false);
+  $(() => {
+    const editor = CodeMirror.fromTextArea(
+      document.getElementById("querying"),
+      {
+        mode: "text/x-pgsql",
+        indentWithTabs: false,
+        parserfile: "codemirror/contrib/sql/js/parsesql.js",
+        path: "codemirror/js/",
+        stylesheet: "css/sqlcolors.css",
+        smartIndent: true,
+        lineNumbers: true,
+        matchBrackets: true,
+        autofocus: true
+      }
+    );
+
+    function updateChangedStatus() {
+      const current_query = editor.getValue();
+      console.log("Updating Changed Status", current_query, stored_query);
+      if (
+        stored_query !== undefined &&
+        stored_query &&
+        current_query !== stored_query
+      ) {
+        changed_indicator.show();
+      } else {
+        changed_indicator.hide();
+      }
+    }
+
+    window.addEventListener("message", event => {
+      const message = event.data;
+      console.log("UPDATING", message.ship.private_settings.query);
+      if (
+        message &&
+        message.from === "hull-dashboard" &&
+        message.action === "update"
+      ) {
+        const { ship } = message;
+        stored_query = ship.private_settings.query;
+        updateChangedStatus();
+      }
+    });
 
     function getStoredQuery() {
       $.ajax({
@@ -34,82 +71,122 @@ import "codemirror/mode/sql/sql.js";
         type: "get",
         success(data) {
           stored_query = data.query;
+          updateChangedStatus();
         },
         error(err) {
-          swal("Stored query", `Failed to load stored query: ${err.message || err.status}`, "error");
+          swal(
+            "Stored query",
+            `Failed to load stored query: ${err.message || err.status}`,
+            "error"
+          );
         }
       });
     }
 
+    function emitToParent(query) {
+      window.parent.postMessage(
+        JSON.stringify({
+          from: "embedded-ship",
+          action: "update",
+          ship: {
+            private_settings: {
+              query
+            }
+          }
+        }),
+        "*"
+      );
+    }
+
+    editor.on(
+      "change",
+      _.debounce(() => {
+        const query = editor.getValue();
+        emitToParent(query);
+        updateChangedStatus();
+      }, 100)
+    );
+
+    $(".to-disable").prop("disabled", false);
+
     getStoredQuery();
 
     function empty() {
-      $("#preview-query").empty().hide();
-      $("#error-query").empty().hide();
+      preview_query.empty().hide();
+      preview_results.hide();
+      preview_error.empty().hide();
       $("#result thead tr").empty();
       $("#result tbody").empty();
       $("#results-title").empty();
     }
 
-
-    $("#button_import").click(() => {
+    button_import.click(() => {
       const query = editor.getValue();
 
-      if (query === "") return swal("Empty query", "The current query is empty", "warning");
-
-      if (query !== stored_query) {
-        if (stored_query) {
-          return swal("Unsaved query", `The current query '${query}' is not the query you saved '${stored_query}'. Please save your query first.`, "warning");
-        }
-        return swal("Unsaved query", `The current query '${query}' is not the query you saved. Please save your query first.`, "warning");
+      if (query === "") {
+        return swal("Empty query", "The current query is empty", "warning");
       }
 
-      return swal({
-        title: "Import the users from the current query? ",
-        text: "If you continue, we will import the users from the currently saved query.",
-        type: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#DD6B55",
-        confirmButtonText: "Let's Go",
-        closeOnConfirm: false
-      }, isConfirm => {
-        if (isConfirm === true) {
-          $("#button_import")
-            .prop("disabled", true);
-          $("#button_import").text("Importing...");
-          empty();
+      if (query !== stored_query) {
+        return swal(
+          "Unsaved query",
+          "The current query you ran is not the query you saved. Please save your query first.",
+          "warning"
+        );
+        // return swal("Unsaved query", `The current query '${query}' is not the query you saved. Please save your query first.`, "warning");
+      }
 
+      return swal(
+        {
+          title: "Import the users from the current query? ",
+          text:
+            "If you continue, we will import the users from the currently saved query.",
+          type: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#DD6B55",
+          confirmButtonText: "Let's Go",
+          closeOnConfirm: false
+        },
+        isConfirm => {
+          if (isConfirm === true) {
+            button_import.prop("disabled", true);
+            button_import.text("Importing...");
+            empty();
 
-          swal("Started importing users. Results will be available shortly in Hull!");
+            swal(
+              "Started importing users. Results will be available shortly in Hull!"
+            );
 
-
-          $.ajax({
-            url: `/import${window.location.search}`,
-            type: "post",
-            data: {
-              query,
-              incremental: true
-            },
-            success() {
-              $(".to-disable").prop("disabled", false);
-              $("#button_import").replaceWith("<button id=\"button_import\" class=\"btn-pill btn-rounded btn-danger btn to-disable\"><i class=\"icon icon-reset\"></i> Import everything</button>");
-            },
-            error(err) {
-              let error = "";
-              if (err.responseJSON) {
-                error = err.responseJSON.message;
-              } else {
-                error = err.message || err.status;
+            $.ajax({
+              url: `/import${window.location.search}`,
+              type: "post",
+              data: {
+                query,
+                incremental: true
+              },
+              success() {
+                $(".to-disable").prop("disabled", false);
+                button_import.replaceWith(
+                  "<button id=\"button_import\" class=\"btn-pill btn-rounded btn-danger btn to-disable\"><i class=\"icon icon-reset\"></i> Import everything</button>"
+                );
+              },
+              error(err) {
+                let error = "";
+                if (err.responseJSON) {
+                  error = err.responseJSON.message;
+                } else {
+                  error = err.message || err.status;
+                }
+                $(".to-disable").prop("disabled", false);
+                preview_error
+                  .empty()
+                  .css("display", "block")
+                  .append(error);
               }
-              $(".to-disable").prop("disabled", false);
-              $("#error-query")
-                .empty()
-                .css("display", "block")
-                .append(error);
-            }
-          });
+            });
+          }
         }
-      });
+      );
     });
 
     function getColumnType(entries, columnName): string {
@@ -120,7 +197,9 @@ import "codemirror/mode/sql/sql.js";
             if (val) ret.push(val);
             return ret;
           }, []);
-          return values[0] && values[0].constructor && values[0].constructor.name;
+          return (
+            values[0] && values[0].constructor && values[0].constructor.name
+          );
         }
       } catch (err) {
         return "";
@@ -128,15 +207,18 @@ import "codemirror/mode/sql/sql.js";
       return "";
     }
 
-    $("#button_preview").click(() => {
+    button_preview.click(() => {
       empty();
       good_query = null;
 
       const query = editor.getValue();
-      if (query === "") return swal("Empty query", "The current query is empty", "warning");
+
+      if (query === "") {
+        return swal("Empty query", "The current query is empty", "warning");
+      }
 
       $(".to-disable").prop("disabled", true);
-      $("#loading-query").show();
+      preview_loading.show();
 
       $.ajax({
         url: `/run${window.location.search}`,
@@ -144,37 +226,52 @@ import "codemirror/mode/sql/sql.js";
         data: { query },
         success(data) {
           $(".to-disable").prop("disabled", false);
-          $("#loading-query").hide();
+          preview_loading.hide();
 
           try {
             if (data.errors && data.errors.length > 0) {
-              $("#error-query")
-                .empty();
+              preview_error.empty();
 
-              data.errors.forEach((error) => {
-                $("#error-query").append(`${error}<br />`);
+              data.errors.forEach(error => {
+                preview_error.append(`${error}<br />`);
               });
 
-              $("#error-query")
-                .show();
+              preview_error.show();
+
+              preview_results.hide();
 
               good_query = null;
             } else if (data.entries && data.entries.length) {
               _.forEach(data.entries[0], (value, columnName) => {
-                $("#result thead tr").append(`<th>${columnName}<em>(${getColumnType(data.entries, columnName)})</em></th>`);
+                $("#result thead tr").append(
+                  `<th>${columnName}<em>(${getColumnType(
+                    data.entries,
+                    columnName
+                  )})</em></th>`
+                );
               });
 
-              data.entries.forEach((element) => {
+              data.entries.forEach(element => {
                 const currentRow = [];
                 $.each(element, (key, value) => {
-                  currentRow.push(`<td><small>${(typeof(value) === "object" && value !== null) ? `<pre style='min-width:200px'><code>${JSON.stringify(value)}</code></pre>` : value}</small></td>`);
+                  currentRow.push(
+                    `<td><small>${
+                      typeof value === "object" && value !== null
+                        ? `<pre style='min-width:200px'><code>${JSON.stringify(
+                            value
+                          )}</code></pre>`
+                        : value
+                    }</small></td>`
+                  );
                 });
                 $("#result tbody").append(`<tr>${currentRow.join("")}<tr>`);
               });
 
               good_query = query;
+
+              preview_results.show();
             } else {
-              $("#error-query")
+              preview_error
                 .empty()
                 .show()
                 .append("No results for this query.");
@@ -183,43 +280,32 @@ import "codemirror/mode/sql/sql.js";
             }
           } catch (err) {
             good_query = stored_query;
-            $("#error-query")
+
+            preview_error
               .empty()
               .show()
               .append(data.message);
           } finally {
             if (good_query !== null && good_query !== stored_query) {
-              window.parent.postMessage(JSON.stringify({
-                from: "embedded-ship",
-                action: "update",
-                ship: {
-                  private_settings: {
-                    query: good_query
-                  }
-                }
-              }), "*");
+              emitToParent(good_query);
             }
           }
         },
         error(res) {
           const err = res.responseJSON;
           $(".to-disable").prop("disabled", false);
-          $("#loading-query").hide();
+          preview_loading.hide();
           if (err) {
-            $("#error-query")
+            const message =
+              err.message === "Timeout error"
+                ? "The query timed out, we suggest optimizing it or creating a materialized view so you can preview it."
+                : err.message;
+            preview_error
               .empty()
               .show()
-              .append(err.message);
+              .append(message);
             good_query = stored_query;
-            window.parent.postMessage(JSON.stringify({
-              from: "embedded-ship",
-              action: "update",
-              ship: {
-                private_settings: {
-                  query: good_query
-                }
-              }
-            }), "*");
+            emitToParent(good_query);
           }
         }
       });
@@ -227,4 +313,4 @@ import "codemirror/mode/sql/sql.js";
       return false;
     });
   });
-}());
+})();
