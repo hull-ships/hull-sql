@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.19
+- improve communicating Timeouts to customer
+- allow to save without a successful preview
+- display changed status of the query in the Connector
+- only display import button after a successful preview
+- rework UX
+
 ## 0.3.18
 - prevent malicious dep flatmap-stream@0.1.1 from installing
 
