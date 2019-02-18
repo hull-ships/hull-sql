@@ -92,7 +92,14 @@ export default class SyncAgent {
    */
   areConnectionParametersConfigured() {
     const settings = this.ship.private_settings;
-    const conn = ["type", "host", "port", "name", "user", "password"].reduce((c, key) => {
+
+    let validationParameters = ["type", "host", "port", "name", "user", "password"];
+
+    if (this.adapter.in.getRequiredParameters) {
+      validationParameters = this.adapter.in.getRequiredParameters();
+    }
+
+    const conn = validationParameters.reduce((c, key) => {
       let val = settings[`db_${key}`];
       if (key === "type" && val === "redshift") val = "postgres";
       if (c && val && val.length > 0) {
@@ -103,7 +110,18 @@ export default class SyncAgent {
       return false;
     }, {});
 
-    return !!conn;
+    const hasRequiredFields = !!conn;
+
+    if (hasRequiredFields) {
+      if (this.adapter.in.isValidConfiguration) {
+        if (!this.adapter.in.isValidConfiguration(settings)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    return false;
   }
 
   /**
