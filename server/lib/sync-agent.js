@@ -280,6 +280,14 @@ export default class SyncAgent {
         }
       }
 
+      try {
+        if (processed % 500 === 0) {
+          this.hull.logger.debug("incoming.job.memory", { jobId, jobName: "sync", stepName: "query", progress: processed, type: this.import_type, usage: process.memoryUsage() });
+        }
+      } catch (error) {
+
+      }
+
       // Add the external_id if exists.
       if (record.external_id) {
         data[this.idKey()] = record.external_id.toString();
