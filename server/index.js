@@ -50,8 +50,11 @@ if (process.env.QUEUE_ADAPTER === "sqs" && process.env.SQS_QUEUE_URL) {
   }));
 }
 
+const timeout = process.env.CONNECTOR_TIMEOUT;
+const preview_timeout = process.env.RUN_TIMEOUT_MS || 60000;
+
 const connector = new Hull.Connector({
-  timeout: process.env.CONNECTOR_TIMEOUT,
+  timeout,
   hostSecret,
   port,
   cache,
@@ -69,6 +72,6 @@ if (process.env.COMBINED || process.env.WORKER) {
 }
 
 if (process.env.COMBINED || process.env.SERVER) {
-  server(app, { hostSecret, queue, devMode });
+  server(app, { hostSecret, queue, devMode, preview_timeout });
   connector.startApp(app);
 }

@@ -21,8 +21,7 @@ function adapterReadmeRouteFactory() {
 }
 
 export default function server(app: express, options: any):express {
-  const { hostSecret, queue, devMode } = options;
-
+  const { hostSecret, queue, devMode, preview_timeout } = options;
   if (devMode) {
     app.use(devModeMiddleware());
   }
@@ -58,6 +57,7 @@ export default function server(app: express, options: any):express {
       const query = agent.getQuery();
       res.render("connected.html", {
         query,
+        preview_timeout,
         last_sync_at: null,
         import_type: "users",
         ...agent.ship.private_settings
@@ -78,7 +78,7 @@ export default function server(app: express, options: any):express {
     }
 
     return agent
-      .runQuery(query, { timeout: parseInt(process.env.RUN_TIMEOUT_MS, 10) | 60000, limit: 100 })
+      .runQuery(query, { timeout: parseInt(preview_timeout, 10), limit: 100 })
       .then(data => res.json(data))
       .catch(error => {
         const { status, message } = error;

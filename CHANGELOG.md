@@ -1,8 +1,15 @@
 # Changelog
 
-## 0.3.19
+## 0.3.20
 - Adding the ability to pull from a snowflake warehouse
 - Also adding the ability to migrate specific connectors to a place where each different type of sql can serve their own assets
+
+## 0.3.19
+- improve communicating Timeouts to customer
+- allow to save without a successful preview
+- display changed status of the query in the Connector
+- only display import button after a successful preview
+- rework UX
 
 ## 0.3.18
 - prevent malicious dep flatmap-stream@0.1.1 from installing
