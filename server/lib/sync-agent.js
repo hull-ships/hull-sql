@@ -92,14 +92,7 @@ export default class SyncAgent {
    */
   areConnectionParametersConfigured() {
     const settings = this.ship.private_settings;
-
-    let validationParameters = ["type", "host", "port", "name", "user", "password"];
-
-    if (this.adapter.in.getRequiredParameters) {
-      validationParameters = this.adapter.in.getRequiredParameters();
-    }
-
-    const conn = validationParameters.reduce((c, key) => {
+    const conn = ["type", "host", "port", "name", "user", "password"].reduce((c, key) => {
       let val = settings[`db_${key}`];
       if (key === "type" && val === "redshift") val = "postgres";
       if (c && val && val.length > 0) {
@@ -110,18 +103,7 @@ export default class SyncAgent {
       return false;
     }, {});
 
-    const hasRequiredFields = !!conn;
-
-    if (hasRequiredFields) {
-      if (this.adapter.in.isValidConfiguration) {
-        if (!this.adapter.in.isValidConfiguration(settings)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    return false;
+    return !!conn;
   }
 
   /**
@@ -278,14 +260,6 @@ export default class SyncAgent {
             // unsupported adapter operation
           }
         }
-      }
-
-      try {
-        if (processed % 500 === 0) {
-          this.hull.logger.debug("incoming.job.memory", { jobId, jobName: "sync", stepName: "query", progress: processed, type: this.import_type, usage: process.memoryUsage() });
-        }
-      } catch (error) {
-
       }
 
       // Add the external_id if exists.
