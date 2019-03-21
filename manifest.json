@@ -160,6 +160,36 @@
       "format": "hidden"
     }
   ],
+  "settings_sections": [
+    {
+      "title": "Database connection",
+      "properties": [
+        "private_settings.db_type",
+        "private_settings.db_host",
+        "private_settings.db_port",
+        "private_settings.db_name",
+        "private_settings.db_options"
+      ]
+    },
+    {
+      "title": "Database Login",
+      "description": "***Security Recommendation***<br>We recommend to grant the user below read-only access to dedicated tables to keep your information safe. Please refer to the manual of your database server for additional security recommendations.",
+      "properties": [
+        "private_settings.db_user",
+        "private_settings.db_password"
+      ]
+    },
+    {
+      "title": "Import Configuration",
+      "properties": [
+        "private_settings.import_type",
+        "private_settings.enabled",
+        "private_settings.sync_interval",
+        "private_settings.overwrite",
+        "private_settings.import_days"
+      ]
+    }
+  ],
   "resources": [],
   "readme": "readme.md",
   "tabs": [
