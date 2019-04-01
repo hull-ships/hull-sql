@@ -9,7 +9,8 @@
     "incoming",
     "oneColumn",
     "beta-release",
-    "sql-accounts"
+    "sql-accounts",
+    "first-install"
   ],
   "private_settings": [
     {
