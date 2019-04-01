@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.20
+- Adding the ability to pull from a snowflake warehouse
+- Also adding the ability to migrate specific connectors to a place where each different type of sql can serve their own assets
+
 ## 0.3.19
 - improve communicating Timeouts to customer
 - allow to save without a successful preview

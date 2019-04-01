@@ -1,16 +1,15 @@
 {
-  "name": "SQL Importer",
-  "description": "Import data from your SQL databases",
+  "name": "Snowflake Importer",
+  "description": "Import data from your Snowflake Warehouse",
   "picture": "picture.png",
-  "source": "sql",
+  "source": "snowflake",
   "logo": "logo.png",
-  "version": "0.3.20",
+  "version": "0.3.19",
   "tags": [
     "incoming",
     "oneColumn",
     "beta-release",
-    "sql-accounts",
-    "first-install"
+    "sql-accounts"
   ],
   "private_settings": [
     {
@@ -69,47 +68,30 @@
       "type": "string",
       "title": "Type",
       "enum": [
-        "redshift",
-        "postgres",
-        "mysql",
-        "mssql"
+        "snowflake"
       ],
-      "default": "postgres",
+      "default": "snowflake",
       "required" : true
     },
     {
-      "name": "db_host",
+      "name": "db_account",
       "type": "string",
-      "title": "Host Name",
+      "title": "Snowflake Account Name",
       "required" : true,
-      "description": "The public host name of your database server."
+      "description": "Do not include the region.  This is the public account name for connecting.  It is the FIRST part of your connection string.  Example: ab12334"
     },
     {
-      "name": "db_port",
+      "name": "db_region",
       "type": "string",
-      "title": "Port",
+      "title": "Region",
       "required" : true,
-      "description": "Default ports: MySql: 3306, PostgreSQL: 5432, MS SQL: 1433"
+      "description": "Region of the database"
     },
     {
       "name": "db_name",
       "type": "string",
       "title": "Database name",
       "required" : true
-    },
-    {
-      "name": "db_options",
-      "type": "string",
-      "title": "Additional connection options",
-      "required" : false,
-      "description": "Add connection options for the different database types. See below for more details."
-    },
-    {
-      "name": "db_options_hero",
-      "type": "string",
-      "headerTemplate": "***MySql and Postgres***<br>Specify options as plain text in the format `ssl=true`.<br><br>***MS SQL***<br>Specify a valid JSON object like `{\"encrypt\": true}`. Please refer to the [tedious driver documentation](http://tediousjs.github.io/tedious/api-connection.html#function_newConnection) for available options.<br>**Important Note for SQL Azure**: SQL Azure requires the option encrypt to be set to true which is not the default. Please specify `{\"encrypt\": true}` in the options otherwise the connection will be refused.",
-      "format": "information",
-      "title": " "
     },
     {
       "type": "string",
@@ -159,36 +141,6 @@
       "title": "Last job ID",
       "type": "string",
       "format": "hidden"
-    }
-  ],
-  "settings_sections": [
-    {
-      "title": "Database connection",
-      "properties": [
-        "private_settings.db_type",
-        "private_settings.db_host",
-        "private_settings.db_port",
-        "private_settings.db_name",
-        "private_settings.db_options"
-      ]
-    },
-    {
-      "title": "Database Login",
-      "description": "***Security Recommendation***<br>We recommend to grant the user below read-only access to dedicated tables to keep your information safe. Please refer to the manual of your database server for additional security recommendations.",
-      "properties": [
-        "private_settings.db_user",
-        "private_settings.db_password"
-      ]
-    },
-    {
-      "title": "Import Configuration",
-      "properties": [
-        "private_settings.import_type",
-        "private_settings.enabled",
-        "private_settings.sync_interval",
-        "private_settings.overwrite",
-        "private_settings.import_days"
-      ]
     }
   ],
   "resources": [],

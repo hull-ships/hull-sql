@@ -3,6 +3,7 @@ import * as mysql from "./mysql";
 import * as s3 from "./s3";
 import * as filesystem from "./filesystem";
 import * as mssql from "./mssql";
+import * as snowflake from "./snowflake";
 
 const redshift = postgres;
 
@@ -12,3 +13,5 @@ export { postgres };
 export { s3 };
 export { filesystem };
 export { mssql };
+export { snowflake };
+
