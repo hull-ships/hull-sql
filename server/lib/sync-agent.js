@@ -435,7 +435,9 @@ export default class SyncAgent {
       emit_event: false,
       overwrite: !!overwrite,
       name: `Import from hull-sql ${this.ship.name} - part ${partNumber}`,
-      schedule_at: moment().add(this.importDelay + (2 * partNumber), "minutes").toISOString(),
+      // scheduling all parts for right now.  Doesn't seem to work if schedule_at is removed
+      // dashboard says "Invalid Date"
+      schedule_at: moment().toISOString(),
       stats: { size },
       size,
       import_id: importId,
