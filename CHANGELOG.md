@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.21
+- Added new settings feature to group settings in a much more easily understood way
+- Previously sql imports over a certain size had been spread out over a larger time window.  New feature on the platform allows them to be scheduled fairly without spreading.  Now Scheduling the imports immediately
+
 ## 0.3.20
 - Adding the ability to pull from a snowflake warehouse
 - Also adding the ability to migrate specific connectors to a place where each different type of sql can serve their own assets
