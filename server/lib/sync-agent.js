@@ -187,6 +187,9 @@ export default class SyncAgent {
     if (!options.import_days) {
       options.import_days = FULL_IMPORT_DAYS;
     }
+    if (!options.last_updated_at) {
+      options.last_updated_at = moment().subtract(FULL_IMPORT_DAYS, "days").toISOString();
+    }
     return this.streamQuery(query, options)
       .then(stream => this.sync(stream, started_sync_at))
       .catch(err => {
