@@ -297,7 +297,7 @@ import "codemirror/mode/sql/sql.js";
           preview_loading.hide();
           if (err) {
             const message =
-              err.message === "Timeout error"
+              err === "Timeout error" || "connect ETIMEDOUT"
                 ? "The query timed out, we suggest optimizing it or creating a materialized view so you can preview it."
                 : err.message;
             preview_error
@@ -306,6 +306,7 @@ import "codemirror/mode/sql/sql.js";
               .append(message);
             good_query = stored_query;
             emitToParent(good_query);
+            preview_results.show();
           }
         }
       });
