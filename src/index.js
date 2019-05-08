@@ -297,7 +297,7 @@ import "codemirror/mode/sql/sql.js";
           preview_loading.hide();
           if (err) {
             const message =
-              err.message === "Timeout error" || err.message === "connect ETIMEDOUT"
+              err.message === "Timeout error"
                 ? "The query timed out, we suggest optimizing it or creating a materialized view so you can preview it."
                 : err.message;
             preview_error
