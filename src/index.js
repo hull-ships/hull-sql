@@ -306,6 +306,7 @@ import "codemirror/mode/sql/sql.js";
               .append(message);
             good_query = stored_query;
             emitToParent(good_query);
+            preview_results.show();
           }
         }
       });
