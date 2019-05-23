@@ -4,6 +4,7 @@ import * as s3 from "./s3";
 import * as filesystem from "./filesystem";
 import * as mssql from "./mssql";
 import * as snowflake from "./snowflake";
+import * as salesforce from "./salesforce";
 
 const redshift = postgres;
 
@@ -14,4 +15,4 @@ export { s3 };
 export { filesystem };
 export { mssql };
 export { snowflake };
-
+export { salesforce };

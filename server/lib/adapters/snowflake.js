@@ -46,7 +46,7 @@ export function openConnection(settings) {
 }
 
 export function getRequiredParameters() {
-  return ["account", "region", "name", "user", "password"];
+  return ["db_account", "db_region", "db_name", "db_user", "db_password"];
 }
 
 export function isValidConfiguration(settings) {
