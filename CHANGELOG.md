@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.22
+- Added a feature where if you timeout in the preview window, will also show the import button
+
 ## 0.3.21
 - Added new settings feature to group settings in a much more easily understood way
 - Previously sql imports over a certain size had been spread out over a larger time window.  New feature on the platform allows them to be scheduled fairly without spreading.  Now Scheduling the imports immediately
