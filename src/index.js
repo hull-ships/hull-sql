@@ -11,7 +11,6 @@ import "codemirror/mode/sql/sql.js";
 (function boot() {
   let good_query = null;
   let stored_query = "";
-  let timeouttime = 60;
   const { swal } = window;
 
   const button_import = $("#button_import");
