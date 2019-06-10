@@ -11,6 +11,7 @@ import "codemirror/mode/sql/sql.js";
 (function boot() {
   let good_query = null;
   let stored_query = "";
+  let timeouttime = 60;
   const { swal } = window;
 
   const button_import = $("#button_import");
@@ -298,7 +299,7 @@ import "codemirror/mode/sql/sql.js";
           if (err) {
             const message =
               err.message === "Timeout error"
-                ? "The query timed out, we suggest optimizing it or creating a materialized view so you can preview it."
+                ? "The query took more than 45 seconds to return any result. If you are sure the query is correct, you can save it and run a full import."
                 : err.message;
             preview_error
               .empty()
