@@ -1,7 +1,7 @@
 {
   "name": "hull-sql",
   "description": "Install SQL connector on your Hull dashboard",
-  "version": "0.3.22",
+  "version": "0.3.23",
   "homepage": "https://github.com/hull-ships/hull-sql",
   "license": "MIT",
   "main": "dist/ship.js",

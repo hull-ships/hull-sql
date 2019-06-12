@@ -4,7 +4,7 @@
   "picture": "picture.png",
   "source": "sql",
   "logo": "logo.png",
-  "version": "0.3.22",
+  "version": "0.3.23",
   "tags": [
     "incoming",
     "oneColumn",
