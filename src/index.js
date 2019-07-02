@@ -58,7 +58,7 @@ import "codemirror/mode/sql/sql.js";
         message.action === "update"
       ) {
         const { ship } = message;
-        if (ship) {        
+        if (ship) {
           stored_query = ship.private_settings.query;
         }
         updateChangedStatus();
@@ -165,10 +165,8 @@ import "codemirror/mode/sql/sql.js";
                 incremental: true
               },
               success() {
-                $(".to-disable").prop("disabled", false);
-                button_import.replaceWith(
-                  "<button id=\"button_import\" class=\"btn-pill btn-rounded btn-danger btn to-disable\"><i class=\"icon icon-reset\"></i> Import everything</button>"
-                );
+                button_import.text("Import");
+                button_import.prop("disabled", false);
               },
               error(err) {
                 let error = "";
