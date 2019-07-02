@@ -144,13 +144,24 @@ function wrapQuery(sql, replacements) {
  * @returns {Promise} A promise object of the following format: { rows }
  */
 function runQuery(client, query, options = {}) {
-  return client.connect().then(conn => {
-    const params = { sql: `${query} LIMIT ${options.limit || 100}` };
-    return conn.query(params).then((rows) => {
-      const columnNames = Object.keys(rows[0]);
-      const columnTypes = _.map(rows.meta, 'type');
-      const columns = _.zip(columnNames, columnTypes).map(([ name, type ]) => ({ name, type }));
-      return { rows, columns };
+  return new Promise((resolve, reject) => {
+    client.connect().then(conn => {
+      let timer;
+
+      if (options.timeout) {
+        timer = setTimeout(() => {
+          reject(new Error("Timeout error"));
+        }, options.timeout);
+      }
+      
+      const params = { sql: `${query} LIMIT ${options.limit || 100}` };
+      return conn.query(params).then((rows) => {
+        if (timer) clearTimeout(timer);
+        const columnNames = Object.keys(rows[0]);
+        const columnTypes = _.map(rows.meta, 'type');
+        const columns = _.zip(columnNames, columnTypes).map(([ name, type ]) => ({ name, type }));
+        resolve({ rows, columns });
+      });
     });
   });
 }
