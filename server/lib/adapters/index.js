@@ -1,5 +1,5 @@
 import * as postgres from "./postgres";
-import * as mysql from "./mysql";
+import * as mysql from "./mariadb";
 import * as s3 from "./s3";
 import * as filesystem from "./filesystem";
 import * as mssql from "./mssql";
@@ -14,4 +14,3 @@ export { s3 };
 export { filesystem };
 export { mssql };
 export { snowflake };
-
