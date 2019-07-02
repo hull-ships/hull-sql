@@ -20,11 +20,75 @@ import validateResultColumns from "./validate-result-columns";
  * @return {mysql.IConnection} A mysql connection instance
  */
 
-function openConnection(settings) {
-  const connection_string = parseConnectionConfig(settings);
-  return mysql.createConnection(connection_string);
+const CONNECTIONS = {};
+
+
+function traceConnections() {
+  console.warn("-------------- START: connections list --------------")
+  _.map(CONNECTIONS, (c, cid) => {
+    console.warn(cid, c.id, c.status, (c.connection && c.connection.isValid()));
+  });
+  console.warn("--------------- END: connections list ---------------")
 }
 
+// setInterval(traceConnections, 5000)
+
+class MysqlConnection {
+
+  constructor(settings) {
+    this.id = _.uniqueId('mysql-connection-')
+    this.connection_string = parseConnectionConfig(settings);
+    this.status = "pending";
+  }
+
+  connect() {
+    if (this.connecting) return this.connecting;
+    this.connecting = mysql.createConnection(this.connection_string);
+    this.connecting.then(
+      conn => {
+        CONNECTIONS[this.id] = this;
+        this.status = 'connected';
+        this.connection = conn
+      },
+      err => {
+        this.status = 'error';
+        this.connectionError = err;
+      }
+    )
+    return this.connecting;
+  }
+
+  isConnected() {
+    if (this.connecting && !this.connection) {
+      return this.connecting.then(
+        conn => conn.isValid(),
+        err => false
+      )
+    }
+    return Promise.resolve(this.connection && this.connection.isValid());
+  }
+
+  closeConnection() {
+    return this.isConnected().then(
+      connected => {
+        this.status = 'closing';
+        if (connected) {
+          return this.connection.end().then(
+            ok => this.status = 'closed',
+            err => {
+              this.status = 'error'
+              this.connectionError = err
+            }
+          )
+        }
+      }
+    )
+  }
+}
+
+function openConnection(settings) {
+  return new MysqlConnection(settings);
+}
 
 /**
  * Close the connection.
@@ -32,7 +96,7 @@ function openConnection(settings) {
  * @param {mysql.IConnection} client The mysql client
  */
 function closeConnection(client) {
-  return client.then((connection) => connection.end());
+  return client.closeConnection();
 }
 
 /**
@@ -80,7 +144,7 @@ function wrapQuery(sql, replacements) {
  * @returns {Promise} A promise object of the following format: { rows }
  */
 function runQuery(client, query, options = {}) {
-  return client.then(conn => {
+  return client.connect().then(conn => {
     const params = { sql: `${query} LIMIT ${options.limit || 100}` };
     return conn.query(params).then((rows) => {
       const columnNames = Object.keys(rows[0]);
@@ -100,7 +164,15 @@ function runQuery(client, query, options = {}) {
  * @returns {Promise} A promise object that wraps a stream.
  */
 function streamQuery(client, query, options = {}) {
-  return client.then((conn) => conn.queryStream(query));
+  return client.connect().then((conn) => {
+    const stream = conn.queryStream(query);
+
+    stream.on("end", () => {
+      client.closeConnection();
+    });
+
+    return stream;
+  });
 }
 
 
