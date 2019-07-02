@@ -43,8 +43,16 @@ export default function (req: Request, res: Response) {
   }
 
   return Promise.all(promises).then(() => {
-    res.json({ messages: _.uniq(messages), status });
-    client.logger.debug("connector.statusCheck.success", { status, messages: _.uniq(messages) });
-    return client.put(`${ship.id}/status`, { status, messages: _.uniq(messages) });
+    const responseStatus = { messages: _.uniq(messages), status };
+    res.json(responseStatus);
+    client.logger.debug("connector.statusCheck.success", { responseStatus });
+    return client.put(`${ship.id}/status`, responseStatus);
+  }, (err) => {
+    const responseStatus = { messages: _.uniq(messages), status };
+    res.json(responseStatus);
+    client.logger.debug("connector.statusCheck.error", { err: error, responseStatus });
+    if (responseStatus.status) {
+      return client.put(`${ship.id}/status`, responseStatus);
+    }
   });
 }
