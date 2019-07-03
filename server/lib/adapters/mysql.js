@@ -153,7 +153,7 @@ function runQuery(client, query, options = {}) {
           reject(new Error("Timeout error"));
         }, options.timeout);
       }
-      
+
       const params = { sql: `${query} LIMIT ${options.limit || 100}` };
       return conn.query(params).then((rows) => {
         if (timer) clearTimeout(timer);
@@ -161,7 +161,7 @@ function runQuery(client, query, options = {}) {
         const columnTypes = _.map(rows.meta, 'type');
         const columns = _.zip(columnNames, columnTypes).map(([ name, type ]) => ({ name, type }));
         resolve({ rows, columns });
-      });
+      }, reject);
     });
   });
 }
@@ -175,14 +175,20 @@ function runQuery(client, query, options = {}) {
  * @returns {Promise} A promise object that wraps a stream.
  */
 function streamQuery(client, query, options = {}) {
-  return client.connect().then((conn) => {
-    const stream = conn.queryStream(query);
-
-    stream.on("end", () => {
-      client.closeConnection();
-    });
-
-    return stream;
+  return new Promise((resolve, reject) => {
+    return client.connect().then((conn) => {
+      const stream = conn.queryStream(query);
+      stream.on("fields", (fields) => {
+        resolve(stream);
+      });
+      stream.on("end", () => {
+        client.closeConnection();
+      });
+      stream.on("error", (err) => {
+        client.closeConnection();
+        reject(err);
+      });
+    }, reject);
   });
 }
 

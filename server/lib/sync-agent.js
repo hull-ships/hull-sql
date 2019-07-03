@@ -292,7 +292,7 @@ export default class SyncAgent {
       }
 
       // Add the external_id if exists.
-      if (record.external_id) {
+      if (!_.isNil(record.external_id)) {
         data[this.idKey()] = record.external_id.toString();
       }
 
