@@ -36,14 +36,30 @@ function traceConnections() {
 class MysqlConnection {
 
   constructor(settings) {
-    this.id = _.uniqueId('mysql-connection-')
-    this.connection_string = parseConnectionConfig(settings);
+    this.id = _.uniqueId('mysql-connection-');
+    // TODO: refactor this to allow a list of known valid options
+    this.connection_options = {
+      host: settings.db_host,
+      user: settings.db_user,
+      password: settings.db_password,
+      database: settings.db_name
+    };
+
+    if (settings.db_options && settings.db_options.length && settings.db_options.split) {
+      settings.db_options.split("&").map((o) => {
+        const [k,v] = o.split("=");
+        if (k === "ssl" && v === "true") {
+          this.connection_options.ssl = true;
+        }
+      });
+    }
+
     this.status = "pending";
   }
 
   connect() {
     if (this.connecting) return this.connecting;
-    this.connecting = mysql.createConnection(this.connection_string);
+    this.connecting = mysql.createConnection(this.connection_options);
     this.connecting.then(
       conn => {
         CONNECTIONS[this.id] = this;
