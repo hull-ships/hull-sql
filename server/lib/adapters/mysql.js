@@ -162,7 +162,7 @@ function runQuery(client, query, options = {}) {
         const columns = _.zip(columnNames, columnTypes).map(([ name, type ]) => ({ name, type }));
         resolve({ rows, columns });
       }, reject);
-    });
+    }, reject);
   });
 }
 
