@@ -1,7 +1,7 @@
 /**
  * Module dependencies.
  */
-import mysql from "mysql";
+import mysql from "mariadb";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
 import _ from "lodash";
@@ -19,9 +19,75 @@ import validateResultColumns from "./validate-result-columns";
  *
  * @return {mysql.IConnection} A mysql connection instance
  */
-export function openConnection(settings) {
-  const connection_string = parseConnectionConfig(settings);
-  return mysql.createConnection(connection_string);
+
+const CONNECTIONS = {};
+
+
+function traceConnections() {
+  console.warn("-------------- START: connections list --------------")
+  _.map(CONNECTIONS, (c, cid) => {
+    console.warn(cid, c.id, c.status, (c.connection && c.connection.isValid()));
+  });
+  console.warn("--------------- END: connections list ---------------")
+}
+
+// setInterval(traceConnections, 5000)
+
+class MysqlConnection {
+
+  constructor(settings) {
+    this.id = _.uniqueId('mysql-connection-')
+    this.connection_string = parseConnectionConfig(settings);
+    this.status = "pending";
+  }
+
+  connect() {
+    if (this.connecting) return this.connecting;
+    this.connecting = mysql.createConnection(this.connection_string);
+    this.connecting.then(
+      conn => {
+        CONNECTIONS[this.id] = this;
+        this.status = 'connected';
+        this.connection = conn
+      },
+      err => {
+        this.status = 'error';
+        this.connectionError = err;
+      }
+    )
+    return this.connecting;
+  }
+
+  isConnected() {
+    if (this.connecting && !this.connection) {
+      return this.connecting.then(
+        conn => conn.isValid(),
+        err => false
+      )
+    }
+    return Promise.resolve(this.connection && this.connection.isValid());
+  }
+
+  closeConnection() {
+    return this.isConnected().then(
+      connected => {
+        this.status = 'closing';
+        if (connected) {
+          return this.connection.end().then(
+            ok => this.status = 'closed',
+            err => {
+              this.status = 'error'
+              this.connectionError = err
+            }
+          )
+        }
+      }
+    )
+  }
+}
+
+function openConnection(settings) {
+  return new MysqlConnection(settings);
 }
 
 /**
@@ -29,8 +95,8 @@ export function openConnection(settings) {
  *
  * @param {mysql.IConnection} client The mysql client
  */
-export function closeConnection(client) {
-  client.end();
+function closeConnection(client) {
+  return client.closeConnection();
 }
 
 /**
@@ -38,7 +104,7 @@ export function closeConnection(client) {
  * @returns Array of errors
  */
 
-export function validateResult(result, import_type = "users") {
+function validateResult(result, import_type = "users") {
   return validateResultColumns(result.columns.map(column => column.name), import_type);
 }
 
@@ -48,7 +114,7 @@ export function validateResult(result, import_type = "users") {
  * @returns {{errors: Array}}
  */
 
-export function checkForError(error) {
+function checkForError(error) {
   if (error && error.code === "ER_PARSE_ERROR") {
     return { message: `Invalid Syntax: ${_.get(error, "sqlMessage", "")}` };
   }
@@ -65,7 +131,7 @@ export function checkForError(error) {
  * @param {*} sql The raw SQL query
  * @param {*} replacements The replacement parameters
  */
-export function wrapQuery(sql, replacements) {
+function wrapQuery(sql, replacements) {
   return SequelizeUtils.formatNamedParameters(sql, replacements, "mysql");
 }
 
@@ -77,28 +143,24 @@ export function wrapQuery(sql, replacements) {
  *
  * @returns {Promise} A promise object of the following format: { rows }
  */
-export function runQuery(client, query, options = {}) {
+function runQuery(client, query, options = {}) {
   return new Promise((resolve, reject) => {
-    // Connect the connection.
-    client.connect((connectionError) => {
-      if (connectionError) {
-        connectionError.status = 401;
-        return reject(connectionError);
-      }
+    client.connect().then(conn => {
+      let timer;
 
+      if (options.timeout) {
+        timer = setTimeout(() => {
+          reject(new Error("Timeout error"));
+        }, options.timeout);
+      }
+      
       const params = { sql: `${query} LIMIT ${options.limit || 100}` };
-
-      if (options.timeout && options.timeout > 0) {
-        params.timeout = options.timeout;
-      }
-
-      // Run the query.
-      return client.query(params, (queryError, rows, fieldPackets) => {
-        if (queryError) {
-          queryError.status = 400;
-          return reject(queryError);
-        }
-        return resolve({ rows, columns: fieldPackets });
+      return conn.query(params).then((rows) => {
+        if (timer) clearTimeout(timer);
+        const columnNames = Object.keys(rows[0]);
+        const columnTypes = _.map(rows.meta, 'type');
+        const columns = _.zip(columnNames, columnTypes).map(([ name, type ]) => ({ name, type }));
+        resolve({ rows, columns });
       });
     });
   });
@@ -112,24 +174,25 @@ export function runQuery(client, query, options = {}) {
  *
  * @returns {Promise} A promise object that wraps a stream.
  */
-export function streamQuery(client, query, options = {}) {
-  return new Promise((resolve, reject) => {
-    // Connect the connection.
-    client.connect((connectionError) => {
-      if (connectionError) {
-        connectionError.status = 401;
-        return reject(connectionError);
-      }
+function streamQuery(client, query, options = {}) {
+  return client.connect().then((conn) => {
+    const stream = conn.queryStream(query);
 
-      const params = { sql: query };
-
-      if (options.timeout && options.timeout > 0) {
-        params.timeout = options.timeout;
-      }
-
-      // Run the query.
-      return resolve(client.query(params).stream({ highWaterMark: 10 }));
+    stream.on("end", () => {
+      client.closeConnection();
     });
+
+    return stream;
   });
 }
 
+
+module.exports = {
+  openConnection,
+  closeConnection,
+  runQuery,
+  validateResult,
+  checkForError,
+  wrapQuery,
+  streamQuery
+}

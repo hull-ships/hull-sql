@@ -115,7 +115,7 @@ export function streamQuery(client, query) {
 export function upload(shipId, partNumber) {
   const stream = new Stream.PassThrough();
   const promise = new Promise((resolve, reject) => {
-    const filename = `test/extracts/${new Date().getTime()}-${partNumber}.json`;
+    const filename = `/tmp/sql-extracts-${new Date().getTime()}-${partNumber}.json`;
     const writeStream = fs.createWriteStream(filename);
     let size = 0;
     writeStream.on("close", (err) => {

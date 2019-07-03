@@ -39,7 +39,6 @@ import "codemirror/mode/sql/sql.js";
 
     function updateChangedStatus() {
       const current_query = editor.getValue();
-      console.log("Updating Changed Status", current_query, stored_query);
       if (
         stored_query !== undefined &&
         stored_query &&
@@ -53,14 +52,15 @@ import "codemirror/mode/sql/sql.js";
 
     window.addEventListener("message", event => {
       const message = event.data;
-      console.log("UPDATING", message.ship.private_settings.query);
       if (
         message &&
         message.from === "hull-dashboard" &&
         message.action === "update"
       ) {
         const { ship } = message;
-        stored_query = ship.private_settings.query;
+        if (ship) {
+          stored_query = ship.private_settings.query;
+        }
         updateChangedStatus();
       }
     });
@@ -165,10 +165,8 @@ import "codemirror/mode/sql/sql.js";
                 incremental: true
               },
               success() {
-                $(".to-disable").prop("disabled", false);
-                button_import.replaceWith(
-                  "<button id=\"button_import\" class=\"btn-pill btn-rounded btn-danger btn to-disable\"><i class=\"icon icon-reset\"></i> Import everything</button>"
-                );
+                button_import.text("Import");
+                button_import.prop("disabled", false);
               },
               error(err) {
                 let error = "";
@@ -260,7 +258,7 @@ import "codemirror/mode/sql/sql.js";
                         ? `<pre style='min-width:200px'><code>${JSON.stringify(
                             value
                           )}</code></pre>`
-                        : value
+                        : $("<div>").text(value).html()
                     }</small></td>`
                   );
                 });
