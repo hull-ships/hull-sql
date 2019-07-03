@@ -58,7 +58,7 @@ import "codemirror/mode/sql/sql.js";
         message.action === "update"
       ) {
         const { ship } = message;
-        if (ship) {        
+        if (ship) {
           stored_query = ship.private_settings.query;
         }
         updateChangedStatus();
@@ -165,10 +165,8 @@ import "codemirror/mode/sql/sql.js";
                 incremental: true
               },
               success() {
-                $(".to-disable").prop("disabled", false);
-                button_import.replaceWith(
-                  "<button id=\"button_import\" class=\"btn-pill btn-rounded btn-danger btn to-disable\"><i class=\"icon icon-reset\"></i> Import everything</button>"
-                );
+                button_import.text("Import");
+                button_import.prop("disabled", false);
               },
               error(err) {
                 let error = "";
@@ -298,7 +296,7 @@ import "codemirror/mode/sql/sql.js";
           if (err) {
             const message =
               err.message === "Timeout error"
-                ? "The query timed out, we suggest optimizing it or creating a materialized view so you can preview it."
+                ? "The query took more than 45 seconds to return any result. If you are sure the query is correct, you can save it and run a full import."
                 : err.message;
             preview_error
               .empty()
