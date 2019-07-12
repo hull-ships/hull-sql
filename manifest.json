@@ -169,6 +169,7 @@
   "settings_sections": [
     {
       "title": "Database connection",
+      "step": "credentials",
       "description": "***Security Recommendation***<br>We recommend to grant the user below read-only access to dedicated tables to keep your information safe. Please refer to the manual of your database server for additional security recommendations.",
       "properties": [
         "private_settings.db_type",
@@ -201,6 +202,12 @@
       "editable": true
     }
   ],
+  "status": {
+    "url": "/status",
+    "initial_value": "setupRequired",
+    "type": "cron",
+    "value": "30 * * * *"
+  },
   "ui": false,
   "schedules": [
     {
@@ -208,11 +215,6 @@
       "type": "interval",
       "value_from": "private_settings.sync_interval",
       "default": "180"
-    },
-    {
-      "url": "/status",
-      "type": "cron",
-      "value": "30 * * * *"
     }
   ]
 }
