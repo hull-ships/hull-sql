@@ -183,6 +183,7 @@
     },
     {
       "title": "Connector Configuration",
+      "description": "To write your query, go to the **Overview** tab and click the **Query Editor** button **AFTER** saving these settings",
       "properties": [
         "private_settings.import_type",
         "private_settings.enabled",
