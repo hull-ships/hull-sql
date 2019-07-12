@@ -102,10 +102,8 @@ export default class SyncAgent {
     const conn = validationParameters.reduce((c, key) => {
       let val = settings[`db_${key}`];
       if (key === "type" && val === "redshift") val = "postgres";
-      if (c && val && val.length > 0) {
-        return { ...c,
-          [key]: val
-        };
+      if (c && val && (val.length > 0 || (key === "port" && _.isNumber(val)))) {
+        return { ...c, [key]: val };
       }
       return false;
     }, {});
