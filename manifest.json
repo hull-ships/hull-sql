@@ -140,6 +140,11 @@
       "title": "SSH Tunnel Login"
     },
     {
+      "name": "ssh_host",
+      "type": "string",
+      "title": "SSH host"
+    },
+    {
       "name": "ssh_username",
       "type": "string",
       "title": "SSH username"
