@@ -15,7 +15,12 @@ export default function (req: Request, res: Response) {
   client.logger.debug("connector.statusCheck.start");
 
   if (!req.agent.areConnectionParametersConfigured()) {
-    pushMessage("Connection parameters are not fully configured");
+    const r = {
+      status: "setupRequired",
+      message: "Connection parameters are not fully configured"
+    };
+    res.json(r);
+    return client.put(`${ship.id}/status`, r);
   } else {
     // check connection and response
     promises.push(agent.runQuery("SELECT 1 as test", { timeout: 3000 }).catch(err => {
