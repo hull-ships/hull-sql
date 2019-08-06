@@ -97,7 +97,9 @@
       "type": "number",
       "title": "Port",
       "required": true,
-      "description": "Default ports: MySql: 3306, PostgreSQL: 5432, MS SQL: 1433"
+      "description": "Default ports: MySql: 3306, PostgreSQL: 5432, MS SQL: 1433",
+      "minimum": 0,
+      "maximum": 65535
     },
     {
       "name": "db_name",
