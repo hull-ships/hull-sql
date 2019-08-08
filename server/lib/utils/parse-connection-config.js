@@ -1,4 +1,5 @@
 import URI from "urijs";
+import _ from "lodash";
 
 export function parseConnectionConfig(settings) {
   const conn = ["type", "host", "port", "name", "user", "password"].reduce((c, key) => {
