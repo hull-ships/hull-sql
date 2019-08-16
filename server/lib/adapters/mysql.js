@@ -1,7 +1,7 @@
 /**
  * Module dependencies.
  */
-import mysql from "mysql";
+import mysql from "mysql2";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
 import _ from "lodash";
@@ -19,9 +19,8 @@ import validateResultColumns from "./validate-result-columns";
  *
  * @return {mysql.IConnection} A mysql connection instance
  */
-export function openConnection(settings) {
-  const connection_string = parseConnectionConfig(settings);
-  return mysql.createConnection(connection_string);
+export function openConnection(dbConfig) {
+  return mysql.createConnection(dbConfig);
 }
 
 /**
@@ -79,27 +78,19 @@ export function wrapQuery(sql, replacements) {
  */
 export function runQuery(client, query, options = {}) {
   return new Promise((resolve, reject) => {
-    // Connect the connection.
-    client.connect((connectionError) => {
-      if (connectionError) {
-        connectionError.status = 401;
-        return reject(connectionError);
+    const params = { sql: `${query} LIMIT ${options.limit || 100}` };
+
+    if (options.timeout && options.timeout > 0) {
+      params.timeout = options.timeout;
+    }
+
+    // Run the query.
+    return client.query(params, (queryError, rows, fieldPackets) => {
+      if (queryError) {
+        queryError.status = 400;
+        return reject(queryError);
       }
-
-      const params = { sql: `${query} LIMIT ${options.limit || 100}` };
-
-      if (options.timeout && options.timeout > 0) {
-        params.timeout = options.timeout;
-      }
-
-      // Run the query.
-      return client.query(params, (queryError, rows, fieldPackets) => {
-        if (queryError) {
-          queryError.status = 400;
-          return reject(queryError);
-        }
-        return resolve({ rows, columns: fieldPackets });
-      });
+      return resolve({ rows, columns: fieldPackets });
     });
   });
 }

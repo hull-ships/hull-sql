@@ -5,13 +5,18 @@ import _ from "lodash";
 import moment from "moment";
 import ps from "promise-streams";
 import tunnel from "tunnel-ssh";
+import { SSHConnection } from "node-ssh-forward";
+const mysqlssh = require("mysql-ssh");
+const fs = require("fs");
+const Client = require("ssh2").Client;
+const mysql = require("mysql2");
 
 // Map each record of the stream.
 import map from "through2-map";
 import through2 from "through2";
 
 import * as Adapters from "./adapters";
-import { shouldUseSshTunnel, getSshTunnelConfig } from "./utils/ssh-tunnel";
+import { shouldUseSshTunnel, getSshTunnelConfig, getDatabaseConfig } from "./utils/ssh-tunnel";
 
 const DEFAULT_BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "10000", 10);
 const FULL_IMPORT_DAYS = process.env.FULL_IMPORT_DAYS || "10000";
@@ -64,9 +69,9 @@ export default class SyncAgent {
     return this;
   }
 
-  openConnection() {
+  openConnection(dbConfig: Object = this.ship.private_settings) {
     try {
-      return this.adapter.in.openConnection(this.ship.private_settings);
+      return this.adapter.in.openConnection(dbConfig);
     } catch (err) {
       let message;
       const error = this.adapter.in.checkForError(err);
@@ -122,23 +127,6 @@ export default class SyncAgent {
     return this.ship.private_settings.query;
   }
 
-  exec(callback) {
-    if (shouldUseSshTunnel(this.ship.private_settings)) {
-      const tunnelConfig = getSshTunnelConfig(this.ship.private_settings);
-      this.hull.logger.info("connecting through SSH tunnel", _.omit(tunnelConfig, "privateKey"));
-      tunnel(tunnelConfig, (err, tnl) => {
-        if (err) {
-          this.hull.logger.error("failed to connect in SSH", { err });
-          throw err;
-        }
-        const result = callback();
-        result.then(() => tnl.close());
-        return result;
-      });
-    }
-    return callback();
-  }
-
   /**
    * Run a wrapped query.
    *
@@ -169,20 +157,25 @@ export default class SyncAgent {
 
     const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
 
-    return this.exec(() => {
-      const client = this.openConnection();
-      // Run the method for the specific adapter.
-      return this.adapter.in.runQuery(client, wrappedQuery, options)
-        .then(result => {
-          this.adapter.in.closeConnection(client);
-          const { errors } = this.adapter.in.validateResult(result, this.import_type);
-          if (errors && errors.length > 0) {
-            return { entries: result.rows, errors };
-          }
+    const dbConfig = getDatabaseConfig(this.ship.private_settings);
+    const sshConfig = getSshTunnelConfig(this.ship.private_settings);
 
-          return { entries: result.rows };
-        });
-    });
+    return mysqlssh.connect(sshConfig, dbConfig)
+      .then(client => {
+        return this.adapter.in.runQuery(client, wrappedQuery, options)
+          .then(result => {
+            this.adapter.in.closeConnection(client);
+            const { errors } = this.adapter.in.validateResult(result, this.import_type);
+            if (errors && errors.length > 0) {
+              return { entries: result.rows, errors };
+            }
+
+            return { entries: result.rows };
+          });
+      })
+      .catch(err => {
+        console.log(err);
+      });
   }
 
   startImport(options = {}) {
@@ -193,20 +186,25 @@ export default class SyncAgent {
       options.import_days = FULL_IMPORT_DAYS;
     }
 
-    return this.exec(() => {
-      const client = this.openConnection();
-      return this.streamQuery(query, client, options)
-        .then(stream => this.sync(stream, client, started_sync_at))
-        .catch(err => {
-          let { message } = this.adapter.in.checkForError(err);
-          if (!message) {
-            message = _.get(err, "message", err);
-          }
+    const dbConfig = getDatabaseConfig(this.ship.private_settings);
+    const sshConfig = getSshTunnelConfig(this.ship.private_settings);
 
-          this.hull.logger.error("incoming.job.error", { jobName: "sync", hull_summary: message });
-          return Promise.reject(err);
-        });
-    });
+    return mysqlssh.connect(sshConfig, dbConfig)
+      .then(client => {
+        return this.streamQuery(query, client, options)
+          .then(stream => {
+            this.sync(stream, client, started_sync_at);
+          })
+          .catch(err => {
+            let { message } = this.adapter.in.checkForError(err);
+            if (!message) {
+              message = _.get(err, "message", err);
+            }
+
+            this.hull.logger.error("incoming.job.error", { jobName: "sync", hull_summary: message });
+            return Promise.reject(err);
+          });
+      });
   }
 
   startSync(options = {}) {
