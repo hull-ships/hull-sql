@@ -4,19 +4,14 @@
 import _ from "lodash";
 import moment from "moment";
 import ps from "promise-streams";
-import tunnel from "tunnel-ssh";
-import { SSHConnection } from "node-ssh-forward";
 const mysqlssh = require("mysql-ssh");
-const fs = require("fs");
-const Client = require("ssh2").Client;
-const mysql = require("mysql2");
 
 // Map each record of the stream.
 import map from "through2-map";
 import through2 from "through2";
 
 import * as Adapters from "./adapters";
-import { shouldUseSshTunnel, getSshTunnelConfig, getDatabaseConfig } from "./utils/ssh-tunnel";
+import { getSshTunnelConfig, getDatabaseConfig } from "./utils/ssh-tunnel";
 
 const DEFAULT_BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "10000", 10);
 const FULL_IMPORT_DAYS = process.env.FULL_IMPORT_DAYS || "10000";

@@ -1,4 +1,3 @@
-const _ = require("lodash");
 
 export function getSshTunnelConfig({ ssh_username, ssh_private_key, ssh_host }) {
   return {

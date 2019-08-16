@@ -5,7 +5,6 @@ import mysql from "mysql2";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
 import _ from "lodash";
-import parseConnectionConfig from "../utils/parse-connection-config";
 import validateResultColumns from "./validate-result-columns";
 
 /**

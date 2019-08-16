@@ -1082,7 +1082,7 @@ batch@0.5.3:
   version "0.5.3"
   resolved "https://registry.yarnpkg.com/batch/-/batch-0.5.3.tgz#3f3414f380321743bfc1042f9a83ff1d5824d464"
 
-bcrypt-pbkdf@^1.0.0, bcrypt-pbkdf@^1.0.2:
+bcrypt-pbkdf@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/bcrypt-pbkdf/-/bcrypt-pbkdf-1.0.2.tgz#a4301d389b6a43f9b67ff3ca11a3f6637e360e9e"
   dependencies:
@@ -4111,7 +4111,7 @@ lodash.debounce@^4.0.8:
   version "4.0.8"
   resolved "https://registry.yarnpkg.com/lodash.debounce/-/lodash.debounce-4.0.8.tgz#82d79bff30a67c4005ffd5e2515300ad9ca4d7af"
 
-lodash.defaults@^4.1.0, lodash.defaults@^4.2.0:
+lodash.defaults@^4.2.0:
   version "4.2.0"
   resolved "https://registry.yarnpkg.com/lodash.defaults/-/lodash.defaults-4.2.0.tgz#d09178716ffea4dde9e5fb7b37f6f0802274580c"
 
@@ -4621,12 +4621,6 @@ node-redis-warlock@~0.2.0:
   dependencies:
     node-redis-scripty "0.0.5"
     uuid "^2.0.1"
-
-node-ssh-forward@^0.5.1:
-  version "0.5.1"
-  resolved "https://registry.yarnpkg.com/node-ssh-forward/-/node-ssh-forward-0.5.1.tgz#47664e1e39d1a006bb796e79bb901fe2ece0607f"
-  dependencies:
-    ssh2 "^0.8.4"
 
 nodemon@^1.10.0:
   version "1.19.1"
@@ -6420,7 +6414,7 @@ sqs-consumer@^3.6.1:
     aws-sdk "^2.100.0"
     debug "^2.1.0"
 
-ssh2-streams@~0.1.15, ssh2-streams@~0.1.18:
+ssh2-streams@~0.1.18:
   version "0.1.20"
   resolved "https://registry.yarnpkg.com/ssh2-streams/-/ssh2-streams-0.1.20.tgz#51118d154555df5469ee1f67e0cf1e7e8a2c0e3a"
   dependencies:
@@ -6428,31 +6422,11 @@ ssh2-streams@~0.1.15, ssh2-streams@~0.1.18:
     semver "^5.1.0"
     streamsearch "~0.1.2"
 
-ssh2-streams@~0.4.4:
-  version "0.4.4"
-  resolved "https://registry.yarnpkg.com/ssh2-streams/-/ssh2-streams-0.4.4.tgz#7f07464c4b19ee93324995ec7164f110c5a13658"
-  dependencies:
-    asn1 "~0.2.0"
-    bcrypt-pbkdf "^1.0.2"
-    streamsearch "~0.1.2"
-
-ssh2@0.5.4:
-  version "0.5.4"
-  resolved "https://registry.yarnpkg.com/ssh2/-/ssh2-0.5.4.tgz#1bf6b6b28c96eaef267f4d6c46a5a2517a599e27"
-  dependencies:
-    ssh2-streams "~0.1.15"
-
 ssh2@^0.5.4:
   version "0.5.5"
   resolved "https://registry.yarnpkg.com/ssh2/-/ssh2-0.5.5.tgz#c7781ecd2ece7304a253cf620fab5a5c22bb2235"
   dependencies:
     ssh2-streams "~0.1.18"
-
-ssh2@^0.8.4:
-  version "0.8.5"
-  resolved "https://registry.yarnpkg.com/ssh2/-/ssh2-0.8.5.tgz#9144cdd6c104aa81b2b16ce647c109f4bd138b57"
-  dependencies:
-    ssh2-streams "~0.4.4"
 
 sshpk@^1.7.0:
   version "1.16.1"
@@ -6860,14 +6834,6 @@ tunnel-agent@^0.6.0:
   resolved "https://registry.yarnpkg.com/tunnel-agent/-/tunnel-agent-0.6.0.tgz#27a5dea06b36b04a0a9966774b290868f0fc40fd"
   dependencies:
     safe-buffer "^5.0.1"
-
-tunnel-ssh@^4.1.3:
-  version "4.1.4"
-  resolved "https://registry.yarnpkg.com/tunnel-ssh/-/tunnel-ssh-4.1.4.tgz#b301f7733c73dcea1616466b9c87b607f4958b45"
-  dependencies:
-    debug "2.6.9"
-    lodash.defaults "^4.1.0"
-    ssh2 "0.5.4"
 
 tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"
