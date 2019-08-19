@@ -1,7 +1,7 @@
 /**
  * Module dependencies.
  */
-import mysql from "mysql2";
+import mysql from "mysql";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
 import _ from "lodash";
