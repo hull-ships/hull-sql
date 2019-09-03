@@ -159,8 +159,10 @@ export default class SyncAgent {
       .then(client => {
         return this.adapter.in.runQuery(client, wrappedQuery, options)
           .then(result => {
-            this.adapter.in.closeConnection(client);
             const { errors } = this.adapter.in.validateResult(result, this.import_type);
+
+            console.log("closing ssh connection initiated from preview");
+            mysqlssh.close();
             if (errors && errors.length > 0) {
               return { entries: result.rows, errors };
             }
@@ -186,9 +188,13 @@ export default class SyncAgent {
 
     return mysqlssh.connect(sshConfig, dbConfig)
       .then(client => {
-        return this.streamQuery(query, client, options)
+        this.streamQuery(query, client, options)
           .then(stream => {
-            this.sync(stream, client, started_sync_at);
+            return this.sync(stream, client, started_sync_at);
+          })
+          .then(() => {
+            this.hull.logger.info("closing ssh connection initiated from import");
+            mysqlssh.close();
           })
           .catch(err => {
             let { message } = this.adapter.in.checkForError(err);

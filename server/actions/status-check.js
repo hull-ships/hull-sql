@@ -2,9 +2,9 @@
 import { Request, Response } from "express";
 import _ from "lodash";
 
-import SyncAgent from "../lib/sync-agent";
 
 export default function (req: Request, res: Response) {
+  // eslint-disable-next-line prefer-const
   let { agent } = req;
   const { client = {}, ship = {} } = req.hull;
   let status = "ok";
@@ -26,23 +26,6 @@ export default function (req: Request, res: Response) {
 
   if (!agent.isQueryStringConfigured()) {
     pushMessage("Query is not configured");
-  } else if (req.agent.areConnectionParametersConfigured()) {
-    agent = new SyncAgent(req.hull);
-    promises.push(agent.runQuery(agent.getQuery(), { limit: 1, timeout: 3000 }).then(result => {
-      if (result.entries && result.entries.length === 0) {
-        let changeStatusTo = "warning";
-        if (status === "error") {
-          changeStatusTo = "error";
-        }
-        pushMessage("Database does not return any rows for saved query", changeStatusTo);
-      }
-
-      if (result.errors) {
-        pushMessage(`Results have invalid format: ${result.errors.join("\n")}`);
-      }
-    }).catch(err => {
-      pushMessage(`Error when trying to connect with database: ${_.get(err, "message", "")}`);
-    }));
   }
 
   if (!agent.isEnabled()) {
