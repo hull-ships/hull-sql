@@ -16,12 +16,14 @@ import validateResultColumns from "./validate-result-columns";
 export function parseConnectionConfig(settings) {
   const conn = ["type", "host", "port", "name", "user", "password"].reduce((c, key) => {
     const val = settings[`db_${key}`];
-    if (c && val && val.length > 0) {
-      return {
-        ...c,
-        [key]: val
-      };
+    // if (c && val && val.length > 0) {
+    //   return { ...c, [key]: val };
+    // }
+    if (c && val && (val.length > 0 || (key === "port" && _.isNumber(val)))) {
+      return { ...c, [key]: val };
     }
+    // TODO Not sure what the intention was here, returning false will make this the next c, seems wrong
+    // but maybe that was the intention if a value ever isn't something we expect?
     return false;
   }, {});
   // Must-have options
