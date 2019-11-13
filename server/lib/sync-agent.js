@@ -105,6 +105,8 @@ export default class SyncAgent {
       if (c && val && (val.length > 0 || (key === "port" && _.isNumber(val)))) {
         return { ...c, [key]: val };
       }
+      // TODO Not sure what the intention was here, returning false will make this the next c, seems wrong
+      // but maybe that was the intention if a value ever isn't something we expect?
       return false;
     }, {});
 
