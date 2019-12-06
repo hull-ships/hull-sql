@@ -29,7 +29,8 @@ export function parseConnectionConfig(settings) {
   // Must-have options
   let opts = {
     port: conn.port || 1433,
-    database: conn.name
+    database: conn.name,
+    requestTimeout: 45000
   };
   // All additional options are optional
   if (settings.db_options) {
