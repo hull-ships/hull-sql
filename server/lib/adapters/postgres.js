@@ -59,8 +59,20 @@ export function closeConnection(client) {
  */
 
 export function validateResult(result, import_type = "users") {
+  const incorrectColumnNames = [];
+
+  _.forEach(result.fields, (column) => {
+    const dataType = column.dataTypeID;
+    if (dataType === 114 || dataType === 199 || dataType === 3802 || dataType === 3807) {
+      incorrectColumnNames.push(column.name);
+    }
+  });
+
   const { errors } = validateResultColumns(result.fields.map(column => column.name), import_type);
 
+  if (incorrectColumnNames.length > 0) {
+    errors.push([`Following columns from postgres database are in json format which is not supported : ${incorrectColumnNames.join(", ")}`]);
+  }
   return { errors };
 }
 
