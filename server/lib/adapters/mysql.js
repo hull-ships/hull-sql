@@ -1,7 +1,7 @@
 /**
  * Module dependencies.
  */
-import mysql from "mariadb";
+import mysql from "hull-mariadb";
 import Promise from "bluebird";
 import SequelizeUtils from "sequelize/lib/utils";
 import _ from "lodash";
@@ -42,7 +42,8 @@ class MysqlConnection {
       host: settings.db_host,
       user: settings.db_user,
       password: settings.db_password,
-      database: settings.db_name
+      database: settings.db_name,
+      port: settings.db_port
     };
 
     if (settings.db_options && settings.db_options.length && settings.db_options.split) {
