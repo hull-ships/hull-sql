@@ -102,11 +102,11 @@ export default class SyncAgent {
     const conn = validationParameters.reduce((c, key) => {
       let val = settings[`db_${key}`];
       if (key === "type" && val === "redshift") val = "postgres";
-      if (c && val && val.length > 0) {
-        return { ...c,
-          [key]: val
-        };
+      if (c && val && (val.length > 0 || (key === "port" && _.isNumber(val)))) {
+        return { ...c, [key]: val };
       }
+      // TODO Not sure what the intention was here, returning false will make this the next c, seems wrong
+      // but maybe that was the intention if a value ever isn't something we expect?
       return false;
     }, {});
 

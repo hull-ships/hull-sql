@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.25
+- [hotfix] Fix parsing of settings parameter for port in connection util
+
 ## 0.3.22
 - Added a feature where if you timeout in the preview window, will also show the import button
 

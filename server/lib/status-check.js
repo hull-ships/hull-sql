@@ -15,7 +15,12 @@ export default function (req: Request, res: Response) {
   client.logger.debug("connector.statusCheck.start");
 
   if (!req.agent.areConnectionParametersConfigured()) {
-    pushMessage("Connection parameters are not fully configured");
+    const r = {
+      status: "setupRequired",
+      message: "Connection parameters are not fully configured"
+    };
+    res.json(r);
+    return client.put(`${ship.id}/status`, r);
   } else {
     // check connection and response
     promises.push(agent.runQuery("SELECT 1 as test", { timeout: 3000 }).catch(err => {
@@ -24,11 +29,15 @@ export default function (req: Request, res: Response) {
   }
 
   if (!agent.isQueryStringConfigured()) {
-    pushMessage("Query is not configured");
+    let changeStatusTo = "ok";
+    if (status === "error") {
+      changeStatusTo = "error";
+    }
+    pushMessage("Query is not configured", changeStatusTo);
   }
 
   if (!agent.isEnabled()) {
-    let changeStatusTo = "warning";
+    let changeStatusTo = "ok";
     if (status === "error") {
       changeStatusTo = "error";
     }
@@ -39,7 +48,11 @@ export default function (req: Request, res: Response) {
     _.get(ship, "private_settings.enabled") &&
     _.get(ship, "private_settings.import_days", 0) < 0 &&
     _.includes(_.get(ship, "private_settings.query"), "import_start_date")) {
-    pushMessage("Interval syncing is enabled but interval time is less or equal zero.");
+    let changeStatusTo = "ok";
+    if (status === "error") {
+      changeStatusTo = "error";
+    }
+    pushMessage("Interval syncing is enabled but interval time is less or equal zero.", changeStatusTo);
   }
 
   return Promise.all(promises).then(() => {
