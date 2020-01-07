@@ -128,7 +128,7 @@ export function runQuery(client, query, options) {
     const conf = _.cloneDeep(client.config);
     conf.options = confoptions;
 
-    let conn = new tedious.Connection(conf);
+    let conn = client;//new tedious.Connection(conf);
 
     conn.on("connect", (err) => { // eslint-disable-line consistent-return
       if (err) {
@@ -150,6 +150,7 @@ export function runQuery(client, query, options) {
       const qparam = `WITH __qry__ AS (${query}) SELECT TOP(${limit}) * FROM __qry__`;
 
       const request = new tedious.Request(qparam, (reqError) => { // eslint-disable-line consistent-return
+
         if (reqError) {
           return reject(reqError);
         }
@@ -218,7 +219,7 @@ export function streamQuery(client, query, options = {}) {
     const confoptions = _.merge(client.config.options, options);
     const conf = _.cloneDeep(client.config);
     conf.options = confoptions;
-    const conn = new tedious.Connection(conf);
+    const conn = client;//new tedious.Connection(conf);
 
     const streamOpts = {};
     streamOpts.objectMode = true;
@@ -234,6 +235,7 @@ export function streamQuery(client, query, options = {}) {
         }
 
         const request = new tedious.Request(query, (reqError) => { // eslint-disable-line consistent-return
+
           if (reqError) {
             stream.emit("error", reqError);
           }

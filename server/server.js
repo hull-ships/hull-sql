@@ -91,6 +91,14 @@ export default function server(app: express, options: any):express {
     checkConfiguration({ checkQueryString: true }),
     (req, res) => {
     req.hull.enqueue("startImport");
+
+    if (req.agent) {
+      // Typically the agent closes itself after the query or stream is done
+      // but in this case we're not using it, so we have to close directly
+      // should look into this pattern more
+      req.agent.closeClient();
+    }
+
     res.json({ status: "scheduled" });
   });
 
@@ -103,6 +111,11 @@ export default function server(app: express, options: any):express {
       response.status = "scheduled";
       req.hull.enqueue("startSync");
     }
+
+    // Typically the agent closes itself after the query or stream is done
+    // but in this case we're not using it, so we have to close directly
+    // should look into this pattern more
+    req.agent.closeClient();
 
     res.json(response);
   });
