@@ -128,7 +128,7 @@ export function runQuery(client, query, options) {
     const conf = _.cloneDeep(client.config);
     conf.options = confoptions;
 
-    let conn = client;//new tedious.Connection(conf);
+    let conn = client;
 
     conn.on("connect", (err) => { // eslint-disable-line consistent-return
       if (err) {
@@ -216,10 +216,7 @@ export function runQuery(client, query, options) {
  */
 export function streamQuery(client, query, options = {}) {
   return new Promise((resolve) => {
-    const confoptions = _.merge(client.config.options, options);
-    const conf = _.cloneDeep(client.config);
-    conf.options = confoptions;
-    const conn = client;//new tedious.Connection(conf);
+    const conn = client;
 
     const streamOpts = {};
     streamOpts.objectMode = true;
