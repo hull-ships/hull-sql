@@ -50,11 +50,22 @@ export default function server(app: express, options: any):express {
     return res.status(403).json({ status: "missing credentials" });
   };
 
+  // Typically the agent closes itself after the query or stream is done
+  // but in this case we're not using it, so we have to close directly
+  // need to refactor this pattern
+  const closeRequestAgent = (requestAgent) => {
+    if (requestAgent) {
+      requestAgent.closeClient();
+    }
+  };
+
   routes.get("/admin.html",
     validationMiddleware,
     ({ agent }, res) => {
     if (agent.areConnectionParametersConfigured()) {
       const query = agent.getQuery();
+      closeRequestAgent(agent);
+
       res.render("connected.html", {
         query,
         preview_timeout,
@@ -63,6 +74,7 @@ export default function server(app: express, options: any):express {
         ...agent.ship.private_settings
       });
     } else {
+      closeRequestAgent(agent);
       res.render("home.html", {});
     }
   });
@@ -90,44 +102,43 @@ export default function server(app: express, options: any):express {
     validationMiddleware,
     checkConfiguration({ checkQueryString: true }),
     (req, res) => {
-    req.hull.enqueue("startImport");
+      req.hull.enqueue("startImport");
 
-    if (req.agent) {
-      // Typically the agent closes itself after the query or stream is done
-      // but in this case we're not using it, so we have to close directly
-      // should look into this pattern more
-      req.agent.closeClient();
-    }
+      closeRequestAgent(req.agent);
 
-    res.json({ status: "scheduled" });
-  });
+      res.json({ status: "scheduled" });
+    });
 
   routes.post("/sync",
     validationMiddleware,
     checkConfiguration({ checkQueryString: true, sync: true }),
     (req, res) => {
-    const response = { status: "ignored" };
-    if (req.agent.isEnabled()) {
-      response.status = "scheduled";
-      req.hull.enqueue("startSync");
-    }
+      const response = { status: "ignored" };
+      if (req.agent.isEnabled()) {
+        response.status = "scheduled";
+        req.hull.enqueue("startSync");
+      }
 
-    // Typically the agent closes itself after the query or stream is done
-    // but in this case we're not using it, so we have to close directly
-    // should look into this pattern more
-    req.agent.closeClient();
+      closeRequestAgent(req.agent);
 
-    res.json(response);
-  });
+      res.json(response);
+    });
 
   routes.get("/storedquery",
     validationMiddleware,
-    checkConfiguration(), ({ agent }, res) => {
-    const query = agent.getQuery();
-    res.json({ query });
-  });
+    checkConfiguration(),
+    ({ agent }, res) => {
+      const query = agent.getQuery();
+      closeRequestAgent(req.agent);
+      res.json({ query });
+    });
 
-  routes.all("/status", validationMiddleware, statusCheck);
+  routes.all("/status",
+    validationMiddleware,
+    statusCheck,
+    ({ agent }) => {
+      closeRequestAgent(agent);
+    });
 
   app.use(routes);
 
