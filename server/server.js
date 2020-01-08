@@ -129,7 +129,7 @@ export default function server(app: express, options: any):express {
     checkConfiguration(),
     ({ agent }, res) => {
       const query = agent.getQuery();
-      closeRequestAgent(req.agent);
+      closeRequestAgent(agent);
       res.json({ query });
     });
 
