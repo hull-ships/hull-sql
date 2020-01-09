@@ -8,6 +8,8 @@ import Readable from "readable-stream";
 import SequelizeUtils from "sequelize/lib/utils";
 import validateResultColumns from "./validate-result-columns";
 
+// const tedious = require("tedious");
+
 /**
  * MS SQL adapter.
  */
@@ -48,7 +50,8 @@ export function parseConnectionConfig(settings) {
     userName: conn.user,
     password: conn.password,
     server: conn.host,
-    options: opts
+    options: opts,
+    debug: true
   };
 
   return config;
@@ -62,7 +65,14 @@ export function parseConnectionConfig(settings) {
  */
 export function openConnection(settings) {
   const config = parseConnectionConfig(settings);
-  return new tedious.Connection(config);
+  const connection = new tedious.Connection(config);
+  connection.on('debug', (message) => {
+    console.log(`DEBUG: ${message}`);
+  });
+  connection.on("error", (error) => {
+    console.log(`MSSQL Connection Error: ${JSON.stringify(error)}`);
+  });
+  return connection;
 }
 
 /**
@@ -136,13 +146,17 @@ export function runQuery(client, query, options) {
           // This is an error caused by the Azure Load Balancer that is not really an error,
           // we can recover from it pretty easily by simply reconnecting.
           // See https://github.com/tediousjs/tedious/issues/300
-          try {
-            conn.close();
-          } finally {
-            // if the connection has been already closed, the call above will result in an error
-            // but we can recover here:
-            conn = new tedious.Connection(conf);
-          }
+          // try {
+          //   conn.close();
+          // } finally {
+          //   // if the connection has been already closed, the call above will result in an error
+          //   // but we can recover here:
+          //   conn = new tedious.Connection(conf);
+          // }
+
+          // Commenting out the above code for now because it may cause potential crashes.
+          // Logging it though because I'm not totally convinced it's even happening
+          console.log(`Catchable ECONNRESET: ${err.message}`);
         }
         return reject(err);
       }
@@ -203,6 +217,7 @@ export function runQuery(client, query, options) {
 
       conn.execSql(request);
     });
+
   });
 }
 
@@ -226,9 +241,13 @@ export function streamQuery(client, query, options = {}) {
     let resultReturned = false;
 
     stream._read = function () { // eslint-disable-line func-names
+
       conn.on("connect", (err) => { // eslint-disable-line consistent-return
         if (err) {
           stream.emit("error", err);
+          // don't need to execute request if had an error
+          console.log(`MSSQL: Would have executed request: ${JSON.stringify(err)}`);
+          return;
         }
 
         const request = new tedious.Request(query, (reqError) => { // eslint-disable-line consistent-return
