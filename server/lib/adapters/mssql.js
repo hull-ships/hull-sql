@@ -246,6 +246,7 @@ export function streamQuery(client, query, options = {}) {
         if (err) {
           stream.emit("error", err);
           // don't need to execute request if had an error
+          console.log(`MSSQL: Would have executed request: ${JSON.stringify(err)}`);
           return;
         }
 
