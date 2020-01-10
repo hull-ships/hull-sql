@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.26
+- Added json import support, still need to wait for support on the platform import side
+
 ## 0.3.25
 - [hotfix] Fix parsing of settings parameter for port in connection util
 
