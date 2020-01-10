@@ -78,6 +78,10 @@ export default class SyncAgent {
     return this;
   }
 
+  closeClient() {
+    this.adapter.in.closeConnection(this.client);
+  }
+
   /**
    * Returns whether sync is enabled or not.
    * @return {boolean} True if sync is enabled; otherwise false.
@@ -165,7 +169,8 @@ export default class SyncAgent {
     // Run the method for the specific adapter.
     return this.adapter.in.runQuery(this.client, wrappedQuery, options)
       .then(result => {
-        this.adapter.in.closeConnection(this.client);
+        // this.adapter.in.closeConnection(this.client);
+        this.closeClient();
 
         const { errors } = this.adapter.in.validateResult(result, this.import_type);
         if (errors && errors.length > 0) {
@@ -175,7 +180,8 @@ export default class SyncAgent {
         return { entries: result.rows };
       })
       .catch((err) => {
-        this.adapter.in.closeConnection(this.client);
+        // this.adapter.in.closeConnection(this.client);
+        this.closeClient();
         return Promise.reject(err);
       });
   }
@@ -192,7 +198,15 @@ export default class SyncAgent {
     }
     return this.streamQuery(query, options)
       .then(stream => this.sync(stream, started_sync_at))
+      .then(result => {
+        // we weren't closing client after the stream was complete
+        // should close and continue to return result
+        this.closeClient();
+        return Promise.resolve(result);
+      })
       .catch(err => {
+        // this.adapter.in.closeConnection(this.client);
+        this.closeClient();
         let { message } = this.adapter.in.checkForError(err);
         if (!message) {
           message = _.get(err, "message", err);
@@ -339,7 +353,9 @@ export default class SyncAgent {
         });
 
         if (stream.close) stream.close();
-        this.adapter.in.closeConnection(this.client);
+        // Don't do this so deep down, handling it in the catch attached to synch()
+        // after reject is called, it will close
+        // this.adapter.in.closeConnection(this.client);
         reject(err);
       })
       .pipe(transform)
