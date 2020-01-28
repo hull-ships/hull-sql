@@ -13,8 +13,13 @@ import through2 from "through2";
 
 import * as Adapters from "./adapters";
 
+
+const { getSshTunnelConfig, getDatabaseConfig } = require("./utils/ssh-utils");
+const { SSHConnection } = require("./utils/ssh-connection")
+
 const DEFAULT_BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "10000", 10);
 const FULL_IMPORT_DAYS = process.env.FULL_IMPORT_DAYS || "10000";
+
 
 /**
  * Export the sync agent for the SQL ship.
@@ -26,6 +31,8 @@ class ConfigurationError extends Error {
     this.status = 403;
   }
 }
+
+let rotatingForwardingPort = 0;
 
 export default class SyncAgent {
 
@@ -61,8 +68,35 @@ export default class SyncAgent {
       throw new ConfigurationError(`Invalid output type ${output_type}.`);
     }
 
+    // try {
+    //   this.client = this.adapter.in.openConnection(private_settings);
+    // } catch (err) {
+    //   let message;
+    //   const error = this.adapter.in.checkForError(err);
+    //   if (error) {
+    //     message = error.message;
+    //   } else {
+    //     message = `Server Error: ${_.get(err, "message", "")}`;
+    //   }
+    //
+    //   client.logger.error("connection.error", { hull_summary: message });
+    //   throw err;
+    // }
+    return this;
+  }
+
+  createClient() {
+    if (this.requiresSshTunnel()) {
+      return this.openClientWithTunnel();
+    } else {
+      return this.openClient();
+    }
+  }
+
+  openClient() {
     try {
-      this.client = this.adapter.in.openConnection(private_settings);
+      const private_settings = this.ship.private_settings;
+      return Promise.resolve(this.adapter.in.openConnection(private_settings));
     } catch (err) {
       let message;
       const error = this.adapter.in.checkForError(err);
@@ -72,14 +106,128 @@ export default class SyncAgent {
         message = `Server Error: ${_.get(err, "message", "")}`;
       }
 
-      client.logger.error("connection.error", { hull_summary: message });
-      throw err;
+      this.hull.logger.error("connection.error", { hull_summary: message });
+      return Promise.reject(err);
     }
-    return this;
   }
 
-  closeClient() {
-    this.adapter.in.closeConnection(this.client);
+  requiresSshTunnel() {
+    return !_.isEmpty(_.get(this.ship, "private_settings.ssh_host"));
+  }
+
+  openClientWithTunnel() {
+    const private_settings = this.ship.private_settings;
+
+    const dbConfig = getDatabaseConfig(private_settings);
+    const sshConfig = getSshTunnelConfig(private_settings);
+
+    this.sshConnection = new SSHConnection({
+      endHost: sshConfig.host,
+      username: sshConfig.user,
+      privateKey: sshConfig.privateKey
+    });
+
+    // Rotate ports just in case we're proxying multiple queries at the same time
+    // betweek 50k and 60k port number
+    // rotating every 10k
+    rotatingForwardingPort += 1;
+    const portIncrement = rotatingForwardingPort % 10000;
+    const portForward = 50000 + portIncrement;
+
+    return this.sshConnection.forward({
+      fromPort: portForward,
+      toPort: dbConfig.port,
+      toHost: dbConfig.host
+    }).then(() => {
+      return Promise.resolve(this.adapter.in.openConnection({
+        db_host: "127.0.0.1",
+        db_port: portForward,
+        db_user: dbConfig.user,
+        db_password: dbConfig.password,
+        db_name: dbConfig.database
+      }));
+    });
+
+    // return new Promise((resolve, reject) => {
+    //
+    //   rotatingForwardingPort += 1;
+    //   const portIncrement = rotatingForwardingPort % 10000;
+    //   const portForward = 50000 + portIncrement;
+    //
+    //   const config = {
+    //     username: sshConfig.user,
+    //     // Password:'secret',
+    //     privateKey: sshConfig.privateKey,
+    //     host: sshConfig.host,
+    //     port: 22,
+    //     dstHost: dbConfig.host,
+    //     dstPort: dbConfig.port,
+    //     localHost: "127.0.0.1",
+    //     localPort: portForward
+    //   };
+    //
+    //
+    //   const tunnel = sshTunnel(config, (error, tnl) => {
+    //     if (error) {
+    //       return reject(error);
+    //     }
+    //     return resolve(this.adapter.in.openConnection({
+    //       db_host: "127.0.0.1",
+    //       db_port: portForward,
+    //       db_user: dbConfig.user,
+    //       db_password: dbConfig.password,
+    //       db_name: dbConfig.database
+    //     }));
+    //   });
+    //
+    //   tunnel.on("error", (err) => {
+    //     console.error(`SSH Tunnel error for ${sshConfig.host}`, err);
+    //     reject(err);
+    //   });
+    //
+    // });
+  }
+
+  closeClient(client) {
+    try {
+      if (client !== undefined && client !== null) {
+        this.adapter.in.closeConnection(client);
+      }
+      // may want to handle a return of the promise on close in the future...
+      if (this.sshConnection !== undefined && this.sshConnection !== null) {
+        this.sshConnection.shutdown();
+      }
+    } catch (closeClientError) {
+      const closeClientErrorMessage = _.get(closeClientError, "message", "Unknown Error Closing Client");
+      this.hull.logger.error("incoming.job.error", { jobName: "sync", hull_summary: closeClientErrorMessage });
+    }
+  }
+
+  handleAndReturnAppropriateError(error) {
+    let appropriateError = error;
+
+    let { message } = this.adapter.in.checkForError(error);
+    if (!message) {
+      message = _.get(error, "message");
+      if (this.requiresSshTunnel()) {
+        if (error.code === "ER_SOCKET_UNEXPECTED_CLOSE") {
+          message = "There was an unexpected issue connecting to the database through the bastion, please double check your connector settings to ensure they are correct, if you think they are, please contact a Hull representative for assistance";
+        } else if (error.message === "All configured authentication methods failed") {
+          message = "Connecting to the bastion server through ssh failed, please double check your ssh settings to ensure they are correct, if you think they are, please contact a Hull representative for assistance";
+        }
+      }
+    }
+
+    // preserving original behavior which did this:
+    // message =  _.get(error, "message", error);
+    if (!message) {
+      message = error;
+    } else {
+      appropriateError = new Error(message);
+    }
+
+    this.hull.logger.error("incoming.job.error", { jobName: "sync", hull_summary: message });
+    return appropriateError;
   }
 
   /**
@@ -167,10 +315,17 @@ export default class SyncAgent {
 
     const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
     // Run the method for the specific adapter.
-    return this.adapter.in.runQuery(this.client, wrappedQuery, options)
+    // return this.adapter.in.runQuery(this.client, wrappedQuery, options)
+
+    let openClient;
+
+    return this.createClient()
+      .then((client) => {
+        openClient = client;
+        return this.adapter.in.runQuery(client, wrappedQuery, options);
+      })
       .then(result => {
-        // this.adapter.in.closeConnection(this.client);
-        this.closeClient();
+        this.closeClient(openClient);
 
         const { errors } = this.adapter.in.validateResult(result, this.import_type);
         if (errors && errors.length > 0) {
@@ -180,9 +335,8 @@ export default class SyncAgent {
         return { entries: result.rows };
       })
       .catch((err) => {
-        // this.adapter.in.closeConnection(this.client);
-        this.closeClient();
-        return Promise.reject(err);
+        this.closeClient(openClient);
+        return Promise.reject(this.handleAndReturnAppropriateError(err));
       });
   }
 
@@ -196,24 +350,24 @@ export default class SyncAgent {
     if (!options.last_updated_at) {
       options.last_updated_at = moment().subtract(FULL_IMPORT_DAYS, "days").toISOString();
     }
-    return this.streamQuery(query, options)
+
+    let openClient;
+
+    return this.createClient()
+      .then((client) => {
+        openClient = client;
+        return this.streamQuery(client, query, options)
+      })
       .then(stream => this.sync(stream, started_sync_at))
       .then(result => {
         // we weren't closing client after the stream was complete
         // should close and continue to return result
-        this.closeClient();
+        this.closeClient(openClient);
         return Promise.resolve(result);
       })
       .catch(err => {
-        // this.adapter.in.closeConnection(this.client);
-        this.closeClient();
-        let { message } = this.adapter.in.checkForError(err);
-        if (!message) {
-          message = _.get(err, "message", err);
-        }
-
-        this.hull.logger.error("incoming.job.error", { jobName: "sync", hull_summary: message });
-        return Promise.reject(err);
+        this.closeClient(openClient);
+        return Promise.reject(this.handleAndReturnAppropriateError(err));
       });
   }
 
@@ -225,7 +379,7 @@ export default class SyncAgent {
     return this.startImport({ ...options, last_updated_at });
   }
 
-  streamQuery(query, options = {}) {
+  streamQuery(client, query, options = {}) {
     const { last_updated_at } = options;
     const replacements = {
       last_updated_at,
@@ -237,18 +391,19 @@ export default class SyncAgent {
     this.hull.logger.info("incoming.job.query", { jobName: "sync", query: wrappedQuery, type: this.import_type });
 
     // Run the method for the specific adapter.
-    return this.adapter.in.streamQuery(this.client, wrappedQuery).then(stream => {
-      return stream;
-    }, err => {
-      this.hull.logger.error("incoming.job.error", {
-        jobName: "sync",
-        errors: _.invoke(err, "toString") || err,
-        hull_summary: _.get(err, "message", "Server Error: Error while streaming query from database"),
-        type: this.import_type
+    return this.adapter.in.streamQuery(client, wrappedQuery)
+      .then(stream => {
+        return stream;
+      }, err => {
+        this.hull.logger.error("incoming.job.error", {
+          jobName: "sync",
+          errors: _.invoke(err, "toString") || err,
+          hull_summary: _.get(err, "message", "Server Error: Error while streaming query from database"),
+          type: this.import_type
+        });
+        err.status = 403;
+        throw err;
       });
-      err.status = 403;
-      throw err;
-    });
   }
 
   /**

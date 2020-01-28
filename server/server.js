@@ -64,7 +64,7 @@ export default function server(app: express, options: any):express {
     ({ agent }, res) => {
     if (agent.areConnectionParametersConfigured()) {
       const query = agent.getQuery();
-      closeRequestAgent(agent);
+      // closeRequestAgent(agent);
 
       res.render("connected.html", {
         query,
@@ -74,7 +74,7 @@ export default function server(app: express, options: any):express {
         ...agent.ship.private_settings
       });
     } else {
-      closeRequestAgent(agent);
+      // closeRequestAgent(agent);
       res.render("home.html", {});
     }
   });
@@ -104,7 +104,7 @@ export default function server(app: express, options: any):express {
     (req, res) => {
       req.hull.enqueue("startImport");
 
-      closeRequestAgent(req.agent);
+      // closeRequestAgent(req.agent);
 
       res.json({ status: "scheduled" });
     });
@@ -119,7 +119,7 @@ export default function server(app: express, options: any):express {
         req.hull.enqueue("startSync");
       }
 
-      closeRequestAgent(req.agent);
+      // closeRequestAgent(req.agent);
 
       res.json(response);
     });
@@ -129,7 +129,7 @@ export default function server(app: express, options: any):express {
     checkConfiguration(),
     ({ agent }, res) => {
       const query = agent.getQuery();
-      closeRequestAgent(agent);
+      // closeRequestAgent(agent);
       res.json({ query });
     });
 
@@ -137,7 +137,7 @@ export default function server(app: express, options: any):express {
     validationMiddleware,
     statusCheck,
     ({ agent }) => {
-      closeRequestAgent(agent);
+      // closeRequestAgent(agent);
     });
 
   app.use(routes);
