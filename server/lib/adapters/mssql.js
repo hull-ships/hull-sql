@@ -1,14 +1,14 @@
 /**
  * Module dependencies.
  */
-import tedious from "tedious";
+// import tedious from "tedious";
 import Promise from "bluebird";
 import _ from "lodash";
 import Readable from "readable-stream";
 import SequelizeUtils from "sequelize/lib/utils";
 import validateResultColumns from "./validate-result-columns";
 
-// const tedious = require("tedious");
+const tedious = require("tedious");
 
 /**
  * MS SQL adapter.
@@ -21,8 +21,16 @@ export function parseConnectionConfig(settings) {
     // if (c && val && val.length > 0) {
     //   return { ...c, [key]: val };
     // }
-    if (c && val && (val.length > 0 || (key === "port" && _.isNumber(val)))) {
-      return { ...c, [key]: val };
+    if (c && val) {
+      if (key === "port") {
+        let port = val;
+        if (!_.isNumber(val)) {
+          port = parseInt(val, 10);
+        }
+        return { ...c, [key]: port };
+      } else if (val.length > 0) {
+        return { ...c, [key]: val };
+      }
     }
     // TODO Not sure what the intention was here, returning false will make this the next c, seems wrong
     // but maybe that was the intention if a value ever isn't something we expect?
@@ -47,12 +55,19 @@ export function parseConnectionConfig(settings) {
   }
 
   const config = {
-    userName: conn.user,
-    password: conn.password,
+    authentication:  {
+      type: "default",
+      options: {
+        userName: conn.user,
+        password: conn.password
+      }
+    },
     server: conn.host,
     options: opts,
     debug: true
   };
+
+  // console.log("Config: " + JSON.stringify(config, null, 2));
 
   return config;
 }
@@ -118,7 +133,11 @@ export function checkForError(error) {
  * @param {*} replacements The replacement parameters
  */
 export function wrapQuery(sql, replacements) {
-  return SequelizeUtils.formatNamedParameters(sql, replacements, "mssql");
+  const replacementDates = _.reduce(replacements, (results, value, key) => {
+    results[key] = new Date(value);
+    return results;
+  }, {});
+  return SequelizeUtils.formatNamedParameters(sql, replacementDates, "mssql");
 }
 
 /**
@@ -240,54 +259,70 @@ export function streamQuery(client, query, options = {}) {
 
     let resultReturned = false;
 
-    stream._read = function () { // eslint-disable-line func-names
+    // let limit = 1;
 
-      conn.on("connect", (err) => { // eslint-disable-line consistent-return
-        if (err) {
-          stream.emit("error", err);
-          // don't need to execute request if had an error
-          console.log(`MSSQL: Would have executed request: ${JSON.stringify(err)}`);
-          return;
-        }
+    const request = new tedious.Request(query, (reqError) => { // eslint-disable-line consistent-return
 
-        const request = new tedious.Request(query, (reqError) => { // eslint-disable-line consistent-return
+      if (reqError) {
+        stream.emit("error", reqError);
+      }
+    });
 
-          if (reqError) {
-            stream.emit("error", reqError);
-          }
-        });
-
-        request.on("row", (columns) => {
-          const row = {};
-          _.forEach(columns, (column) => {
-            row[column.metadata.colName] = column.value;
-          });
-          stream.push(row);
-        });
-
-        request.on("done", (rowCount) => { // eslint-disable-line consistent-return
-          if (_.isNumber(rowCount) && !resultReturned) {
-            resultReturned = true;
-            stream.push(null);
-          }
-        });
-
-        request.on("doneInProc", (rowCount) => { // eslint-disable-line consistent-return
-          if (_.isNumber(rowCount) && !resultReturned) {
-            resultReturned = true;
-            stream.push(null);
-          }
-        });
-
-        request.on("doneProc", (rowCount) => { // eslint-disable-line consistent-return
-          if (_.isNumber(rowCount) && !resultReturned) {
-            resultReturned = true;
-            stream.push(null);
-          }
-        });
-
-        conn.execSql(request);
+    request.on("row", (columns) => {
+      const row = {};
+      _.forEach(columns, (column) => {
+        row[column.metadata.colName] = column.value;
       });
+
+      // if upstream returns false (backpressure) we want to pause the stream
+      if (!stream.push(row)) {
+        // below was my way of testing to make sure the row that we paused on was still delivered
+        // limit += 1;
+        // row.rowNumber = limit;
+        // console.log(`[${limit}]Paused on: ${JSON.stringify(row)}`);
+
+        // pause the stream, the resume() method in the _read should resume the stream when upstream is ready
+        request.pause();
+      }
+
+    });
+
+    request.on("done", (rowCount) => { // eslint-disable-line consistent-return
+      if (_.isNumber(rowCount) && !resultReturned) {
+        resultReturned = true;
+        stream.push(null);
+      }
+    });
+
+    request.on("doneInProc", (rowCount) => { // eslint-disable-line consistent-return
+      if (_.isNumber(rowCount) && !resultReturned) {
+        resultReturned = true;
+        stream.push(null);
+      }
+    });
+
+    request.on("doneProc", (rowCount) => { // eslint-disable-line consistent-return
+      if (_.isNumber(rowCount) && !resultReturned) {
+        resultReturned = true;
+        stream.push(null);
+      }
+    });
+
+    conn.on("connect", (err) => { // eslint-disable-line consistent-return
+      if (err) {
+        stream.emit("error", err);
+        // don't need to execute request if had an error
+        console.log(`MSSQL: Would have executed request: ${JSON.stringify(err)}`);
+        return;
+      }
+
+      conn.execSql(request);
+    });
+
+    stream._read = function () { // eslint-disable-line func-names
+      // call resume to ensure the stream is flowing if upstream is trying to read
+      // within this call checks to see if the stream is paused and if it isn't, then just returns
+      request.resume();
     };
 
     stream.once("end", () => {
