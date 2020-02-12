@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.26
+- [feature] Add the ability to tunnel through ssh bastion
+
 ## 0.3.25
 - [hotfix] Fix parsing of settings parameter for port in connection util
 
