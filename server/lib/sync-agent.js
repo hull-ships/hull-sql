@@ -122,6 +122,7 @@ export default class SyncAgent {
     const sshConfig = getSshTunnelConfig(private_settings);
 
     this.sshConnection = new SSHConnection({
+      endPort: sshConfig.port,
       endHost: sshConfig.host,
       username: sshConfig.user,
       privateKey: sshConfig.privateKey

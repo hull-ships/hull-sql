@@ -1,5 +1,6 @@
-export function getSshTunnelConfig({ ssh_username, ssh_private_key, ssh_host }) {
+export function getSshTunnelConfig({ ssh_port, ssh_username, ssh_private_key, ssh_host }) {
   return {
+    port: ssh_port,
     host: ssh_host,
     user: ssh_username,
     privateKey: ssh_private_key
