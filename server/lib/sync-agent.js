@@ -595,6 +595,15 @@ export default class SyncAgent {
         this.hull.put("app/status", {
           status: "error",
           messages: [_.get(err, "message", err)]
+        }).catch(statusError => {
+          // we think this error is what's causing the app to crash, supress it for now
+          this.hull.logger.error("incoming.job.error", {
+            jobName: "sync",
+            errors: _.get(statusError, "message", err),
+            hull_summary: "logging caught status message",
+            type: this.import_type
+          });
+          return Promise.resolve();
         });
         reject(err);
       });
