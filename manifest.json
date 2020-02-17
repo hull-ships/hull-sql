@@ -183,6 +183,12 @@
       "title": "SSH host"
     },
     {
+      "name": "ssh_port",
+      "type": "string",
+      "title": "SSH port",
+      "description": "Defaults to port 22"
+    },
+    {
       "name": "ssh_username",
       "type": "string",
       "title": "SSH username"
@@ -224,6 +230,7 @@
       "description": "If your connection must go through an ssh tunnel, please input the information here",
       "properties": [
         "private_settings.ssh_host",
+        "private_settings.ssh_port",
         "private_settings.ssh_username",
         "private_settings.ssh_private_key"
       ]
