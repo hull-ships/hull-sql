@@ -12,10 +12,10 @@ import map from "through2-map";
 import through2 from "through2";
 
 import * as Adapters from "./adapters";
-
+import removeComments from "../../server/lib/utils/remove-comment";
 
 const { getSshTunnelConfig, getDatabaseConfig } = require("./utils/ssh-utils");
-const { SSHConnection } = require("./utils/ssh-connection")
+const { SSHConnection } = require("./utils/ssh-connection");
 
 const DEFAULT_BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "10000", 10);
 const FULL_IMPORT_DAYS = process.env.FULL_IMPORT_DAYS || "10000";
@@ -314,6 +314,12 @@ export default class SyncAgent {
       import_start_date: moment().subtract(this.ship.private_settings.import_days, "days").format()
     };
 
+    try {
+      query = removeComments(query);
+    } catch (err) {
+      return Promise.reject(this.handleAndReturnAppropriateError(err));
+    }
+
     const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
     // Run the method for the specific adapter.
     // return this.adapter.in.runQuery(this.client, wrappedQuery, options)
@@ -343,7 +349,12 @@ export default class SyncAgent {
 
   startImport(options = {}) {
     this.hull.logger.info("incoming.job.start", { jobName: "sync", type: this.import_type, options });
-    const query = this.getQuery();
+    let query = this.getQuery();
+    try {
+      query = removeComments(this.getQuery());
+    } catch (err) {
+      return Promise.reject(this.handleAndReturnAppropriateError(err));
+    }
     const started_sync_at = new Date();
     if (!options.import_days) {
       options.import_days = FULL_IMPORT_DAYS;
@@ -357,7 +368,7 @@ export default class SyncAgent {
     return this.createClient()
       .then((client) => {
         openClient = client;
-        return this.streamQuery(client, query, options)
+        return this.streamQuery(client, query, options);
       })
       .then(stream => this.sync(stream, started_sync_at))
       .then(result => {
