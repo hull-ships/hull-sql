@@ -1,26 +1,44 @@
 // @flow
 
-/*
+/**
  * Detects whether or not the current index of a string shows a beginning of a comment block such as "/*"
  * @param request as the string to parse
- * @param index as the cursor to start looking in the request
- * @returns true when a comment block starts | false otherwise }
+ * @param index as the cursor to look at in the request
+ * @returns true when a comment block starts, false otherwise
  */
 function isStartOfCommentBlock(request: string, index: number): boolean {
   return index >= 0 && index + 1 < request.length &&
     request[index] === "/" && request[index + 1] === "*";
 }
 
+/**
+ * Detects whether or not the current index of a string shows an ending of a comment block such as "* /"
+ * @param request as the string to parse
+ * @param index as the cursor to look at in the request
+ * @returns true when a comment block starts, false otherwise
+ */
 function isEndOfCommentBlock(request: string, index: number): boolean {
   return index >= 0 && index + 1 < request.length &&
     request[index] === "*" && request[index + 1] === "/";
 }
 
+/*
+ * Detects whether or not the current index of a string shows a beginning of a comment line such as "--"
+ * @param request as the string to parse
+ * @param index as the cursor to look at in the request
+ * @returns true when a comment line is detected, false otherwise
+ */
 function isStartOfCommentLine(request: string, index: number): boolean {
   return index >= 0 && index + 1 < request.length &&
       request[index] === "-" && request[index + 1] === "-";
 }
 
+/**
+ * Deletes every characters in a string succeeding a given index until the end of a line or the last character
+ * @param request as the string to edit
+ * @param index as the cursor to start removing characters
+ * @returns {string}
+ */
 function deleteUntilEndOfLine(request: string, index: number): string {
   let end = index;
   while (end >= 0 && end < request.length && request[end] !== "\r" && request[end] !== "\n") {
@@ -29,6 +47,15 @@ function deleteUntilEndOfLine(request: string, index: number): string {
   return request.substring(0, index) + request.substring(end, request.length);
 }
 
+/**
+ * Deletes every characters of a comment block in a string succeeding a given index.
+ * It follows the following logic: For every opened nested comment, a closing block sequence is expected.
+ * If not, the function will throw.
+ * @param request
+ * @param index
+ * @returns {string}
+ * @throws Error saying that an invalid comment block was detected
+ */
 function deleteUntilEndOfCommentBlock(request: string, index: number): string {
   let end = index + 2, counter = 1;
   while (end < request.length && counter > 0) {
@@ -56,9 +83,15 @@ function deleteUntilEndOfCommentBlock(request: string, index: number): string {
 // '      => look for closing pair and ignore everything between
 // --     => look for end of line and remove everything between
 // /*     => start looking for end of comment block
-//            To do so, count everytime you read a /* by increasing a counter
+//            To do so, count every time you read a /* by increasing a counter
 //            When you read */ decrease the counter
 //            When it goes down to zero, you met the end of that block
+
+/**
+ * Looks for the two different types of comment in SQL and attempt to remove them
+ * @param request as the string to manipulate
+ * @returns {string} as the newly formatted request
+ */
 export default (request: string) => {
   let i = 0;
   while (i < request.length) {
