@@ -14,12 +14,18 @@ describe("Utils functions", () => {
     expect(testQuery).to.be.equal("\nSELECT * from users\n");
   });
   it("should remove comments properly on simple block comments in query", () => {
-    let testQuery = "/* test comment */\n" +
-                    "SELECT * from users\n" +
-                    "/* test end */";
+    let testQuery = "SELECT employee_id, last_name\n" +
+                    "/*\n" +
+                    " * Author: Nobody\n" +
+                    " * Purpose: Something\n" +
+                    " */\n" +
+                    "FROM employees\n" +
+                    "/* test comment */";
     testQuery = removeComments(testQuery);
 
-    expect(testQuery).to.be.equal("\nSELECT * from users\n");
+    expect(testQuery).to.be.equal("SELECT employee_id, last_name\n" +
+                                  "\n" +
+                                  "FROM employees\n");
   });
   it("should remove comments properly on nested comments in query", () => {
     let testQuery = "/* test /* comment */ */\n" +
