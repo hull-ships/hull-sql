@@ -36,10 +36,12 @@ describe("Utils functions", () => {
     expect(testQuery).to.be.equal("\nSELECT * from users\n");
   });
   it("should keep the query as it is when comments are in a string literal", () => {
-    let testQuery = "SELECT '/* something /* not /* useful /* at /* all */ */ */ */ */'* from users\n'test'";
+    let testQuery = "SELECT '/* something /* not /* useful /* at /* all */ */ */ */ */'users as \"fi/*el*/d\" from " +
+                    "users\n\"test\"";
     testQuery = removeComments(testQuery);
 
-    expect(testQuery).to.be.equal("SELECT '/* something /* not /* useful /* at /* all */ */ */ */ */'* from users\n'test'");
+    expect(testQuery).to.be.equal("SELECT '/* something /* not /* useful /* at /* all */ */ */ */ */'users as \"fi/*el*/d\" from users\n" +
+                                  "\"test\"");
   });
   it("should throw an error when comments in query are not valid", () => {
     const testQuery = "/* failing /* */ /* test comment */\n" +
