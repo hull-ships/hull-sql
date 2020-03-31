@@ -314,13 +314,14 @@ export default class SyncAgent {
       import_start_date: moment().subtract(this.ship.private_settings.import_days, "days").format()
     };
 
+    let wrappedQuery;
     try {
       query = removeComments(query);
+      wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
     } catch (err) {
       return Promise.reject(this.handleAndReturnAppropriateError(err));
     }
 
-    const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
     // Run the method for the specific adapter.
     // return this.adapter.in.runQuery(this.client, wrappedQuery, options)
 
