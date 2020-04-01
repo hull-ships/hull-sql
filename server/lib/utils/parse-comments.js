@@ -7,18 +7,24 @@
  * @param client as the Hull client for logging
  */
 function parseForVariable(sqlComment: string, replacements: Object, client: Object) {
-  if (!replacements || Object.keys(replacements).length === 0) {
-    return;
-  }
-  const match = sqlComment.match(/\:+(?!\d)(\w+)/g);
-  if (match) {
-    match.forEach(m => {
-      if (!replacements[m]) {
-        client.logger.debug("Detected variable(s) in comment section of query", m);
-        throw new Error(`Unsupported variable in comment section -> ${m}`);
-      }
-    });
-  }
+  return sqlComment.replace(/\:+(?!\d)(\w+)/g, (value, key) => {
+    if (!replacements[key]) {
+      client.logger.debug("Detected variable(s) in comment section of query", key);
+      throw new Error(`Unsupported variable in comment section -> ${key}`);
+    }
+  });
+  // if (!replacements || Object.keys(replacements).length === 0) {
+  //   return;
+  // }
+  // const match = sqlComment.match(/\:+(?!\d)(\w+)/g);
+  // if (match) {
+  //   match.forEach(m => {
+  //     if (!replacements[m]) {
+  //       client.logger.debug("Detected variable(s) in comment section of query", m);
+  //       throw new Error(`Unsupported variable in comment section -> ${m}`);
+  //     }
+  //   });
+  // }
 }
 
 /**

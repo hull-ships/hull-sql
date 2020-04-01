@@ -4,7 +4,7 @@ import {
 } from "chai";
 import removeComments from "../../server/lib/utils/parse-comments";
 
-describe("Utils functions", () => {
+describe("Remove comments", () => {
   var env;
 
   // mocking an environment
@@ -19,7 +19,6 @@ describe("Utils functions", () => {
   });
 
   it("should remove comments properly on simple comments in query", () => {
-    process.env = { DELETE_COMMENTS: true };
     let testQuery = "-- test comment\n" +
                     "SELECT * from users\n" +
                     "-- test end";
