@@ -1,15 +1,29 @@
 /* global describe, it */
 import {
-  expect
+  expect,
 } from "chai";
-import removeComments from "../../server/lib/utils/remove-comment";
+import removeComments from "../../server/lib/utils/parse-comments";
 
 describe("Utils functions", () => {
+  var env;
+
+  // mocking an environment
+  before(function () {
+    env = process.env;
+    process.env = { DELETE_COMMENTS: true };
+  });
+
+  // restoring everything back
+  after(function () {
+    process.env = env;
+  });
+
   it("should remove comments properly on simple comments in query", () => {
+    process.env = { DELETE_COMMENTS: true };
     let testQuery = "-- test comment\n" +
                     "SELECT * from users\n" +
                     "-- test end";
-    testQuery = removeComments(testQuery);
+    testQuery = removeComments(testQuery, {}, { logger: { debug: () => {} } });
 
     expect(testQuery).to.be.equal("\nSELECT * from users\n");
   });
@@ -21,7 +35,7 @@ describe("Utils functions", () => {
                     " */\n" +
                     "FROM employees\n" +
                     "/* test comment */";
-    testQuery = removeComments(testQuery);
+    testQuery = removeComments(testQuery, {}, { logger: { debug: () => {} } });
 
     expect(testQuery).to.be.equal("SELECT employee_id, last_name\n" +
                                   "\n" +
@@ -31,14 +45,14 @@ describe("Utils functions", () => {
     let testQuery = "/* test /* comment */ */\n" +
                     "SELECT /* something /* not /* useful /* at /* all */ */ */ */ */* from users\n" +
                     "/* test end */";
-    testQuery = removeComments(testQuery);
+    testQuery = removeComments(testQuery, {}, { logger: { debug: () => {} } });
 
     expect(testQuery).to.be.equal("\nSELECT * from users\n");
   });
   it("should keep the query as it is when comments are in a string literal", () => {
     let testQuery = "SELECT '/* something /* not /* useful /* at /* all */ */ */ */ */'users as \"fi/*el*/d\" from " +
                     "users\n\"test\"";
-    testQuery = removeComments(testQuery);
+    testQuery = removeComments(testQuery, {}, { logger: { debug: () => {} } });
 
     expect(testQuery).to.be.equal("SELECT '/* something /* not /* useful /* at /* all */ */ */ */ */'users as \"fi/*el*/d\" from users\n" +
                                   "\"test\"");
@@ -48,7 +62,7 @@ describe("Utils functions", () => {
                       "SELECT * from users\n" +
                       "/* test end */";
 
-    expect(() => { removeComments(testQuery); }).to.throw();
+    expect(() => { removeComments(testQuery, {}, { logger: { debug: () => {} } }); }).to.throw();
   });
   it("should throw an error with a bit of every type of possible comments", () => {
     let testQuery =
@@ -65,7 +79,7 @@ describe("Utils functions", () => {
       ");\n" +
       "            go]";
 
-    testQuery = removeComments(testQuery);
+    testQuery = removeComments(testQuery, {}, { logger: { debug: () => {} } });
     expect(testQuery).to.be.equal(
       "[select  top 1 'a'  from  sys.tables \n" +
       "union\n" +

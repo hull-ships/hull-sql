@@ -1,6 +1,27 @@
 // @flow
 
 /**
+ * Searches for variables in a sql comment, defined by a regex
+ * @param sqlComment as the commented section in a sql query
+ * @param replacements as the known values to ignore
+ * @param client as the Hull client for logging
+ */
+function parseForVariable(sqlComment: string, replacements: Object, client: Object) {
+  if (!replacements || Object.keys(replacements).length === 0) {
+    return;
+  }
+  const match = sqlComment.match(/\:+(?!\d)(\w+)/g);
+  if (match) {
+    match.forEach(m => {
+      if (!replacements[m]) {
+        client.logger.debug("Detected variable(s) in comment section of query", m);
+        throw new Error(`Unsupported variable in comment section -> ${m}`);
+      }
+    });
+  }
+}
+
+/**
  * Detects whether or not the current index of a string shows a beginning of a comment block such as "/*"
  * @param request as the string to parse
  * @param index as the cursor to look at in the request
@@ -34,30 +55,33 @@ function isStartOfCommentLine(request: string, index: number): boolean {
 }
 
 /**
- * Deletes every characters in a string succeeding a given index until the end of a line or the last character
+ * Finds the end of a line comment in a string succeeding a given index
  * @param request as the string to edit
  * @param index as the cursor to start removing characters
- * @returns {string}
+ * @returns {number} as index of the end of the line
  */
-function deleteUntilEndOfLine(request: string, index: number): string {
+function findEndOfLine(request: string, index: number): number {
   let end = index;
   while (end >= 0 && end < request.length && request[end] !== "\r" && request[end] !== "\n") {
     end += 1;
   }
-  return request.substring(0, index) + request.substring(end, request.length);
+  return end;
 }
 
 /**
- * Deletes every characters of a comment block in a string succeeding a given index.
+ * Finds the end of comment block in a string succeeding a given index.
  * It follows the following logic: For every opened nested comment, a closing block sequence is expected.
  * If not, the function will throw.
  * @param request
  * @param index
- * @returns {string}
+ * @param replacements as the known values to ignore
+ * @param client as the Hull client for logging
+ * @returns {number}
  * @throws Error saying that an invalid comment block was detected
  */
-function deleteUntilEndOfCommentBlock(request: string, index: number): string {
-  let end = index + 2, counter = 1;
+function findEndOfBlock(request: string, index: number, replacements: Object, client: Object): number {
+  let end = index + 2;
+  let counter = 1;
   while (end < request.length && counter > 0) {
     if (isStartOfCommentBlock(request, end)) {
       counter += 1;
@@ -73,8 +97,7 @@ function deleteUntilEndOfCommentBlock(request: string, index: number): string {
     // Invalid comment block - not properly terminated.
     throw new Error("Invalid comment block");
   }
-  request = request.substring(0, index) + request.substring(end, request.length);
-  return request;
+  return end;
 }
 
 /* test /* */
@@ -89,17 +112,32 @@ function deleteUntilEndOfCommentBlock(request: string, index: number): string {
 //            When it goes down to zero, you met the end of that block
 
 /**
- * Looks for the two different types of comment in SQL and attempt to remove them
+ * Looks for the two different types of comment in SQL and attempt to remove them if the option is enabled
  * @param request as the string to manipulate
+ * @param replacements as the known values to ignore
+ * @param client as the Hull client for logging
  * @returns {string} as the newly formatted request
  */
-export default (request: string) => {
+export default (request: string, replacements: Object, client: Object) => {
+  const deleteComments = process.env.DELETE_COMMENTS || false;
   let i = 0;
   while (i < request.length) {
     if (isStartOfCommentLine(request, i)) {
-      request = deleteUntilEndOfLine(request, i);
+      const endOfLine = findEndOfLine(request, i);
+      if (deleteComments) {
+        request = request.substring(0, i) + request.substring(endOfLine, request.length);
+      } else {
+        parseForVariable(request.substring(i, endOfLine), replacements, client);
+        i = endOfLine;
+      }
     } else if (isStartOfCommentBlock(request, i)) {
-      request = deleteUntilEndOfCommentBlock(request, i);
+      const endOfBlock = findEndOfBlock(request, i);
+      if (deleteComments) {
+        request = request.substring(0, i) + request.substring(endOfBlock, request.length);
+      } else {
+        parseForVariable(request.substring(i, endOfBlock), replacements, client);
+        i = endOfBlock;
+      }
     } else if (request[i] === "'") {
       const quoteIndex = request.indexOf("'", i + 1);
       // Look for a closing pair, otherwise iterate to the end and return as it is
