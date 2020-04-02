@@ -12,10 +12,10 @@ import map from "through2-map";
 import through2 from "through2";
 
 import * as Adapters from "./adapters";
-
+import removeComments from "./utils/parse-comments";
 
 const { getSshTunnelConfig, getDatabaseConfig } = require("./utils/ssh-utils");
-const { SSHConnection } = require("./utils/ssh-connection")
+const { SSHConnection } = require("./utils/ssh-connection");
 
 const DEFAULT_BATCH_SIZE = parseInt(process.env.BATCH_SIZE || "10000", 10);
 const FULL_IMPORT_DAYS = process.env.FULL_IMPORT_DAYS || "10000";
@@ -314,7 +314,14 @@ export default class SyncAgent {
       import_start_date: moment().subtract(this.ship.private_settings.import_days, "days").format()
     };
 
-    const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
+    let wrappedQuery;
+    try {
+      query = removeComments(query, replacements, this.hull);
+      wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
+    } catch (err) {
+      return Promise.reject(this.handleAndReturnAppropriateError(err));
+    }
+
     // Run the method for the specific adapter.
     // return this.adapter.in.runQuery(this.client, wrappedQuery, options)
 
@@ -357,7 +364,7 @@ export default class SyncAgent {
     return this.createClient()
       .then((client) => {
         openClient = client;
-        return this.streamQuery(client, query, options)
+        return this.streamQuery(client, query, options);
       })
       .then(stream => this.sync(stream, started_sync_at))
       .then(result => {
@@ -386,6 +393,7 @@ export default class SyncAgent {
       last_updated_at,
       import_start_date: moment().subtract(options.import_days, "days").format()
     };
+    query = removeComments(query, replacements, this.hull);
     // Wrap the query.
     const wrappedQuery = this.adapter.in.wrapQuery(query, replacements);
 
