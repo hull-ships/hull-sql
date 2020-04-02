@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.27
+- Show error in preview and in logs when variables are used in commented sections of the query
+- Able to delete comments when option is enabled, to allow users writing variables in comments
+
 ## 0.3.26
 - [feature] Add the ability to tunnel through ssh bastion
 
