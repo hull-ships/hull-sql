@@ -77,7 +77,7 @@
     "raw-body": "^2.3.0",
     "rimraf": "^2.4.3",
     "s3-upload-stream": "^1.0.7",
-    "sequelize": "^3.30.0",
+    "sequelize": "^5.15.1",
     "snowflake-sdk": "^1.1.11",
     "sqs-consumer": "^3.6.1",
     "ssh2": "^0.8.7",
