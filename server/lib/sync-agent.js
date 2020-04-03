@@ -491,6 +491,14 @@ export default class SyncAgent {
         data.timestamp = record.timestamp;
         data.event = record.event;
         data.eventId = record.event_id;
+
+        if ((record.session_id || record._sid) && (record.browser_id || record._bid) && record.url) {
+          data.context = {
+            _sid: record.session_id || record._sid,
+            _bid: record.browser_id || record._bid,
+            url: record.url
+            };
+        }
         omitTraits.push("timestamp", "event", "event_id");
       }
 
@@ -603,6 +611,15 @@ export default class SyncAgent {
         this.hull.put("app/status", {
           status: "error",
           messages: [_.get(err, "message", err)]
+        }).catch(statusError => {
+          // we think this error is what's causing the app to crash, supress it for now
+          this.hull.logger.error("incoming.job.error", {
+            jobName: "sync",
+            errors: _.get(statusError, "message", err),
+            hull_summary: "logging caught status message",
+            type: this.import_type
+          });
+          return Promise.resolve();
         });
         reject(err);
       });
