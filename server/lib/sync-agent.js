@@ -52,6 +52,7 @@ export default class SyncAgent {
     this.importDelay = _.random(0, _.get(this.ship.private_settings, "sync_interval", 120));
 
     const private_settings = this.ship.private_settings;
+    this.static_port_forward = private_settings.static_port_forward;
     this.import_type = private_settings.import_type || "users";
     // Get the DB type.
     const { db_type, output_type = "s3" } = private_settings;
@@ -133,7 +134,7 @@ export default class SyncAgent {
     // rotating every 10k
     rotatingForwardingPort += 1;
     const portIncrement = rotatingForwardingPort % 10000;
-    const portForward = 50000 + portIncrement;
+    const portForward = this.static_port_forward ? this.static_port_forward : 50000 + portIncrement;
 
     return this.sshConnection.forward({
       fromPort: portForward,
