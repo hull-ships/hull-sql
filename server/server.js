@@ -83,7 +83,7 @@ export default function server(app: express, options: any):express {
     validationMiddleware,
     checkConfiguration(),
     ({ body, agent, hull }, res) => {
-    const query = body.query || agent.getQuery();
+    const query = agent.getQuery(body.query);
 
     if (!query) {
       return res.status(403).json({ status: "query string empty" });
