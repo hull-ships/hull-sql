@@ -621,7 +621,10 @@ export default class SyncAgent {
   }
 
   startImportJob(url, partNumber, size, importId) {
-    const { overwrite } = this.ship.private_settings;
+    const { 
+      overwrite, 
+      dedupe_lines_from_previous_import = false 
+    } = this.ship.private_settings;
     const params = {
       url,
       format: "json",
@@ -635,7 +638,8 @@ export default class SyncAgent {
       stats: { size },
       size,
       import_id: importId,
-      part_number: partNumber
+      part_number: partNumber,
+      dedupe: dedupe_lines_from_previous_import
     };
 
     this.hull.logger.info("incoming.job.progress", { jobName: "sync", stepName: "import", progress: partNumber, options: _.omit(params, "url"), type: this.import_type });
