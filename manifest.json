@@ -228,6 +228,7 @@
         "private_settings.enabled",
         "private_settings.sync_interval",
         "private_settings.overwrite",
+        "private_settings.dedupe_lines_from_previous_import",
         "private_settings.import_days"
       ]
     },
