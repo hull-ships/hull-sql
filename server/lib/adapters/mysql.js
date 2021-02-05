@@ -174,6 +174,7 @@ function runQuery(client, query, options = {}) {
       const params = { sql: `${query} LIMIT ${options.limit || 100}` };
       return conn.query(params).then((rows) => {
         if (timer) clearTimeout(timer);
+        if (!rows) return reject(new Error("No results"));
         const columnNames = Object.keys(rows[0]);
         const columnTypes = _.map(rows.meta, 'type');
         const columns = _.zip(columnNames, columnTypes).map(([ name, type ]) => ({ name, type }));
