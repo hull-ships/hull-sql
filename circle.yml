@@ -2,8 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: hull/ci-builder:157.0.0
-    working_directory: /hull
+      - image: circleci/node:12.12.0
     steps:
       - checkout
       - setup_remote_docker:
