@@ -7,7 +7,7 @@ COPY ./yarn.lock /app/yarn.lock
 
 RUN yarn --ignore-scripts --ignore-engines
 COPY . /app
-RUN yarn
+RUN yarn --ignore-engines
 
 # RUN yarn --ignore-scripts
 
