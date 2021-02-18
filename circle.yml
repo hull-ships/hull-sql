@@ -7,8 +7,8 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          reusable: true
-          exclusive: true
+          version: 19.03.13
+          docker_layer_caching: true
       - run:
           name: install git openssh-client tar
           command: apk update && apk add git openssh-client tar
