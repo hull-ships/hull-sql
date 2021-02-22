@@ -1,4 +1,6 @@
 # Hull SQL Ship.
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhull-ships%2Fhull-sql.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhull-ships%2Fhull-sql?ref=badge_shield)
+
 
 ### Using :
 
@@ -83,3 +85,7 @@ Logs that are specific for SQL Connector:
       * `Invalid structure {messages}` - errors about invalid results structure, e.g. missing email/external_id, json column in postgres database ...
    - warning:
       * `Warning: Query returned no results` - when query that was already saved returned no results
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhull-ships%2Fhull-sql.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhull-ships%2Fhull-sql?ref=badge_large)
