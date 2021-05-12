@@ -58,7 +58,7 @@
     "bootstrap-sweetalert": "^1.0.1",
     "cache-manager": "2.5.0",
     "camelize": "^1.0.0",
-    "codemirror": "^5.28.0",
+    "codemirror": "^5.58.2",
     "css-loader": "^0.28.4",
     "dotenv": "^2.0.0",
     "ejs": "^2.5.7",
