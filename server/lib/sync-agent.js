@@ -493,6 +493,14 @@ export default class SyncAgent {
         data.timestamp = record.timestamp;
         data.event = record.event;
         data.eventId = record.event_id;
+
+        if ((record.session_id || record._sid) && (record.browser_id || record._bid) && record.url) {
+          data.context = {
+            _sid: record.session_id || record._sid,
+            _bid: record.browser_id || record._bid,
+            url: record.url
+            };
+        }
         omitTraits.push("timestamp", "event", "event_id");
       }
 
