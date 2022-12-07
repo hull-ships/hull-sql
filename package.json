@@ -62,7 +62,7 @@
     "css-loader": "^0.28.4",
     "dotenv": "^2.0.0",
     "ejs": "^2.5.7",
-    "express": "^4.15.4",
+    "express": "^4.17.3",
     "hull": "^0.13.16",
     "jquery": "^3.2.1",
     "json-loader": "^0.5.7",
